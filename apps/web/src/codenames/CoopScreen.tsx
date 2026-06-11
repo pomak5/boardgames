@@ -10,6 +10,7 @@ import {
 } from '@boardgames/shared';
 import type { BotRisk, CoopGame } from '@boardgames/shared';
 import { CardTile } from './CardTile';
+import { fireWinConfetti } from './effects';
 import { LogList } from './LogList';
 import { sounds } from './sounds';
 import './codenames.css';
@@ -37,6 +38,7 @@ export function CoopScreen({ risk }: { risk: BotRisk }) {
       const owner = g.state.cards[index]?.owner;
       const next = coopGuess(g, index);
       if (next.state.phase === 'finished') {
+        if (next.state.winner === g.playerTeam) fireWinConfetti(g.playerTeam);
         (next.state.winner === g.playerTeam ? sounds.win : sounds.lose)();
       } else if (owner === g.playerTeam) {
         sounds.good();
@@ -57,6 +59,7 @@ export function CoopScreen({ risk }: { risk: BotRisk }) {
             spymasterView={false}
             disabled={game.state.phase !== 'guess'}
             onReveal={() => reveal(i)}
+            dealIndex={i}
           />
         ))}
       </div>

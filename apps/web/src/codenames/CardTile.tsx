@@ -9,6 +9,8 @@ interface Props {
   disabled: boolean;
   spymasterView: boolean;
   onReveal: () => void;
+  /** Порядковый номер для анимации раздачи (стаггер). */
+  dealIndex?: number;
 }
 
 const OWNER_CLASS = {
@@ -83,14 +85,20 @@ function SealArt({ owner }: { owner: Exclude<Card['owner'], null> }) {
   );
 }
 
-export function CardTile({ card, disabled, spymasterView, onReveal }: Props) {
+export function CardTile({ card, disabled, spymasterView, onReveal, dealIndex }: Props) {
   const revealedClass = card.revealed ? 'cn-card--flipped' : '';
   const dimClass = spymasterView && !card.revealed && card.owner ? `cn-key--${card.owner}` : '';
+  const dealClass = dealIndex !== undefined ? 'cn-card--deal' : '';
   return (
     <button
       type="button"
-      className={`cn-card ${revealedClass}`}
-      style={{ '--tilt': `${tiltOf(card.word)}deg` } as React.CSSProperties}
+      className={`cn-card ${revealedClass} ${dealClass}`}
+      style={
+        {
+          '--tilt': `${tiltOf(card.word)}deg`,
+          '--deal-i': dealIndex ?? 0,
+        } as React.CSSProperties
+      }
       disabled={disabled || card.revealed}
       onClick={onReveal}
       aria-label={card.revealed ? `${card.word} — открыто` : card.word}

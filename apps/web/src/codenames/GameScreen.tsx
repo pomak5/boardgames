@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Clue, Team } from '@boardgames/shared';
 import { CardTile } from './CardTile';
+import { fireWinConfetti } from './effects';
 import { LogList } from './LogList';
 import type { GameApi } from './useCodenamesGame';
 import './codenames.css';
@@ -45,6 +46,9 @@ function ClueForm({ onSubmit }: { onSubmit: (clue: Clue) => string | null }) {
 export function GameScreen({ game }: { game: GameApi }) {
   const { state, score, trace, spymasterView } = game;
   const finished = state.phase === 'finished';
+  useEffect(() => {
+    if (finished && state.winner) fireWinConfetti(state.winner);
+  }, [finished, state.winner]);
   const isHumanCaptain = game.settings.captainMode === 'human';
 
   return (
@@ -57,6 +61,7 @@ export function GameScreen({ game }: { game: GameApi }) {
             spymasterView={spymasterView || isHumanCaptain}
             disabled={state.phase !== 'guess'}
             onReveal={() => game.reveal(i)}
+            dealIndex={i}
           />
         ))}
       </div>
