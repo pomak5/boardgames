@@ -1,0 +1,41 @@
+# Дев-окружение: bun запускает server и web, postgres для будущих задач (#4, #5)
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: boardgames
+      POSTGRES_USER: boardgames
+      POSTGRES_PASSWORD: boardgames
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  server:
+    image: oven/bun:1
+    working_dir: /app
+    command: sh -c "bun install && bun run dev:server"
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgres://boardgames:boardgames@postgres:5432/boardgames
+      WEB_ORIGIN: http://localhost:5173
+    ports:
+      - '3001:3001'
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+
+  web:
+    image: oven/bun:1
+    working_dir: /app
+    command: sh -c "bun install && bun run dev:web"
+    ports:
+      - '5173:5173'
+    volumes:
+      - .:/app
+    depends_on:
+      - server
+
+volumes:
+  pgdata:
