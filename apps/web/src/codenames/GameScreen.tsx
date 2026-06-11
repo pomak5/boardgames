@@ -1,51 +1,11 @@
 import { useState } from 'react';
-import type { Clue, LogEntry, Team } from '@boardgames/shared';
+import type { Clue, Team } from '@boardgames/shared';
 import { CardTile } from './CardTile';
+import { LogList } from './LogList';
 import type { GameApi } from './useCodenamesGame';
 import './codenames.css';
 
 const TEAM_RU: Record<Team, string> = { red: 'Красные', blue: 'Синие' };
-
-function TeamName({ team }: { team: Team }) {
-  return <span className={team === 'red' ? 't-red' : 't-blue'}>{TEAM_RU[team]}</span>;
-}
-
-function LogLine({ entry }: { entry: LogEntry }) {
-  switch (entry.type) {
-    case 'clue':
-      return (
-        <li>
-          <TeamName team={entry.team} />: подсказка «{entry.clue.word}, {entry.clue.count}»
-        </li>
-      );
-    case 'guess':
-      return (
-        <li>
-          <TeamName team={entry.team} />: открыли{' '}
-          {entry.owner === 'assassin'
-            ? 'убийцу 💀'
-            : entry.owner === 'neutral'
-              ? 'нейтральное слово'
-              : entry.owner === entry.team
-                ? 'своё слово ✓'
-                : 'чужое слово ✗'}
-        </li>
-      );
-    case 'pass':
-      return (
-        <li>
-          <TeamName team={entry.team} />: стоп, ход переходит
-        </li>
-      );
-    case 'gameover':
-      return (
-        <li>
-          Победа: <TeamName team={entry.winner} />{' '}
-          {entry.reason === 'assassin' ? '(соперник открыл убийцу)' : '(все слова открыты)'}
-        </li>
-      );
-  }
-}
 
 function ClueForm({ onSubmit }: { onSubmit: (clue: Clue) => string | null }) {
   const [word, setWord] = useState('');
@@ -165,11 +125,7 @@ export function GameScreen({ game }: { game: GameApi }) {
           </button>
         )}
 
-        <ul className="cn-log" aria-label="Лог ходов">
-          {[...state.log].reverse().map((entry, i) => (
-            <LogLine key={state.log.length - i} entry={entry} />
-          ))}
-        </ul>
+        <LogList log={state.log} />
       </aside>
     </div>
   );
