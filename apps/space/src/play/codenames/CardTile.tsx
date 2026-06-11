@@ -1,4 +1,5 @@
 import type { Card } from '../shared';
+import { useSettings } from '../settings';
 import './codenames.css';
 
 /** Карточка локальной игры или редактированный онлайн-вид (owner: null = скрыт). */
@@ -84,13 +85,15 @@ function SealArt({ owner }: { owner: Exclude<Card['owner'], null> }) {
 }
 
 export function CardTile({ card, disabled, spymasterView, onReveal }: Props) {
+  const { flatCards } = useSettings();
+  const tilt = flatCards ? 0 : tiltOf(card.word);
   const revealedClass = card.revealed ? 'cn-card--flipped' : '';
   const dimClass = spymasterView && !card.revealed && card.owner ? `cn-key--${card.owner}` : '';
   return (
     <button
       type="button"
       className={`cn-card ${revealedClass}`}
-      style={{ '--tilt': `${tiltOf(card.word)}deg` } as React.CSSProperties}
+      style={{ '--tilt': `${tilt}deg` } as React.CSSProperties}
       disabled={disabled || card.revealed}
       onClick={onReveal}
       aria-label={card.revealed ? `${card.word} — открыто` : card.word}

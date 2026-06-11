@@ -1,4 +1,6 @@
 /** Лёгкие WebAudio-звуки (как в design/final.html): без файлов, синтез на лету. */
+import { getSettings } from '../settings';
+
 let ctx: AudioContext | null = null;
 
 function audio(): AudioContext | null {
@@ -8,6 +10,8 @@ function audio(): AudioContext | null {
 }
 
 function blip(freq: number, dur: number, type: OscillatorType, gain = 0.08, when = 0) {
+  const { soundEnabled, volume } = getSettings();
+  if (!soundEnabled || volume <= 0) return;
   const ac = audio();
   if (!ac) return;
   const t = ac.currentTime + when;
@@ -15,7 +19,7 @@ function blip(freq: number, dur: number, type: OscillatorType, gain = 0.08, when
   const g = ac.createGain();
   osc.type = type;
   osc.frequency.setValueAtTime(freq, t);
-  g.gain.setValueAtTime(gain, t);
+  g.gain.setValueAtTime(gain * volume, t);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   osc.connect(g).connect(ac.destination);
   osc.start(t);

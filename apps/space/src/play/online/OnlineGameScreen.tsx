@@ -57,7 +57,7 @@ export function OnlineGameScreen({ api }: { api: RoomApi }) {
   const finished = game.phase === 'finished';
 
   return (
-    <div className="on-lobby">
+    <div className="on-play">
       <div className="cn-layout on-game">
         <div className="cn-board">
           {game.cards.map((card, i) => (

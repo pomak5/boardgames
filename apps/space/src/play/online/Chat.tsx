@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChatMessage } from '../shared';
 
+const COLLAPSE_KEY = 'chat-collapsed';
+
 export function Chat({
   messages,
   meId,
@@ -11,11 +13,22 @@ export function Chat({
   onSend: (text: string) => void;
 }) {
   const [text, setText] = useState('');
+  const [collapsed, setCollapsed] = useState<boolean>(
+    () => localStorage.getItem(COLLAPSE_KEY) === '1',
+  );
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
-  }, [messages]);
+    if (!collapsed) listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
+  }, [messages, collapsed]);
+
+  const toggle = () => {
+    setCollapsed((c) => {
+      const next = !c;
+      localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0');
+      return next;
+    });
+  };
 
   const send = () => {
     const t = text.trim();
@@ -25,7 +38,19 @@ export function Chat({
   };
 
   return (
-    <div className="on-chat">
+    <div className={`on-chat ${collapsed ? 'on-chat--collapsed' : ''}`}>
+      <button
+        type="button"
+        className="on-chat__toggle"
+        onClick={toggle}
+        aria-expanded={!collapsed}
+        aria-label={collapsed ? 'Развернуть чат' : 'Свернуть чат'}
+      >
+        <span>💬 Чат</span>
+        <span className="on-chat__chevron" aria-hidden>
+          {collapsed ? '▸' : '▾'}
+        </span>
+      </button>
       <div className="on-chat__list" ref={listRef} aria-label="Чат">
         {messages.map((m) => (
           <div

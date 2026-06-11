@@ -268,3 +268,59 @@
 }
 .on-series__red { color: var(--red, #b3402e); }
 .on-series__blue { color: var(--blue, #2e5e8f); }
+
+/* ===== #40: чат снизу, под полем (раньше был справа) ===== */
+.on-play {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 16px 16px;
+}
+.on-play .cn-layout {
+  padding-left: 0;
+  padding-right: 0;
+}
+/* шапка-переключатель сворачивания */
+.on-chat__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 800;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.on-chat__chevron {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.on-chat--collapsed {
+  height: auto;
+}
+.on-chat--collapsed .on-chat__toggle {
+  border-bottom: 0;
+}
+.on-chat--collapsed .on-chat__list,
+.on-chat--collapsed .on-chat__form {
+  display: none;
+}
+
+/* на мобильных чат прилипает к низу экрана и легко сворачивается */
+@media (max-width: 860px) {
+  .on-play .on-chat {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    height: 260px;
+  }
+  .on-play .on-chat--collapsed {
+    height: auto;
+  }
+}

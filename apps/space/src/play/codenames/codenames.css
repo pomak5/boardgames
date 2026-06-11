@@ -230,9 +230,10 @@
   --seal-bg: var(--team-blue);
 }
 .cn-card__face.cn-card--neutral {
-  background: radial-gradient(120% 90% at 50% 0%, #6d6760 0%, #5c5650 58%, #49443f 100%);
-  color: #e3ded6;
-  --seal-bg: #5c5650;
+  /* светлый «прохожий» — заметно светлее убийцы, не спутать */
+  background: radial-gradient(120% 90% at 50% 0%, #dccbad 0%, #c6b08b 58%, #ad946b 100%);
+  color: #463c2c;
+  --seal-bg: #c6b08b;
 }
 .cn-card__face.cn-card--assassin {
   background: radial-gradient(120% 90% at 50% 0%, #3a352f 0%, #23201c 60%, #121110 100%);
@@ -240,9 +241,10 @@
   --seal-bg: #23201c;
 }
 [data-theme='dark'] .cn-card__face.cn-card--neutral {
-  background: radial-gradient(120% 90% at 50% 0%, #565963 0%, #43454c 58%, #34363c 100%);
-  color: #c8cbd3;
-  --seal-bg: #43454c;
+  /* светлый графит — контраст с почти чёрной убийцей очевиден */
+  background: radial-gradient(120% 90% at 50% 0%, #9ca2af 0%, #848a98 58%, #6e737f 100%);
+  color: #1f232b;
+  --seal-bg: #848a98;
 }
 [data-theme='dark'] .cn-card__face.cn-card--assassin {
   background: radial-gradient(120% 90% at 50% 0%, #1c1c20 0%, #0a0a0c 70%);
