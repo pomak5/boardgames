@@ -28,6 +28,11 @@ html:root {
   --wood-2: #6f452a;
   --wood-3: #5c3922;
   --paper-line: #d8c3a3;
+  --ring: #c2622e55;
+  --uno-red: #d94a32;
+  --uno-blue: #3a6ea5;
+  --uno-green: #5c8a3a;
+  --uno-yellow: #d9982f;
 }
 
 html[data-theme='dark'] {
@@ -185,4 +190,29 @@ button {
   color: var(--muted);
   font-size: 0.8rem;
   text-align: center;
+}
+
+/* базовый класс svg-иконок (никаких эмодзи — см. design/) */
+.pi {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.14em;
+  flex: none;
+}
+
+/* ссылка «на главную» в шапке игры */
+.cn-home-link {
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  margin-right: 6px;
+  transition: transform 0.15s ease;
+}
+.cn-home-link .pi {
+  width: 0.62em;
+  height: 0.62em;
+}
+.cn-home-link:hover {
+  transform: scale(1.12);
 }

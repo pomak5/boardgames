@@ -1,18 +1,20 @@
-import { useState } from 'react';
-import type { RoomApi } from './useRoom';
-import './online.css';
+import { useState } from "react";
+import type { RoomApi } from "./useRoom";
+import "./online.css";
 
 const DEFAULT_SETTINGS = {
-  game: 'codenames' as const,
+  game: "codenames" as const,
   botCaptains: { red: true, blue: true },
-  botRisk: 'normal' as const,
+  botRisk: "normal" as const,
 };
 
 export function HomeScreen({ api }: { api: RoomApi }) {
-  const [nickname, setNickname] = useState(() => localStorage.getItem('nickname') ?? '');
-  const [code, setCode] = useState('');
+  const [nickname, setNickname] = useState(
+    () => localStorage.getItem("nickname") ?? "",
+  );
+  const [code, setCode] = useState("");
 
-  const remember = () => localStorage.setItem('nickname', nickname.trim());
+  const remember = () => localStorage.setItem("nickname", nickname.trim());
 
   const canCreate = nickname.trim().length > 0 && !api.busy;
   const canJoin = canCreate && code.trim().length >= 7;
@@ -25,7 +27,7 @@ export function HomeScreen({ api }: { api: RoomApi }) {
           <span>Ваш ник</span>
           <input
             value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
+            onChange={e => setNickname(e.target.value)}
             maxLength={24}
             placeholder="например, Капибара"
           />
@@ -48,7 +50,7 @@ export function HomeScreen({ api }: { api: RoomApi }) {
           <span>Код комнаты</span>
           <input
             value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onChange={e => setCode(e.target.value.toUpperCase())}
             maxLength={7}
             placeholder="KX4-92F"
           />

@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
-import { api } from '../../../convex/_generated/api';
+import { useMutation, useQuery } from "convex/react";
+import { useCallback, useEffect, useState } from "react";
+import { api } from "../../../convex/_generated/api";
 import type {
   ChatMessage,
   Clue,
@@ -9,7 +9,7 @@ import type {
   RoomSettings,
   RoomView,
   Team,
-} from '../shared';
+} from "../shared";
 
 export interface RoomApi {
   room: RoomView | null;
@@ -33,7 +33,7 @@ export interface RoomApi {
   clearError: () => void;
 }
 
-const SESSION_KEY = 'room-session';
+const SESSION_KEY = "room-session";
 
 interface Session {
   code: string;
@@ -63,7 +63,7 @@ export function useRoom(): RoomApi {
 
   const state = useQuery(
     api.rooms.roomState,
-    session ? { code: session.code, token: session.token } : 'skip',
+    session ? { code: session.code, token: session.token } : "skip",
   );
 
   const mCreate = useMutation(api.rooms.create);
@@ -115,7 +115,8 @@ export function useRoom(): RoomApi {
   );
 
   const leave = useCallback(() => {
-    if (session) void mLeave({ code: session.code, token: session.token }).catch(() => {});
+    if (session)
+      void mLeave({ code: session.code, token: session.token }).catch(() => {});
     saveSession(null);
   }, [session, mLeave, saveSession]);
 
@@ -143,14 +144,14 @@ export function useRoom(): RoomApi {
     create,
     join,
     leave,
-    setTeam: (team, role) => withSession((s) => mSetTeam({ ...s, team, role })),
-    updateSettings: (settings) => withSession((s) => mSettings({ ...s, settings })),
-    start: () => withSession((s) => mStart({ ...s })),
-    newRound: () => withSession((s) => mNewRound({ ...s })),
-    sendChat: (text) => withSession((s) => mChat({ ...s, text })),
-    giveClue: (clue) => withSession((s) => mClue({ ...s, clue })),
-    guess: (cardIndex) => withSession((s) => mGuess({ ...s, cardIndex })),
-    pass: () => withSession((s) => mPass({ ...s })),
+    setTeam: (team, role) => withSession(s => mSetTeam({ ...s, team, role })),
+    updateSettings: settings => withSession(s => mSettings({ ...s, settings })),
+    start: () => withSession(s => mStart({ ...s })),
+    newRound: () => withSession(s => mNewRound({ ...s })),
+    sendChat: text => withSession(s => mChat({ ...s, text })),
+    giveClue: clue => withSession(s => mClue({ ...s, clue })),
+    guess: cardIndex => withSession(s => mGuess({ ...s, cardIndex })),
+    pass: () => withSession(s => mPass({ ...s })),
     turnDeadline: (state?.turnDeadline ?? null) as number | null,
     clearError: () => setError(null),
   };

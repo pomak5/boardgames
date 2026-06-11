@@ -1,8 +1,8 @@
 /** Команда. */
-export type Team = 'red' | 'blue';
+export type Team = "red" | "blue";
 
 /** Принадлежность карточки по ключ-карте. */
-export type CardOwner = Team | 'neutral' | 'assassin';
+export type CardOwner = Team | "neutral" | "assassin";
 
 export interface Card {
   word: string;
@@ -16,15 +16,15 @@ export interface Clue {
 }
 
 /** Фаза хода: капитан думает → команда отгадывает → игра окончена. */
-export type Phase = 'clue' | 'guess' | 'finished';
+export type Phase = "clue" | "guess" | "finished";
 
-export type WinReason = 'all-words' | 'assassin';
+export type WinReason = "all-words" | "assassin";
 
 export type LogEntry =
-  | { type: 'clue'; team: Team; clue: Clue }
-  | { type: 'guess'; team: Team; cardIndex: number; owner: CardOwner }
-  | { type: 'pass'; team: Team }
-  | { type: 'gameover'; winner: Team; reason: WinReason };
+  | { type: "clue"; team: Team; clue: Clue }
+  | { type: "guess"; team: Team; cardIndex: number; owner: CardOwner }
+  | { type: "pass"; team: Team }
+  | { type: "gameover"; winner: Team; reason: WinReason };
 
 export interface CodenamesState {
   cards: Card[];
@@ -40,18 +40,18 @@ export interface CodenamesState {
 }
 
 export type CodenamesErrorCode =
-  | 'GAME_FINISHED'
-  | 'WRONG_PHASE'
-  | 'CARD_ALREADY_REVEALED'
-  | 'CARD_OUT_OF_RANGE'
-  | 'INVALID_CLUE_WORD'
-  | 'INVALID_CLUE_COUNT';
+  | "GAME_FINISHED"
+  | "WRONG_PHASE"
+  | "CARD_ALREADY_REVEALED"
+  | "CARD_OUT_OF_RANGE"
+  | "INVALID_CLUE_WORD"
+  | "INVALID_CLUE_COUNT";
 
 export class CodenamesError extends Error {
   readonly code: CodenamesErrorCode;
   constructor(code: CodenamesErrorCode, message: string) {
     super(message);
     this.code = code;
-    this.name = 'CodenamesError';
+    this.name = "CodenamesError";
   }
 }

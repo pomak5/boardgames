@@ -1,34 +1,39 @@
-import { useState } from 'react';
-import type { Clue, Team } from '../shared';
-import { CardTile } from './CardTile';
-import { LogList } from './LogList';
-import type { GameApi } from './useCodenamesGame';
-import './codenames.css';
+import { useState } from "react";
+import { IconBot, IconKey } from "../icons";
+import type { Clue, Team } from "../shared";
+import { CardTile } from "./CardTile";
+import { LogList } from "./LogList";
+import type { GameApi } from "./useCodenamesGame";
+import "./codenames.css";
 
-const TEAM_RU: Record<Team, string> = { red: 'Красные', blue: 'Синие' };
+const TEAM_RU: Record<Team, string> = { red: "Красные", blue: "Синие" };
 
 function ClueForm({ onSubmit }: { onSubmit: (clue: Clue) => string | null }) {
-  const [word, setWord] = useState('');
+  const [word, setWord] = useState("");
   const [count, setCount] = useState(2);
   const [error, setError] = useState<string | null>(null);
   return (
     <form
       className="cn-clue-form"
-      onSubmit={(e) => {
+      onSubmit={e => {
         e.preventDefault();
         const err = onSubmit({ word: word.trim(), count });
         setError(err);
-        if (!err) setWord('');
+        if (!err) setWord("");
       }}
     >
       <input
         value={word}
-        onChange={(e) => setWord(e.target.value)}
+        onChange={e => setWord(e.target.value)}
         placeholder="подсказка"
         aria-label="Слово-подсказка"
       />
-      <select value={count} onChange={(e) => setCount(Number(e.target.value))} aria-label="Число">
-        {[0, 1, 2, 3, 4, 5].map((n) => (
+      <select
+        value={count}
+        onChange={e => setCount(Number(e.target.value))}
+        aria-label="Число"
+      >
+        {[0, 1, 2, 3, 4, 5].map(n => (
           <option key={n} value={n}>
             {n}
           </option>
@@ -44,8 +49,8 @@ function ClueForm({ onSubmit }: { onSubmit: (clue: Clue) => string | null }) {
 
 export function GameScreen({ game }: { game: GameApi }) {
   const { state, score, trace, spymasterView } = game;
-  const finished = state.phase === 'finished';
-  const isHumanCaptain = game.settings.captainMode === 'human';
+  const finished = state.phase === "finished";
+  const isHumanCaptain = game.settings.captainMode === "human";
 
   return (
     <div className="cn-layout">
@@ -55,7 +60,7 @@ export function GameScreen({ game }: { game: GameApi }) {
             key={card.word}
             card={card}
             spymasterView={spymasterView || isHumanCaptain}
-            disabled={state.phase !== 'guess'}
+            disabled={state.phase !== "guess"}
             onReveal={() => game.reveal(i)}
           />
         ))}
@@ -64,12 +69,12 @@ export function GameScreen({ game }: { game: GameApi }) {
       <aside className="cn-panel">
         <div className="cn-score" aria-label="Счёт: сколько слов осталось">
           <span
-            className={`cn-score__chip cn-score__chip--red ${state.turn !== 'red' ? 'cn-score__chip--dim' : ''}`}
+            className={`cn-score__chip cn-score__chip--red ${state.turn !== "red" ? "cn-score__chip--dim" : ""}`}
           >
             {score.red}
           </span>
           <span
-            className={`cn-score__chip cn-score__chip--blue ${state.turn !== 'blue' ? 'cn-score__chip--dim' : ''}`}
+            className={`cn-score__chip cn-score__chip--blue ${state.turn !== "blue" ? "cn-score__chip--dim" : ""}`}
           >
             {score.blue}
           </span>
@@ -78,13 +83,13 @@ export function GameScreen({ game }: { game: GameApi }) {
         {finished ? (
           <>
             <div className="cn-banner">
-              Победили {state.winner === 'red' ? 'красные' : 'синие'}!
+              Победили {state.winner === "red" ? "красные" : "синие"}!
             </div>
             <button className="cn-btn" onClick={game.restart}>
               Новая партия
             </button>
           </>
-        ) : state.phase === 'clue' ? (
+        ) : state.phase === "clue" ? (
           <>
             <div className="cn-banner">
               Ход: {TEAM_RU[state.turn].toLowerCase()} — нужна подсказка
@@ -93,7 +98,7 @@ export function GameScreen({ game }: { game: GameApi }) {
               <ClueForm onSubmit={game.submitClue} />
             ) : (
               <button className="cn-btn" onClick={game.askBot}>
-                🤖 Подсказка бота
+                <IconBot /> Подсказка бота
               </button>
             )}
           </>
@@ -105,23 +110,39 @@ export function GameScreen({ game }: { game: GameApi }) {
                   {state.clue.word}, {state.clue.count}
                 </div>
                 <div className="cn-clue__meta">
-                  попыток:{' '}
-                  {Number.isFinite(state.guessesLeft) ? state.guessesLeft : 'без ограничений'}
+                  попыток:{" "}
+                  {Number.isFinite(state.guessesLeft)
+                    ? state.guessesLeft
+                    : "без ограничений"}
                 </div>
               </div>
             )}
             {trace && spymasterView && (
-              <div className="cn-clue__meta">бот имел в виду: {trace.targets.join(', ')}</div>
+              <div className="cn-clue__meta">
+                бот имел в виду: {trace.targets.join(", ")}
+              </div>
             )}
-            <button className="cn-btn cn-btn--ghost" onClick={game.stopGuessing}>
+            <button
+              className="cn-btn cn-btn--ghost"
+              onClick={game.stopGuessing}
+            >
               Стоп — закончить ход
             </button>
           </>
         )}
 
         {!finished && !isHumanCaptain && (
-          <button className="cn-btn cn-btn--ghost" onClick={game.toggleSpymasterView}>
-            {spymasterView ? 'Скрыть ключ-карту' : '🔑 Ключ-карта (капитан)'}
+          <button
+            className="cn-btn cn-btn--ghost"
+            onClick={game.toggleSpymasterView}
+          >
+            {spymasterView ? (
+              "Скрыть ключ-карту"
+            ) : (
+              <>
+                <IconKey /> Ключ-карта (капитан)
+              </>
+            )}
           </button>
         )}
 
