@@ -274,19 +274,19 @@ export function HomeHub() {
           <IconArrowRight className="bn-go" />
         </Link>
 
-        <div className="bn-tile bn-tile--soon">
+        <Link to="/uno" className="bn-tile">
           <UnoArt />
           <div>
             <h3>
-              UNO <span className="bn-tag">2–10 игроков</span>{" "}
-              <span className="bn-tag bn-tag--soon">скоро</span>
+              УНО <span className="bn-tag">2–10 игроков</span>
             </h3>
             <p>
-              Классические правила, кнопка «UNO!» со штрафом, боты для
-              недостающих игроков.
+              Классика и куча вариаций: стэкинг, jump-in, 7-0, челлендж +4.
+              Кнопка «UNO!» со штрафом, боты для недостающих игроков.
             </p>
           </div>
-        </div>
+          <IconArrowRight className="bn-go" />
+        </Link>
 
         <div className="bn-tile bn-tile--soon">
           <AliasArt />

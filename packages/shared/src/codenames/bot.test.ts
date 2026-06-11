@@ -24,7 +24,7 @@ describe('бот-капитан', () => {
       expect(() => validateClue(g, t!.clue)).not.toThrow();
       expect(t!.clue.count).toBeGreaterThanOrEqual(1);
     }
-  });
+  }, 20000); // на CI иногда чуть дольше дефолтных 5 сек
 
   test('цели подсказки — только свои неоткрытые слова', () => {
     for (let seed = 1; seed <= 20; seed++) {
