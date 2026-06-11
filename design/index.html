@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boardgames — 10 вариантов дизайна</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=Nunito:wght@400;700;900&family=Caveat:wght@600&family=Unbounded:wght@400;600;800&family=Russo+One&family=Manrope:wght@400;600;800&family=Inter:wght@400;600;800&family=Oswald:wght@400;600&family=Cormorant:ital,wght@0,500;0,700;1,500&family=Rubik:wght@400;600;900&family=Onest:wght@400;600;800&family=JetBrains+Mono:wght@400;700;800&family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============ base / reset ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Manrope',sans-serif;background:#111;min-height:100vh}
+
+/* ============ switcher bar ============ */
+.switcher{position:sticky;top:0;z-index:50;display:flex;gap:6px;overflow-x:auto;padding:10px 14px;background:#0c0c0eee;backdrop-filter:blur(8px);border-bottom:1px solid #ffffff14}
+.switcher::-webkit-scrollbar{height:0}
+.sw-btn{flex:0 0 auto;padding:8px 14px;border-radius:99px;border:1px solid #ffffff22;background:transparent;color:#bbb;font:600 13px 'Manrope',sans-serif;cursor:pointer;white-space:nowrap;transition:.2s}
+.sw-btn:hover{color:#fff;border-color:#ffffff55}
+.sw-btn.active{background:#fff;color:#111;border-color:#fff}
+
+/* ============ shared scene layout ============ */
+.scene{display:none;min-height:100vh;padding-bottom:80px}
+.scene.visible{display:block}
+.wrap{max-width:1060px;margin:0 auto;padding:0 20px}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:22px 0}
+.logo{font-size:22px;font-weight:800;text-decoration:none;display:flex;align-items:center;gap:10px}
+.nav-links{display:flex;gap:22px;align-items:center;font-size:14px;font-weight:600}
+.nav-links span{cursor:pointer;opacity:.75}
+.nav-links span:hover{opacity:1}
+.hero{padding:46px 0 36px;text-align:center}
+.hero h1{font-size:clamp(34px,6vw,58px);line-height:1.08;margin-bottom:16px}
+.hero p{font-size:17px;opacity:.78;max-width:520px;margin:0 auto 28px}
+.cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn{padding:14px 28px;font-size:15px;font-weight:700;cursor:pointer;border:none;transition:.18s;font-family:inherit}
+.btn:hover{transform:translateY(-2px)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin:30px 0 50px}
+.tile{padding:26px;cursor:pointer;transition:.2s;position:relative;overflow:hidden}
+.tile:hover{transform:translateY(-4px)}
+.tile .t-emoji{font-size:34px;margin-bottom:12px;display:block}
+.tile h3{font-size:21px;margin-bottom:6px}
+.tile p{font-size:13.5px;opacity:.72;line-height:1.5}
+.tile .t-tag{position:absolute;top:18px;right:18px;font-size:11px;font-weight:800;padding:4px 10px;border-radius:99px;letter-spacing:.06em}
+/* table mockup */
+.table-zone{padding:34px 0 8px}
+.table-zone h2{text-align:center;font-size:24px;margin-bottom:24px}
+.table{position:relative;margin:0 auto;max-width:760px;height:380px;display:flex;align-items:center;justify-content:center}
+.opps{position:absolute;top:18px;left:0;right:0;display:flex;justify-content:center;gap:26px}
+.opp{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:700}
+.opp .ava{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px}
+.opp .cnt{font-size:11px;opacity:.7}
+.pile{display:flex;gap:18px;align-items:center}
+.card{width:74px;height:108px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;position:relative;box-shadow:0 6px 18px #00000040}
+.card.back{font-size:22px}
+.hand{position:absolute;bottom:-6px;left:0;right:0;display:flex;justify-content:center}
+.hand .card{width:68px;height:100px;font-size:26px;margin:0 -14px;transition:.18s;cursor:pointer}
+.hand .card:nth-child(1){transform:rotate(-14deg) translateY(16px)}
+.hand .card:nth-child(2){transform:rotate(-7deg) translateY(5px)}
+.hand .card:nth-child(3){transform:rotate(0deg)}
+.hand .card:nth-child(4){transform:rotate(7deg) translateY(5px)}
+.hand .card:nth-child(5){transform:rotate(14deg) translateY(16px)}
+.hand .card:hover{transform:translateY(-18px) scale(1.06);z-index:5}
+.uno-btn{position:absolute;right:6%;bottom:64px;padding:14px 22px;font-weight:900;font-size:16px;border-radius:50%;width:78px;height:78px;cursor:pointer;border:none;box-shadow:0 8px 22px #00000055;transition:.15s}
+.uno-btn:hover{transform:scale(1.08) rotate(-4deg)}
+.below{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:44px}
+@media(max-width:680px){.below{grid-template-columns:1fr}.nav-links{display:none}.uno-btn{right:2%;bottom:40px;width:64px;height:64px;font-size:13px}}
+.panel{padding:20px}
+.panel h4{font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.msg{display:flex;gap:10px;margin-bottom:10px;font-size:13.5px;line-height:1.45}
+.msg b{flex:0 0 auto}
+.room-line{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;font-size:14px}
+.code{font-weight:800;letter-spacing:.18em;padding:8px 14px;font-size:15px}
+.note{text-align:center;font-size:12px;opacity:.55;margin-top:46px}
+
+/* ════════════════ 1. ИГОРНЫЙ ДОМ — казино, зелёное сукно, золото ════════════════ */
+.t1{background:#0d2b1d;background-image:radial-gradient(ellipse at 50% -20%,#1a4a32 0%,#0d2b1d 60%),url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.025'%3E%3Cpath d='M0 0h40v40H0zM40 40h40v40H40z'/%3E%3C/g%3E%3C/svg%3E");color:#f3ead7;font-family:'Manrope',sans-serif}
+.t1 .logo{color:#d9b45b;font-family:'Playfair Display',serif;font-size:26px}
+.t1 .nav-links{color:#cdbf9d}
+.t1 .hero h1{font-family:'Playfair Display',serif;font-weight:900;color:#f7efdb}
+.t1 .hero h1 em{color:#d9b45b;font-style:italic}
+.t1 .btn-pri{background:linear-gradient(180deg,#e6c068,#b88c2e);color:#241a05;border-radius:8px;box-shadow:0 6px 18px #00000066}
+.t1 .btn-sec{background:transparent;color:#d9b45b;border:1.5px solid #d9b45b88;border-radius:8px}
+.t1 .tile{background:#10331f;border:1px solid #d9b45b33;border-radius:14px;box-shadow:inset 0 1px 0 #ffffff14}
+.t1 .tile h3{font-family:'Playfair Display',serif;color:#ecd9a8}
+.t1 .t-tag{background:#d9b45b;color:#241a05}
+.t1 .table{background:radial-gradient(ellipse at center,#1c5c38 0%,#123c25 75%);border-radius:200px;border:14px solid #4a2e16;box-shadow:inset 0 0 60px #00000066,0 18px 50px #00000080}
+.t1 .opp .ava{background:#0d2b1d;border:2px solid #d9b45b}
+.t1 .card{background:#f7efdb;color:#b3372e;border:3px solid #fff}
+.t1 .card.back{background:repeating-linear-gradient(45deg,#7a1f1f,#7a1f1f 6px,#641616 6px,#641616 12px);color:#d9b45b;border:3px solid #f7efdb}
+.t1 .card.c-blue{color:#1f5da0}.t1 .card.c-green{color:#1f7a43}.t1 .card.c-yellow{color:#c98f1b}
+.t1 .uno-btn{background:radial-gradient(circle at 35% 30%,#e6c068,#b88c2e);color:#241a05}
+.t1 .panel{background:#10331fdd;border:1px solid #d9b45b2e;border-radius:14px}
+.t1 .code{background:#0d2b1d;border:1px dashed #d9b45b77;color:#e6c068;border-radius:8px}
+
+/* ════════════════ 2. УЮТНЫЙ ВЕЧЕР — тепло, крафт, какао ════════════════ */
+.t2{background:#f6ecdd;background-image:url("data:image/svg+xml,%3Csvg width='52' height='52' viewBox='0 0 52 52' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M26 4l2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6z' fill='%23c79b6b' fill-opacity='0.07'/%3E%3C/svg%3E");color:#4a3526;font-family:'Nunito',sans-serif}
+.t2 .logo{color:#8a5a2b;font-family:'Caveat',cursive;font-size:30px}
+.t2 .hero h1{font-weight:900;color:#3d2b1c}
+.t2 .hero h1 em{font-family:'Caveat',cursive;color:#c2622e;font-size:1.18em;font-style:normal}
+.t2 .btn-pri{background:#c2622e;color:#fff7ec;border-radius:18px;box-shadow:0 6px 0 #94481e}
+.t2 .btn-pri:hover{transform:translateY(-2px)}
+.t2 .btn-sec{background:#fff7ec;color:#8a5a2b;border:2px solid #d9b48c;border-radius:18px}
+.t2 .tile{background:#fff7ec;border-radius:22px;box-shadow:0 8px 24px #c79b6b40;border:2px solid #ecd9bf}
+.t2 .t-tag{background:#f0d8b8;color:#8a5a2b}
+.t2 .table{background:#9c6b3c;background-image:repeating-linear-gradient(90deg,#a8743f 0 46px,#94653a 46px 92px);border-radius:34px;box-shadow:inset 0 0 40px #00000033,0 16px 40px #8a5a2b44}
+.t2 .opp .ava{background:#fff7ec;border:3px solid #c2622e}
+.t2 .card{background:#fffdf7;color:#c2622e;border-radius:14px;border:2.5px solid #4a3526}
+.t2 .card.back{background:#c2622e;color:#fff7ec;border:2.5px solid #4a3526}
+.t2 .card.c-blue{color:#3a6ea5}.t2 .card.c-green{color:#5c8a3a}.t2 .card.c-yellow{color:#d9982f}
+.t2 .uno-btn{background:#e8442c;color:#fff;border:3px solid #4a3526}
+.t2 .panel{background:#fff7ec;border-radius:22px;border:2px solid #ecd9bf}
+.t2 .code{background:#f0d8b8;color:#6b4423;border-radius:12px}
+
+/* ════════════════ 3. НЕОН-АРКАДА — тёмный синий, неон ════════════════ */
+.t3{background:#0a0e1f;background-image:linear-gradient(#15edd911 1px,transparent 1px),linear-gradient(90deg,#15edd911 1px,transparent 1px);background-size:44px 44px;color:#dff7ff;font-family:'Manrope',sans-serif}
+.t3 .logo{color:#15edd9;font-family:'Russo One',sans-serif;text-shadow:0 0 18px #15edd9aa}
+.t3 .hero h1{font-family:'Unbounded',sans-serif;font-weight:800;color:#fff;text-shadow:0 0 30px #15edd966}
+.t3 .hero h1 em{color:#ff3df0;font-style:normal;text-shadow:0 0 24px #ff3df088}
+.t3 .btn-pri{background:#15edd9;color:#06121c;border-radius:6px;box-shadow:0 0 26px #15edd980;font-family:'Russo One',sans-serif}
+.t3 .btn-sec{background:transparent;color:#ff3df0;border:1.5px solid #ff3df0;border-radius:6px;box-shadow:0 0 16px #ff3df04d}
+.t3 .tile{background:#0e1530cc;border:1px solid #15edd944;border-radius:12px}
+.t3 .tile:hover{border-color:#15edd9;box-shadow:0 0 28px #15edd944}
+.t3 .tile h3{font-family:'Russo One',sans-serif}
+.t3 .t-tag{background:#ff3df022;color:#ff3df0;border:1px solid #ff3df0}
+.t3 .table{background:radial-gradient(ellipse at center,#101a3e,#0a0e1f 80%);border-radius:26px;border:1.5px solid #15edd9;box-shadow:0 0 60px #15edd92e,inset 0 0 80px #15edd912}
+.t3 .opp .ava{background:#0e1530;border:2px solid #ff3df0;box-shadow:0 0 14px #ff3df066}
+.t3 .card{background:#0e1530;color:#15edd9;border:2px solid #15edd9;border-radius:8px;box-shadow:0 0 18px #15edd955;text-shadow:0 0 12px #15edd9}
+.t3 .card.back{background:linear-gradient(135deg,#1b0d38,#0e1530);color:#ff3df0;border-color:#ff3df0;box-shadow:0 0 18px #ff3df055}
+.t3 .card.c-blue{color:#3da9ff;border-color:#3da9ff;box-shadow:0 0 18px #3da9ff55}
+.t3 .card.c-green{color:#52ff7d;border-color:#52ff7d;box-shadow:0 0 18px #52ff7d55}
+.t3 .card.c-yellow{color:#ffe04a;border-color:#ffe04a;box-shadow:0 0 18px #ffe04a55}
+.t3 .uno-btn{background:#06121c;color:#ff3df0;border:2px solid #ff3df0;box-shadow:0 0 26px #ff3df088;font-family:'Russo One',sans-serif}
+.t3 .panel{background:#0e1530cc;border:1px solid #15edd933;border-radius:12px}
+.t3 .code{background:#06121c;color:#15edd9;border:1px solid #15edd9;border-radius:6px;text-shadow:0 0 10px #15edd9}
+
+/* ════════════════ 4. МИНИМАЛ — белый, чёрный, красная точка ════════════════ */
+.t4{background:#fafafa;color:#161616;font-family:'Inter',sans-serif}
+.t4 .logo{color:#161616}
+.t4 .logo i{color:#e63b2e;font-style:normal}
+.t4 .hero h1{font-weight:800;letter-spacing:-.03em}
+.t4 .hero h1 em{font-style:normal;border-bottom:5px solid #e63b2e}
+.t4 .btn-pri{background:#161616;color:#fff;border-radius:4px}
+.t4 .btn-sec{background:transparent;color:#161616;border:1.5px solid #16161633;border-radius:4px}
+.t4 .tile{background:#fff;border:1px solid #e6e6e6;border-radius:8px}
+.t4 .tile:hover{border-color:#161616}
+.t4 .t-tag{background:#f1f1f1;color:#666}
+.t4 .table{background:#fff;border:1.5px solid #161616;border-radius:16px}
+.t4 .opp .ava{background:#f1f1f1;border:1.5px solid #161616}
+.t4 .card{background:#fff;color:#161616;border:1.5px solid #161616;border-radius:6px;box-shadow:4px 4px 0 #16161614}
+.t4 .card.back{background:#161616;color:#fff}
+.t4 .card.c-red{color:#e63b2e;border-color:#e63b2e}
+.t4 .card.c-blue{color:#2e62e6}.t4 .card.c-green{color:#1f9d4d}.t4 .card.c-yellow{color:#d99a16}
+.t4 .uno-btn{background:#e63b2e;color:#fff;border-radius:50%}
+.t4 .panel{background:#fff;border:1px solid #e6e6e6;border-radius:8px}
+.t4 .code{background:#161616;color:#fff;border-radius:4px}
+
+/* ════════════════ 5. РЕТРО-ПРИНТ — бумага, ризограф ════════════════ */
+.t5{background:#efe6d4;background-image:url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");color:#27343b;font-family:'Manrope',sans-serif}
+.t5 .logo{color:#27343b;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.08em}
+.t5 .hero h1{font-family:'Oswald',sans-serif;text-transform:uppercase;font-weight:600;letter-spacing:.02em}
+.t5 .hero h1 em{font-style:normal;color:#d9542b;text-decoration:underline wavy #2b7a78 4px}
+.t5 .btn-pri{background:#d9542b;color:#efe6d4;border-radius:0;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.1em;box-shadow:5px 5px 0 #27343b}
+.t5 .btn-sec{background:#efe6d4;color:#27343b;border:2px solid #27343b;border-radius:0;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.1em}
+.t5 .tile{background:#e6b33f;border:2.5px solid #27343b;border-radius:2px;box-shadow:7px 7px 0 #27343b}
+.t5 .tile:nth-child(2){background:#2b7a78;color:#efe6d4}
+.t5 .tile h3{font-family:'Oswald',sans-serif;text-transform:uppercase}
+.t5 .t-tag{background:#27343b;color:#efe6d4}
+.t5 .table{background:#2b7a78;border:3px solid #27343b;border-radius:8px;box-shadow:10px 10px 0 #27343b}
+.t5 .opp .ava{background:#efe6d4;border:2.5px solid #27343b}
+.t5 .opp{color:#efe6d4}
+.t5 .card{background:#efe6d4;color:#d9542b;border:2.5px solid #27343b;border-radius:6px;box-shadow:4px 4px 0 #27343baa}
+.t5 .card.back{background:#d9542b;color:#efe6d4;background-image:radial-gradient(#efe6d433 18%,transparent 19%);background-size:10px 10px}
+.t5 .card.c-blue{color:#2b5d7a}.t5 .card.c-green{color:#3c7a2b}.t5 .card.c-yellow{color:#c2871b}
+.t5 .uno-btn{background:#e6b33f;color:#27343b;border:3px solid #27343b;border-radius:50%;box-shadow:5px 5px 0 #27343b;font-family:'Oswald',sans-serif}
+.t5 .panel{background:#f7f1e3;border:2.5px solid #27343b;border-radius:2px;box-shadow:7px 7px 0 #27343b}
+.t5 .code{background:#27343b;color:#e6b33f;border-radius:0}
+
+/* ════════════════ 6. ТЁМНЫЙ ЛАУНЖ — графит, латунь, премиум ════════════════ */
+.t6{background:#17181c;background-image:radial-gradient(ellipse at 50% 0%,#23242b 0%,#17181c 70%);color:#e8e4da;font-family:'Manrope',sans-serif}
+.t6 .logo{color:#c4a265;font-family:'Cormorant',serif;font-size:28px;font-weight:700;letter-spacing:.06em}
+.t6 .hero h1{font-family:'Cormorant',serif;font-weight:700;color:#f2eee2}
+.t6 .hero h1 em{color:#c4a265}
+.t6 .btn-pri{background:#c4a265;color:#17181c;border-radius:2px;letter-spacing:.08em;text-transform:uppercase;font-size:13px}
+.t6 .btn-sec{background:transparent;color:#c4a265;border:1px solid #c4a26566;border-radius:2px;letter-spacing:.08em;text-transform:uppercase;font-size:13px}
+.t6 .tile{background:#1e1f25;border:1px solid #ffffff0f;border-radius:6px}
+.t6 .tile:hover{border-color:#c4a26566}
+.t6 .tile h3{font-family:'Cormorant',serif;font-size:24px}
+.t6 .t-tag{background:#c4a26522;color:#c4a265;border:1px solid #c4a26544}
+.t6 .table{background:radial-gradient(ellipse at center,#26282f,#1a1b20 80%);border-radius:180px;border:1px solid #c4a26555;box-shadow:0 24px 60px #00000099,inset 0 1px 0 #ffffff14}
+.t6 .opp .ava{background:#23242b;border:1.5px solid #c4a265}
+.t6 .card{background:#f2eee2;color:#9a3b2e;border-radius:8px;box-shadow:0 10px 26px #00000080}
+.t6 .card.back{background:#23242b;color:#c4a265;border:1px solid #c4a26577;background-image:repeating-linear-gradient(45deg,transparent 0 8px,#c4a2650d 8px 9px)}
+.t6 .card.c-blue{color:#33567d}.t6 .card.c-green{color:#3d6b4a}.t6 .card.c-yellow{color:#a8802f}
+.t6 .uno-btn{background:linear-gradient(160deg,#d8b97a,#a8843e);color:#17181c}
+.t6 .panel{background:#1e1f25;border:1px solid #ffffff0f;border-radius:6px}
+.t6 .code{background:#17181c;color:#c4a265;border:1px solid #c4a26555;border-radius:2px}
+
+/* ════════════════ 7. ПОП-КОМИКС — ярко, контуры, веселье ════════════════ */
+.t7{background:#ffd93d;background-image:radial-gradient(#16161612 22%,transparent 23%);background-size:22px 22px;color:#161616;font-family:'Rubik',sans-serif}
+.t7 .logo{color:#161616;font-weight:900;font-size:25px}
+.t7 .hero h1{font-weight:900;text-transform:uppercase;-webkit-text-stroke:0;text-shadow:4px 4px 0 #fff}
+.t7 .hero h1 em{font-style:normal;color:#ff4d6d;text-shadow:4px 4px 0 #161616}
+.t7 .btn-pri{background:#ff4d6d;color:#fff;border:3px solid #161616;border-radius:14px;box-shadow:0 5px 0 #161616;font-weight:900}
+.t7 .btn-pri:hover{transform:translateY(-2px);box-shadow:0 7px 0 #161616}
+.t7 .btn-sec{background:#4dd2ff;color:#161616;border:3px solid #161616;border-radius:14px;box-shadow:0 5px 0 #161616;font-weight:900}
+.t7 .tile{background:#fff;border:3px solid #161616;border-radius:18px;box-shadow:7px 7px 0 #161616}
+.t7 .tile:hover{transform:translate(-2px,-6px);box-shadow:9px 11px 0 #161616}
+.t7 .t-tag{background:#8a5cf6;color:#fff;border:2px solid #161616}
+.t7 .table{background:#4dd2ff;border:4px solid #161616;border-radius:30px;box-shadow:10px 10px 0 #161616}
+.t7 .opp .ava{background:#fff;border:3px solid #161616}
+.t7 .card{background:#fff;color:#ff4d6d;border:3px solid #161616;border-radius:12px;box-shadow:4px 4px 0 #16161688}
+.t7 .card.back{background:#8a5cf6;color:#fff}
+.t7 .card.c-blue{color:#2e7de6}.t7 .card.c-green{color:#26b34a}.t7 .card.c-yellow{color:#e6a112}
+.t7 .uno-btn{background:#ffd93d;color:#161616;border:4px solid #161616;font-weight:900;box-shadow:5px 5px 0 #161616}
+.t7 .panel{background:#fff;border:3px solid #161616;border-radius:18px;box-shadow:7px 7px 0 #161616}
+.t7 .code{background:#161616;color:#ffd93d;border-radius:8px}
+
+/* ════════════════ 8. СКАНДИ — пастель, воздух, мягкость ════════════════ */
+.t8{background:#f4f4f0;color:#3b4044;font-family:'Onest',sans-serif}
+.t8 .logo{color:#3b4044;font-family:'Comfortaa',cursive}
+.t8 .hero h1{font-weight:800;color:#33383c;letter-spacing:-.02em}
+.t8 .hero h1 em{font-style:normal;color:#7fae9c}
+.t8 .btn-pri{background:#7fae9c;color:#fff;border-radius:99px}
+.t8 .btn-sec{background:#e8e8e2;color:#3b4044;border-radius:99px}
+.t8 .tile{background:#fff;border-radius:26px;box-shadow:0 10px 30px #3b404414}
+.t8 .tile:nth-child(1) .t-emoji{background:#fce8e6;border-radius:16px;padding:8px;display:inline-block}
+.t8 .tile:nth-child(2) .t-emoji{background:#e3eef9;border-radius:16px;padding:8px;display:inline-block}
+.t8 .t-tag{background:#f0ece2;color:#8a8170}
+.t8 .table{background:#e9efe9;border-radius:48px;box-shadow:inset 0 0 0 10px #fff,0 14px 36px #3b404418}
+.t8 .opp .ava{background:#fff;box-shadow:0 4px 14px #3b404422}
+.t8 .card{background:#fff;color:#e08a7a;border-radius:16px;box-shadow:0 8px 20px #3b40441f}
+.t8 .card.back{background:#aebfd4;color:#fff}
+.t8 .card.c-blue{color:#7a9cc4}.t8 .card.c-green{color:#7fae9c}.t8 .card.c-yellow{color:#d4b36a}
+.t8 .uno-btn{background:#e08a7a;color:#fff;box-shadow:0 10px 26px #e08a7a66}
+.t8 .panel{background:#fff;border-radius:26px;box-shadow:0 10px 30px #3b404410}
+.t8 .code{background:#e9efe9;color:#5c7a6c;border-radius:99px}
+
+/* ════════════════ 9. КИБЕРСТОЛ — стекло, градиенты, глубина ════════════════ */
+.t9{background:#0f1023;background-image:radial-gradient(circle at 15% 20%,#4338ca55 0%,transparent 40%),radial-gradient(circle at 85% 10%,#a855f755 0%,transparent 40%),radial-gradient(circle at 60% 90%,#06b6d433 0%,transparent 45%);color:#eef0ff;font-family:'Manrope',sans-serif}
+.t9 .logo{color:#fff}
+.t9 .logo i{font-style:normal;background:linear-gradient(90deg,#818cf8,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.t9 .hero h1{font-weight:800;letter-spacing:-.02em}
+.t9 .hero h1 em{font-style:normal;background:linear-gradient(90deg,#818cf8,#c084fc,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
+.t9 .btn-pri{background:linear-gradient(90deg,#6366f1,#a855f7);color:#fff;border-radius:12px;box-shadow:0 10px 30px #6366f155}
+.t9 .btn-sec{background:#ffffff10;color:#dfe2ff;border:1px solid #ffffff2b;border-radius:12px;backdrop-filter:blur(10px)}
+.t9 .tile{background:#ffffff0d;border:1px solid #ffffff1f;border-radius:20px;backdrop-filter:blur(14px)}
+.t9 .tile:hover{background:#ffffff14;border-color:#818cf877}
+.t9 .t-tag{background:#6366f133;color:#a5b4fc;border:1px solid #6366f155}
+.t9 .table{background:#ffffff08;border:1px solid #ffffff22;border-radius:36px;backdrop-filter:blur(16px);box-shadow:0 30px 80px #00000066,inset 0 1px 0 #ffffff2a}
+.t9 .opp .ava{background:linear-gradient(135deg,#6366f1,#a855f7);box-shadow:0 6px 20px #6366f166}
+.t9 .card{background:linear-gradient(160deg,#ffffff18,#ffffff08);color:#fff;border:1px solid #ffffff33;border-radius:12px;backdrop-filter:blur(8px)}
+.t9 .card.back{background:linear-gradient(160deg,#6366f1,#a855f7);border:none}
+.t9 .card.c-red{color:#fb7185}.t9 .card.c-blue{color:#60a5fa}.t9 .card.c-green{color:#34d399}.t9 .card.c-yellow{color:#fbbf24}
+.t9 .uno-btn{background:linear-gradient(135deg,#fb7185,#a855f7);color:#fff;box-shadow:0 12px 32px #fb718566}
+.t9 .panel{background:#ffffff0a;border:1px solid #ffffff1c;border-radius:20px;backdrop-filter:blur(14px)}
+.t9 .code{background:#ffffff10;color:#c7d2fe;border:1px solid #818cf855;border-radius:10px}
+
+/* ════════════════ 10. БРУТАЛИЗМ — моно, резкость, кислота ════════════════ */
+.t10{background:#e8e8e8;color:#111;font-family:'JetBrains Mono',monospace}
+.t10 .logo{color:#111;font-weight:800}
+.t10 .logo i{font-style:normal;background:#d4ff00;padding:0 6px}
+.t10 .hero h1{font-weight:800;text-transform:uppercase;letter-spacing:-.01em}
+.t10 .hero h1 em{font-style:normal;background:#d4ff00;padding:0 10px;box-shadow:4px 4px 0 #111}
+.t10 .hero p{font-size:14px}
+.t10 .btn-pri{background:#111;color:#d4ff00;border-radius:0;font-family:inherit;text-transform:uppercase}
+.t10 .btn-pri:hover{background:#d4ff00;color:#111;outline:2px solid #111;transform:none}
+.t10 .btn-sec{background:transparent;color:#111;border:2px solid #111;border-radius:0;font-family:inherit;text-transform:uppercase}
+.t10 .tile{background:#fff;border:2px solid #111;border-radius:0}
+.t10 .tile:hover{transform:none;background:#d4ff00}
+.t10 .tile h3{text-transform:uppercase}
+.t10 .t-tag{background:#111;color:#d4ff00;border-radius:0}
+.t10 .table{background:#fff;border:2px solid #111;border-radius:0;box-shadow:8px 8px 0 #111}
+.t10 .opp .ava{background:#e8e8e8;border:2px solid #111;border-radius:0}
+.t10 .card{background:#fff;color:#111;border:2px solid #111;border-radius:0}
+.t10 .card.back{background:#111;color:#d4ff00}
+.t10 .card.c-red{background:#ff5247;color:#111}.t10 .card.c-blue{background:#47a3ff;color:#111}.t10 .card.c-green{background:#3ddc6a;color:#111}.t10 .card.c-yellow{background:#d4ff00;color:#111}
+.t10 .uno-btn{background:#d4ff00;color:#111;border:2px solid #111;border-radius:0;font-family:inherit}
+.t10 .panel{background:#fff;border:2px solid #111;border-radius:0}
+.t10 .code{background:#111;color:#d4ff00;border-radius:0}
+</style>
+</head>
+<body>
+
+<nav class="switcher" id="switcher"></nav>
+<div id="scenes"></div>
+
+<template id="scene-tpl">
+  <div class="wrap">
+    <header class="nav">
+      <a class="logo" href="#">🎲 <span class="brand-name"></span></a>
+      <div class="nav-links"><span>Игры</span><span>Комнаты</span><span>Войти</span></div>
+    </header>
+
+    <section class="hero">
+      <h1></h1>
+      <p>Uno, Alias и другие настолки онлайн. Создай комнату для друзей или найди случайных соперников — играть можно даже без регистрации.</p>
+      <div class="cta-row">
+        <button class="btn btn-pri">Создать комнату</button>
+        <button class="btn btn-sec">⚡ Быстрая игра</button>
+      </div>
+    </section>
+
+    <section class="tiles">
+      <div class="tile">
+        <span class="t-tag">2–10 игроков</span>
+        <span class="t-emoji">🃏</span>
+        <h3>UNO</h3>
+        <p>Классические правила, кнопка «UNO!» со штрафом, боты для недостающих игроков.</p>
+      </div>
+      <div class="tile">
+        <span class="t-tag">2 команды +</span>
+        <span class="t-emoji">⏱️</span>
+        <h3>ALIAS</h3>
+        <p>Объясняй слова своей команде на время. Словари по сложности: лёгкий, средний, сложный.</p>
+      </div>
+    </section>
+
+    <section class="table-zone">
+      <h2>Игровой стол</h2>
+      <div class="table">
+        <div class="opps">
+          <div class="opp"><div class="ava">🦊</div>Лиса<span class="cnt">4 карты</span></div>
+          <div class="opp"><div class="ava">🐻</div>Миша<span class="cnt">2 карты</span></div>
+          <div class="opp"><div class="ava">🤖</div>Бот<span class="cnt">6 карт</span></div>
+        </div>
+        <div class="pile">
+          <div class="card back">🎲</div>
+          <div class="card c-red">7</div>
+        </div>
+        <button class="uno-btn">UNO!</button>
+        <div class="hand">
+          <div class="card c-red">3</div>
+          <div class="card c-blue">7</div>
+          <div class="card c-green">⤸</div>
+          <div class="card c-yellow">+2</div>
+          <div class="card">★</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="below">
+      <div class="panel">
+        <h4>💬 Чат комнаты</h4>
+        <div class="msg"><b>Лиса:</b><span>ну всё, у меня одна карта 😎</span></div>
+        <div class="msg"><b>Миша:</b><span>ты UNO не нажала!! ловлю</span></div>
+        <div class="msg"><b>Лиса:</b><span>НЕТ 😱</span></div>
+      </div>
+      <div class="panel">
+        <h4>🚪 Комната</h4>
+        <div class="room-line"><span>Код для друзей</span><span class="code">KX4-92F</span></div>
+        <div class="room-line"><span>Игроки</span><span>4 / 6</span></div>
+        <div class="room-line"><span>Боты</span><span>вкл · 2</span></div>
+      </div>
+    </section>
+
+    <p class="note"></p>
+  </div>
+</template>
+
+<script>
+const THEMES = [
+  {cls:'t1', name:'1 · Игорный дом',  brand:'Игорный Дом',  h1:'Вечер за <em>зелёным сукном</em>', note:'Концепт 1 «Игорный дом» — классическое казино: зелёное сукно, золото, серифы. Солидно и атмосферно.'},
+  {cls:'t2', name:'2 · Уютный вечер', brand:'Настолки',     h1:'Соберёмся <em>за столом?</em>',    note:'Концепт 2 «Уютный вечер» — тёплое дерево, крафт, какао. Дружелюбно, по-домашнему.'},
+  {cls:'t3', name:'3 · Неон-аркада',  brand:'NEON DECK',    h1:'ИГРАЙ <em>НА НЕОНЕ</em>',          note:'Концепт 3 «Неон-аркада» — тёмная арена, светящиеся карты. Энергия и азарт.'},
+  {cls:'t4', name:'4 · Минимал',      brand:'boardgames',   h1:'Просто <em>играть</em>',           note:'Концепт 4 «Минимал» — белый фон, чёрный текст, один красный акцент. Ничего лишнего.'},
+  {cls:'t5', name:'5 · Ретро-принт',  brand:'ИГРОТЕКА',     h1:'КАРТЫ <em>НА СТОЛ</em>',           note:'Концепт 5 «Ретро-принт» — бумага, ризограф, жирные контуры. Винтажная типографика.'},
+  {cls:'t6', name:'6 · Тёмный лаунж', brand:'Salon',        h1:'Партия <em>в полночь</em>',        note:'Концепт 6 «Тёмный лаунж» — графит и латунь. Премиально, спокойно, дорого.'},
+  {cls:'t7', name:'7 · Поп-комикс',   brand:'BOOM! Games',  h1:'ИГРА = <em>ВЕСЕЛЬЕ</em>',          note:'Концепт 7 «Поп-комикс» — яркие цвета, толстые контуры, комикс-тени. Максимум фана.'},
+  {cls:'t8', name:'8 · Сканди',       brand:'hygge games',  h1:'Играем <em>спокойно</em>',         note:'Концепт 8 «Сканди» — пастель, воздух, мягкие формы. Лёгкий и ненавязчивый.'},
+  {cls:'t9', name:'9 · Киберстол',    brand:'<i>glass</i>table', h1:'Стол <em>будущего</em>',     note:'Концепт 9 «Киберстол» — стеклянные панели, градиенты, глубина. Современный tech-вайб.'},
+  {cls:'t10',name:'10 · Брутализм',   brand:'BRD<i>GMS</i>',h1:'<em>ИГРАТЬ.</em> ТОЧКА',           note:'Концепт 10 «Брутализм» — моноширинный шрифт, резкие края, кислотный акцент. Дерзко.'}
+];
+
+const tpl = document.getElementById('scene-tpl');
+const scenes = document.getElementById('scenes');
+const switcher = document.getElementById('switcher');
+
+THEMES.forEach((t, i) => {
+  const sec = document.createElement('section');
+  sec.className = 'scene ' + t.cls;
+  sec.id = t.cls;
+  sec.appendChild(tpl.content.cloneNode(true));
+  sec.querySelector('.brand-name').innerHTML = t.brand;
+  sec.querySelector('.hero h1').innerHTML = t.h1;
+  sec.querySelector('.note').textContent = t.note;
+  scenes.appendChild(sec);
+
+  const btn = document.createElement('button');
+  btn.className = 'sw-btn';
+  btn.textContent = t.name;
+  btn.onclick = () => show(i);
+  switcher.appendChild(btn);
+});
+
+function show(i){
+  document.querySelectorAll('.scene').forEach((s,j)=>s.classList.toggle('visible', j===i));
+  document.querySelectorAll('.sw-btn').forEach((b,j)=>b.classList.toggle('active', j===i));
+  window.scrollTo({top:0});
+}
+show(0);
+</script>
+</body>
+</html>
