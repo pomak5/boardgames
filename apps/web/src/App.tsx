@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import type { BotRisk } from '@boardgames/shared';
+import { CoopScreen } from './codenames/CoopScreen';
 import { GameScreen } from './codenames/GameScreen';
 import { useCodenamesGame } from './codenames/useCodenamesGame';
 import type { CaptainMode } from './codenames/useCodenamesGame';
 import './theme.css';
 
 type Theme = 'light' | 'dark';
+type Mode = 'classic' | 'coop';
 
 function useTheme(): [Theme, () => void] {
   const [theme, setTheme] = useState<Theme>(
@@ -20,6 +22,7 @@ function useTheme(): [Theme, () => void] {
 
 export function App() {
   const [theme, toggleTheme] = useTheme();
+  const [mode, setMode] = useState<Mode>('classic');
   const [captainMode, setCaptainMode] = useState<CaptainMode>('bot');
   const [risk, setRisk] = useState<BotRisk>('normal');
   const game = useCodenamesGame({ captainMode, risk });
@@ -29,15 +32,21 @@ export function App() {
       <header className="cn-topbar">
         <h1 className="cn-title">Коднеймс</h1>
         <div className="cn-settings">
-          <select
-            value={captainMode}
-            onChange={(e) => setCaptainMode(e.target.value as CaptainMode)}
-            aria-label="Кто капитан"
-          >
-            <option value="bot">Капитан: бот 🤖</option>
-            <option value="human">Капитан: я</option>
+          <select value={mode} onChange={(e) => setMode(e.target.value as Mode)} aria-label="Режим">
+            <option value="classic">Классика</option>
+            <option value="coop">Кооп: соло/дуо</option>
           </select>
-          {captainMode === 'bot' && (
+          {mode === 'classic' && (
+            <select
+              value={captainMode}
+              onChange={(e) => setCaptainMode(e.target.value as CaptainMode)}
+              aria-label="Кто капитан"
+            >
+              <option value="bot">Капитан: бот 🤖</option>
+              <option value="human">Капитан: я</option>
+            </select>
+          )}
+          {(mode === 'coop' || captainMode === 'bot') && (
             <select
               value={risk}
               onChange={(e) => setRisk(e.target.value as BotRisk)}
@@ -48,9 +57,11 @@ export function App() {
               <option value="bold">Бот: смелый</option>
             </select>
           )}
-          <button className="cn-btn cn-btn--ghost" onClick={game.restart}>
-            Новая партия
-          </button>
+          {mode === 'classic' && (
+            <button className="cn-btn cn-btn--ghost" onClick={game.restart}>
+              Новая партия
+            </button>
+          )}
           <button
             className="cn-btn cn-btn--ghost"
             onClick={toggleTheme}
@@ -60,7 +71,7 @@ export function App() {
           </button>
         </div>
       </header>
-      <GameScreen game={game} />
+      {mode === 'classic' ? <GameScreen game={game} /> : <CoopScreen key={risk} risk={risk} />}
     </>
   );
 }
