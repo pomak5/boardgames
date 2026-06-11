@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Caveat:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Caveat:wght@600;700&family=Spectral+SC:wght@600;700&display=swap');
 
 /* ===== токены из design/final.html ===== */
 :root {
@@ -23,6 +23,11 @@
   --shadow: 0 8px 24px #c79b6b40;
   --shadow-big: 0 20px 48px #8a5a2b3d;
   --radius: 18px;
+  --bg-glow: #fff3df;
+  --wood-1: #8a5a33;
+  --wood-2: #6f452a;
+  --wood-3: #5c3922;
+  --paper-line: #d8c3a3;
 }
 
 [data-theme='dark'] {
@@ -46,6 +51,11 @@
   --team-blue: #4a7aa8;
   --shadow: 0 10px 30px #00000066;
   --shadow-big: 0 24px 60px #00000099;
+  --bg-glow: #23252e;
+  --wood-1: #33363f;
+  --wood-2: #282b33;
+  --wood-3: #1f2128;
+  --paper-line: #3a3d47;
 }
 
 * {
@@ -58,7 +68,11 @@ body,
   min-height: 100vh;
 }
 body {
-  background: var(--bg);
+  /* бумажное зерно поверх тёплого фона — стол, а не «флэт-заливка» */
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1200px 600px at 50% -10%, var(--bg-glow) 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
   color: var(--text);
   font-family: 'Nunito', sans-serif;
   transition:
