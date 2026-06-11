@@ -1,5 +1,5 @@
-import type { Card, CardOwner, Clue, CodenamesState, Team } from './types';
-import { CodenamesError } from './types';
+import type { Card, CardOwner, Clue, CodenamesState, Team } from "./types";
+import { CodenamesError } from "./types";
 
 export const BOARD_SIZE = 25;
 export const STARTING_TEAM_WORDS = 9;
@@ -8,7 +8,7 @@ export const NEUTRAL_WORDS = 7;
 export const ASSASSIN_WORDS = 1;
 
 export function otherTeam(team: Team): Team {
-  return team === 'red' ? 'blue' : 'red';
+  return team === "red" ? "blue" : "red";
 }
 
 function shuffle<T>(items: T[], random: () => number): T[] {
@@ -27,16 +27,19 @@ export function createGame(
 ): CodenamesState {
   const random = options.random ?? Math.random;
   if (words.length < BOARD_SIZE) {
-    throw new Error(`Нужно минимум ${BOARD_SIZE} слов, получено ${words.length}`);
+    throw new Error(
+      `Нужно минимум ${BOARD_SIZE} слов, получено ${words.length}`,
+    );
   }
-  const startingTeam = options.startingTeam ?? (random() < 0.5 ? 'red' : 'blue');
+  const startingTeam =
+    options.startingTeam ?? (random() < 0.5 ? "red" : "blue");
   const second = otherTeam(startingTeam);
 
   const owners: CardOwner[] = [
     ...Array<CardOwner>(STARTING_TEAM_WORDS).fill(startingTeam),
     ...Array<CardOwner>(SECOND_TEAM_WORDS).fill(second),
-    ...Array<CardOwner>(NEUTRAL_WORDS).fill('neutral'),
-    ...Array<CardOwner>(ASSASSIN_WORDS).fill('assassin'),
+    ...Array<CardOwner>(NEUTRAL_WORDS).fill("neutral"),
+    ...Array<CardOwner>(ASSASSIN_WORDS).fill("assassin"),
   ];
 
   const boardWords = shuffle(words, random).slice(0, BOARD_SIZE);
@@ -52,7 +55,7 @@ export function createGame(
     cards,
     startingTeam,
     turn: startingTeam,
-    phase: 'clue',
+    phase: "clue",
     clue: null,
     guessesLeft: 0,
     winner: null,
@@ -61,7 +64,7 @@ export function createGame(
   };
 }
 
-const normalize = (w: string) => w.trim().toLowerCase().replace(/ё/g, 'е');
+const normalize = (w: string) => w.trim().toLowerCase().replace(/ё/g, "е");
 
 /** Грубая проверка однокоренности: общий префикс ≥ 4 символов и одно слово начинается с основы другого. */
 function looksRelated(a: string, b: string): boolean {
@@ -74,15 +77,21 @@ function looksRelated(a: string, b: string): boolean {
 
 export function validateClue(state: CodenamesState, clue: Clue): void {
   if (!/^[а-яёa-z-]+$/i.test(clue.word.trim())) {
-    throw new CodenamesError('INVALID_CLUE_WORD', 'Подсказка — одно слово без пробелов и цифр');
+    throw new CodenamesError(
+      "INVALID_CLUE_WORD",
+      "Подсказка — одно слово без пробелов и цифр",
+    );
   }
   if (!Number.isInteger(clue.count) || clue.count < 0 || clue.count > 9) {
-    throw new CodenamesError('INVALID_CLUE_COUNT', 'Число должно быть целым от 0 до 9');
+    throw new CodenamesError(
+      "INVALID_CLUE_COUNT",
+      "Число должно быть целым от 0 до 9",
+    );
   }
   for (const card of state.cards) {
     if (looksRelated(card.word, clue.word)) {
       throw new CodenamesError(
-        'INVALID_CLUE_WORD',
+        "INVALID_CLUE_WORD",
         `Подсказка похожа на слово с поля: «${card.word}»`,
       );
     }
@@ -91,60 +100,83 @@ export function validateClue(state: CodenamesState, clue: Clue): void {
 
 /** Капитан текущей команды даёт подсказку. */
 export function giveClue(state: CodenamesState, clue: Clue): CodenamesState {
-  if (state.phase === 'finished') throw new CodenamesError('GAME_FINISHED', 'Игра окончена');
-  if (state.phase !== 'clue') throw new CodenamesError('WRONG_PHASE', 'Сейчас ход отгадывающих');
+  if (state.phase === "finished")
+    throw new CodenamesError("GAME_FINISHED", "Игра окончена");
+  if (state.phase !== "clue")
+    throw new CodenamesError("WRONG_PHASE", "Сейчас ход отгадывающих");
   validateClue(state, clue);
   return {
     ...state,
-    phase: 'guess',
+    phase: "guess",
     clue,
     guessesLeft: clue.count === 0 ? Number.POSITIVE_INFINITY : clue.count + 1,
-    log: [...state.log, { type: 'clue', team: state.turn, clue }],
+    log: [...state.log, { type: "clue", team: state.turn, clue }],
   };
 }
 
 function remainingWords(state: CodenamesState, team: Team): number {
-  return state.cards.filter((c) => c.owner === team && !c.revealed).length;
+  return state.cards.filter(c => c.owner === team && !c.revealed).length;
 }
 
-function finish(state: CodenamesState, winner: Team, reason: CodenamesState['winReason']) {
+function finish(
+  state: CodenamesState,
+  winner: Team,
+  reason: CodenamesState["winReason"],
+) {
   return {
     ...state,
-    phase: 'finished' as const,
+    phase: "finished" as const,
     winner,
     winReason: reason,
-    log: [...state.log, { type: 'gameover' as const, winner, reason: reason! }],
+    log: [...state.log, { type: "gameover" as const, winner, reason: reason! }],
   };
 }
 
 function endTurn(state: CodenamesState): CodenamesState {
-  return { ...state, turn: otherTeam(state.turn), phase: 'clue', clue: null, guessesLeft: 0 };
+  return {
+    ...state,
+    turn: otherTeam(state.turn),
+    phase: "clue",
+    clue: null,
+    guessesLeft: 0,
+  };
 }
 
 /** Команда открывает карточку по индексу. */
-export function guess(state: CodenamesState, cardIndex: number): CodenamesState {
-  if (state.phase === 'finished') throw new CodenamesError('GAME_FINISHED', 'Игра окончена');
-  if (state.phase !== 'guess')
-    throw new CodenamesError('WRONG_PHASE', 'Сначала подсказка капитана');
+export function guess(
+  state: CodenamesState,
+  cardIndex: number,
+): CodenamesState {
+  if (state.phase === "finished")
+    throw new CodenamesError("GAME_FINISHED", "Игра окончена");
+  if (state.phase !== "guess")
+    throw new CodenamesError("WRONG_PHASE", "Сначала подсказка капитана");
   const card = state.cards[cardIndex];
-  if (!card) throw new CodenamesError('CARD_OUT_OF_RANGE', 'Нет такой карточки');
-  if (card.revealed) throw new CodenamesError('CARD_ALREADY_REVEALED', 'Карточка уже открыта');
+  if (!card)
+    throw new CodenamesError("CARD_OUT_OF_RANGE", "Нет такой карточки");
+  if (card.revealed)
+    throw new CodenamesError("CARD_ALREADY_REVEALED", "Карточка уже открыта");
 
-  const cards = state.cards.map((c, i) => (i === cardIndex ? { ...c, revealed: true } : c));
+  const cards = state.cards.map((c, i) =>
+    i === cardIndex ? { ...c, revealed: true } : c,
+  );
   let next: CodenamesState = {
     ...state,
     cards,
-    log: [...state.log, { type: 'guess', team: state.turn, cardIndex, owner: card.owner }],
+    log: [
+      ...state.log,
+      { type: "guess", team: state.turn, cardIndex, owner: card.owner },
+    ],
   };
 
-  if (card.owner === 'assassin') {
-    return finish(next, otherTeam(state.turn), 'assassin');
+  if (card.owner === "assassin") {
+    return finish(next, otherTeam(state.turn), "assassin");
   }
 
   // Победа любой команды по открытию всех слов (в т.ч. если открыли чужое последнее слово).
-  if (card.owner === 'red' || card.owner === 'blue') {
+  if (card.owner === "red" || card.owner === "blue") {
     if (remainingWords(next, card.owner) === 0) {
-      return finish(next, card.owner, 'all-words');
+      return finish(next, card.owner, "all-words");
     }
   }
 
@@ -158,13 +190,20 @@ export function guess(state: CodenamesState, cardIndex: number): CodenamesState 
 
 /** Команда добровольно останавливается. */
 export function pass(state: CodenamesState): CodenamesState {
-  if (state.phase === 'finished') throw new CodenamesError('GAME_FINISHED', 'Игра окончена');
-  if (state.phase !== 'guess')
-    throw new CodenamesError('WRONG_PHASE', 'Сначала подсказка капитана');
-  return endTurn({ ...state, log: [...state.log, { type: 'pass', team: state.turn }] });
+  if (state.phase === "finished")
+    throw new CodenamesError("GAME_FINISHED", "Игра окончена");
+  if (state.phase !== "guess")
+    throw new CodenamesError("WRONG_PHASE", "Сначала подсказка капитана");
+  return endTurn({
+    ...state,
+    log: [...state.log, { type: "pass", team: state.turn }],
+  });
 }
 
 /** Счёт: сколько слов осталось открыть каждой команде. */
 export function score(state: CodenamesState): Record<Team, number> {
-  return { red: remainingWords(state, 'red'), blue: remainingWords(state, 'blue') };
+  return {
+    red: remainingWords(state, "red"),
+    blue: remainingWords(state, "blue"),
+  };
 }

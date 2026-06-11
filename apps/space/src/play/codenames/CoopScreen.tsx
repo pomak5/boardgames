@@ -1,4 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from "react";
+import { IconBot } from "../icons";
+import type { BotRisk, CoopGame } from "../shared";
 import {
   BOARD_SIZE,
   coopGiveClue,
@@ -7,36 +9,37 @@ import {
   coopResult,
   createCoopGame,
   pickWords,
-} from '../shared';
-import type { BotRisk, CoopGame } from '../shared';
-import { CardTile } from './CardTile';
-import { LogList } from './LogList';
-import { sounds } from './sounds';
-import './codenames.css';
+} from "../shared";
+import { CardTile } from "./CardTile";
+import { LogList } from "./LogList";
+import { sounds } from "./sounds";
+import "./codenames.css";
 
-const NAMES = { red: 'Вы', blue: 'Таймер' } as const;
+const NAMES = { red: "Вы", blue: "Таймер" } as const;
 
 export function CoopScreen({ risk }: { risk: BotRisk }) {
-  const [game, setGame] = useState<CoopGame>(() => createCoopGame(pickWords(BOARD_SIZE)));
-  const finished = game.state.phase === 'finished';
+  const [game, setGame] = useState<CoopGame>(() =>
+    createCoopGame(pickWords(BOARD_SIZE)),
+  );
+  const finished = game.state.phase === "finished";
   const result = coopResult(game);
   const timerLeft = game.state.cards.filter(
-    (c) => c.owner === game.timerTeam && !c.revealed,
+    c => c.owner === game.timerTeam && !c.revealed,
   ).length;
   const yoursLeft = game.state.cards.filter(
-    (c) => c.owner === game.playerTeam && !c.revealed,
+    c => c.owner === game.playerTeam && !c.revealed,
   ).length;
 
   const askBot = useCallback(() => {
-    setGame((g) => (g.state.phase === 'clue' ? coopGiveClue(g, risk) : g));
+    setGame(g => (g.state.phase === "clue" ? coopGiveClue(g, risk) : g));
   }, [risk]);
 
   const reveal = useCallback((index: number) => {
-    setGame((g) => {
-      if (g.state.phase !== 'guess' || g.state.cards[index]?.revealed) return g;
+    setGame(g => {
+      if (g.state.phase !== "guess" || g.state.cards[index]?.revealed) return g;
       const owner = g.state.cards[index]?.owner;
       const next = coopGuess(g, index);
-      if (next.state.phase === 'finished') {
+      if (next.state.phase === "finished") {
         (next.state.winner === g.playerTeam ? sounds.win : sounds.lose)();
       } else if (owner === g.playerTeam) {
         sounds.good();
@@ -55,7 +58,7 @@ export function CoopScreen({ risk }: { risk: BotRisk }) {
             key={card.word}
             card={card}
             spymasterView={false}
-            disabled={game.state.phase !== 'guess'}
+            disabled={game.state.phase !== "guess"}
             onReveal={() => reveal(i)}
           />
         ))}
@@ -63,10 +66,14 @@ export function CoopScreen({ risk }: { risk: BotRisk }) {
 
       <aside className="cn-panel">
         <div className="cn-score" aria-label="Счёт">
-          <span className="cn-score__chip cn-score__chip--red">{yoursLeft}</span>
-          <span className="cn-score__chip cn-score__chip--blue">{timerLeft}</span>
+          <span className="cn-score__chip cn-score__chip--red">
+            {yoursLeft}
+          </span>
+          <span className="cn-score__chip cn-score__chip--blue">
+            {timerLeft}
+          </span>
         </div>
-        <div className="cn-clue__meta" style={{ textAlign: 'center' }}>
+        <div className="cn-clue__meta" style={{ textAlign: "center" }}>
           ваши слова · слова таймера
         </div>
 
@@ -75,11 +82,11 @@ export function CoopScreen({ risk }: { risk: BotRisk }) {
             <div className="cn-banner">
               {result.won
                 ? `Победа! Запас: ${result.margin} ${plural(result.margin)} таймера`
-                : game.state.winReason === 'assassin'
-                  ? 'Убийца! Поражение'
-                  : 'Таймер закончился раньше — поражение'}
+                : game.state.winReason === "assassin"
+                  ? "Убийца! Поражение"
+                  : "Таймер закончился раньше — поражение"}
             </div>
-            <div className="cn-clue__meta" style={{ textAlign: 'center' }}>
+            <div className="cn-clue__meta" style={{ textAlign: "center" }}>
               подсказок использовано: {result.cluesUsed}
             </div>
             <button
@@ -89,9 +96,9 @@ export function CoopScreen({ risk }: { risk: BotRisk }) {
               Новая партия
             </button>
           </>
-        ) : game.state.phase === 'clue' ? (
+        ) : game.state.phase === "clue" ? (
           <button className="cn-btn" onClick={askBot}>
-            🤖 Подсказка бота
+            <IconBot /> Подсказка бота
           </button>
         ) : (
           <>
@@ -101,14 +108,17 @@ export function CoopScreen({ risk }: { risk: BotRisk }) {
                   {game.state.clue.word}, {game.state.clue.count}
                 </div>
                 <div className="cn-clue__meta">
-                  попыток:{' '}
+                  попыток:{" "}
                   {Number.isFinite(game.state.guessesLeft)
                     ? game.state.guessesLeft
-                    : 'без ограничений'}
+                    : "без ограничений"}
                 </div>
               </div>
             )}
-            <button className="cn-btn cn-btn--ghost" onClick={() => setGame((g) => coopPass(g))}>
+            <button
+              className="cn-btn cn-btn--ghost"
+              onClick={() => setGame(g => coopPass(g))}
+            >
               Стоп — закончить ход
             </button>
           </>
@@ -123,7 +133,7 @@ export function CoopScreen({ risk }: { risk: BotRisk }) {
 function plural(n: number): string {
   const m10 = n % 10;
   const m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return 'слово';
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'слова';
-  return 'слов';
+  if (m10 === 1 && m100 !== 11) return "слово";
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return "слова";
+  return "слов";
 }

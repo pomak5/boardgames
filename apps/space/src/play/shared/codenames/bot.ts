@@ -2,11 +2,12 @@
  * Бот-капитан: подбирает подсказку «слово + число» по векторам слов (navec, int8).
  * Главный инвариант: бот никогда не даёт подсказку, опасно близкую к убийце.
  */
-import type { Clue, CodenamesState, Team } from './types';
-import { validateClue } from './engine';
-import embeddingsData from './embeddings.data.json';
 
-export type BotRisk = 'cautious' | 'normal' | 'bold';
+import embeddingsData from "./embeddings.data.json";
+import { validateClue } from "./engine";
+import type { Clue, CodenamesState, Team } from "./types";
+
+export type BotRisk = "cautious" | "normal" | "bold";
 
 export interface BotClueTrace {
   clue: Clue;
@@ -23,19 +24,27 @@ interface EmbeddingsFile {
   vectors: string;
 }
 
-const RISK_MARGIN: Record<BotRisk, number> = { cautious: 0.12, normal: 0.08, bold: 0.04 };
+const RISK_MARGIN: Record<BotRisk, number> = {
+  cautious: 0.12,
+  normal: 0.08,
+  bold: 0.04,
+};
 /** Близость подсказки к убийце никогда не должна превышать этот порог. */
 const ASSASSIN_CAP = 0.35;
 const OPPONENT_WEIGHT = 0.85;
 const NEUTRAL_WEIGHT = 0.6;
 
-let cache: { dims: number; words: string[]; index: Map<string, number>; mat: Int8Array } | null =
-  null;
+let cache: {
+  dims: number;
+  words: string[];
+  index: Map<string, number>;
+  mat: Int8Array;
+} | null = null;
 
 function load() {
   if (cache) return cache;
   const file = embeddingsData as EmbeddingsFile;
-  const bytes = Uint8Array.from(atob(file.vectors), (c) => c.charCodeAt(0));
+  const bytes = Uint8Array.from(atob(file.vectors), c => c.charCodeAt(0));
   const mat = new Int8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const index = new Map(file.words.map((w, i) => [w, i]));
   cache = { dims: file.dims, words: file.words, index, mat };
@@ -48,19 +57,21 @@ function sim(a: number, b: number): number {
   let dot = 0;
   const oa = a * dims;
   const ob = b * dims;
-  for (let i = 0; i < dims; i++) dot += (mat[oa + i] as number) * (mat[ob + i] as number);
+  for (let i = 0; i < dims; i++)
+    dot += (mat[oa + i] as number) * (mat[ob + i] as number);
   return dot / (127 * 127);
 }
 
-const normalize = (w: string) => w.trim().toLowerCase().replace(/ё/g, 'е');
+const normalize = (w: string) => w.trim().toLowerCase().replace(/ё/g, "е");
 
 function relatedToBoard(candidate: string, boardWords: string[]): boolean {
   const c = normalize(candidate);
   const stem = (s: string) => s.slice(0, Math.max(4, s.length - 3));
-  return boardWords.some((w) => {
+  return boardWords.some(w => {
     const x = normalize(w);
-    for (const part of x.split(' ')) {
-      if (c === part || c.startsWith(stem(part)) || part.startsWith(stem(c))) return true;
+    for (const part of x.split(" ")) {
+      if (c === part || c.startsWith(stem(part)) || part.startsWith(stem(c)))
+        return true;
     }
     return false;
   });
@@ -74,15 +85,15 @@ function relatedToBoard(candidate: string, boardWords: string[]): boolean {
 export function suggestClue(
   state: CodenamesState,
   team: Team,
-  risk: BotRisk = 'normal',
+  risk: BotRisk = "normal",
 ): BotClueTrace | null {
   const { words, index } = load();
-  const unrevealed = state.cards.filter((c) => !c.revealed);
-  const boardWordsAll = state.cards.map((c) => c.word); // все слова поля, включая открытые
+  const unrevealed = state.cards.filter(c => !c.revealed);
+  const boardWordsAll = state.cards.map(c => c.word); // все слова поля, включая открытые
   const usedClues = new Set(
     state.log
-      .filter((e) => e.type === 'clue')
-      .map((e) => normalize((e as { clue: { word: string } }).clue.word)),
+      .filter(e => e.type === "clue")
+      .map(e => normalize((e as { clue: { word: string } }).clue.word)),
   );
   const margin = RISK_MARGIN[risk];
 
@@ -92,8 +103,9 @@ export function suggestClue(
     const idx = index.get(card.word);
     if (idx === undefined) continue;
     if (card.owner === team) targets.push({ word: card.word, idx });
-    else if (card.owner === 'assassin') dangers.push({ idx, weight: 1, isAssassin: true });
-    else if (card.owner === 'neutral')
+    else if (card.owner === "assassin")
+      dangers.push({ idx, weight: 1, isAssassin: true });
+    else if (card.owner === "neutral")
       dangers.push({ idx, weight: NEUTRAL_WEIGHT, isAssassin: false });
     else dangers.push({ idx, weight: OPPONENT_WEIGHT, isAssassin: false });
   }
@@ -103,7 +115,8 @@ export function suggestClue(
   const better = (a: BotClueTrace, b: BotClueTrace | null) =>
     !b ||
     a.clue.count > b.clue.count ||
-    (a.clue.count === b.clue.count && a.targetSim - a.dangerSim > b.targetSim - b.dangerSim);
+    (a.clue.count === b.clue.count &&
+      a.targetSim - a.dangerSim > b.targetSim - b.dangerSim);
 
   for (let ci = 0; ci < words.length; ci++) {
     const candidate = words[ci] as string;
@@ -120,7 +133,7 @@ export function suggestClue(
     if (assassinSim > ASSASSIN_CAP) continue;
 
     const scored = targets
-      .map((t) => ({ word: t.word, s: sim(ci, t.idx) }))
+      .map(t => ({ word: t.word, s: sim(ci, t.idx) }))
       .sort((a, b) => b.s - a.s);
 
     // От самой большой группы к одиночной: берём первую безопасную.
@@ -131,7 +144,7 @@ export function suggestClue(
       if (k > 1 && targetSim < 0.25) continue; // не натягиваем группы из слабых связей
       const trace: BotClueTrace = {
         clue: { word: candidate, count: k },
-        targets: group.map((g) => g.word),
+        targets: group.map(g => g.word),
         targetSim,
         dangerSim,
       };

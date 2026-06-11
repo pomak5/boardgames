@@ -1,4 +1,11 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from "react";
+import type {
+  BotClueTrace,
+  BotRisk,
+  Clue,
+  CodenamesState,
+  Team,
+} from "../shared";
 import {
   BOARD_SIZE,
   createGame,
@@ -8,11 +15,10 @@ import {
   pickWords,
   score,
   suggestClue,
-} from '../shared';
-import type { BotClueTrace, BotRisk, Clue, CodenamesState, Team } from '../shared';
-import { sounds } from './sounds';
+} from "../shared";
+import { sounds } from "./sounds";
 
-export type CaptainMode = 'bot' | 'human';
+export type CaptainMode = "bot" | "human";
 
 export interface GameSettings {
   captainMode: CaptainMode;
@@ -40,8 +46,8 @@ export function useCodenamesGame(settings: GameSettings): GameApi {
   const [spymasterView, setSpymasterView] = useState(false);
 
   const askBot = useCallback(() => {
-    setState((s) => {
-      if (s.phase !== 'clue') return s;
+    setState(s => {
+      if (s.phase !== "clue") return s;
       const t = suggestClue(s, s.turn, settings.risk);
       if (!t) return s;
       setTrace(t);
@@ -51,14 +57,14 @@ export function useCodenamesGame(settings: GameSettings): GameApi {
 
   const submitClue = useCallback((clue: Clue): string | null => {
     let error: string | null = null;
-    setState((s) => {
-      if (s.phase !== 'clue') return s;
+    setState(s => {
+      if (s.phase !== "clue") return s;
       try {
         const next = giveClue(s, clue);
         setTrace(null);
         return next;
       } catch (e) {
-        error = e instanceof Error ? e.message : 'Неверная подсказка';
+        error = e instanceof Error ? e.message : "Неверная подсказка";
         return s;
       }
     });
@@ -66,12 +72,12 @@ export function useCodenamesGame(settings: GameSettings): GameApi {
   }, []);
 
   const reveal = useCallback((index: number) => {
-    setState((s) => {
-      if (s.phase !== 'guess' || s.cards[index]?.revealed) return s;
+    setState(s => {
+      if (s.phase !== "guess" || s.cards[index]?.revealed) return s;
       const before = s.turn;
       const next = guess(s, index);
       const owner = s.cards[index]?.owner;
-      if (next.phase === 'finished') {
+      if (next.phase === "finished") {
         (next.winner === before ? sounds.win : sounds.lose)();
       } else if (owner === before) {
         sounds.good();
@@ -83,7 +89,7 @@ export function useCodenamesGame(settings: GameSettings): GameApi {
   }, []);
 
   const stopGuessing = useCallback(() => {
-    setState((s) => (s.phase === 'guess' ? pass(s) : s));
+    setState(s => (s.phase === "guess" ? pass(s) : s));
   }, []);
 
   const restart = useCallback(() => {
@@ -91,7 +97,7 @@ export function useCodenamesGame(settings: GameSettings): GameApi {
     setTrace(null);
   }, []);
 
-  const toggleSpymasterView = useCallback(() => setSpymasterView((v) => !v), []);
+  const toggleSpymasterView = useCallback(() => setSpymasterView(v => !v), []);
 
   const tally = useMemo(() => score(state), [state]);
 
