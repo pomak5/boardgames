@@ -1,0 +1,19 @@
+{
+  "name": "@boardgames/server",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@boardgames/shared": "workspace:*",
+    "fastify": "^5.2.0",
+    "socket.io": "^4.8.0"
+  },
+  "devDependencies": {
+    "bun-types": "^1.2.0"
+  }
+}

@@ -5,13 +5,13 @@
 
 ## Документация
 
-| Документ | Описание |
-| --- | --- |
-| [docs/architecture.md](docs/architecture.md) | Архитектура, стек, структура монорепо |
-| [docs/mvp-plan.md](docs/mvp-plan.md) | План MVP по этапам |
-| [docs/games/uno.md](docs/games/uno.md) | Спецификация Uno |
-| [docs/games/alias.md](docs/games/alias.md) | Спецификация Alias |
-| [design/index.html](design/index.html) | 10 вариантов дизайна (открыть в браузере) |
+| Документ                                     | Описание                                  |
+| -------------------------------------------- | ----------------------------------------- |
+| [docs/architecture.md](docs/architecture.md) | Архитектура, стек, структура монорепо     |
+| [docs/mvp-plan.md](docs/mvp-plan.md)         | План MVP по этапам                        |
+| [docs/games/uno.md](docs/games/uno.md)       | Спецификация Uno                          |
+| [docs/games/alias.md](docs/games/alias.md)   | Спецификация Alias                        |
+| [design/index.html](design/index.html)       | 10 вариантов дизайна (открыть в браузере) |
 
 ## Принципы
 
