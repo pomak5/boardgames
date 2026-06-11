@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { BotRisk } from '@boardgames/shared';
 import { CoopScreen } from './codenames/CoopScreen';
 import { HomeScreen } from './online/HomeScreen';
@@ -8,27 +8,16 @@ import { useRoom } from './online/useRoom';
 import { GameScreen } from './codenames/GameScreen';
 import { useCodenamesGame } from './codenames/useCodenamesGame';
 import type { CaptainMode } from './codenames/useCodenamesGame';
+import { SettingsModal } from './SettingsModal';
 import './theme.css';
 
-type Theme = 'light' | 'dark';
 type Mode = 'classic' | 'coop' | 'online';
 
-function useTheme(): [Theme, () => void] {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem('theme') as Theme) ?? 'light',
-  );
-  useEffect(() => {
-    document.documentElement.dataset['theme'] = theme;
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-  return [theme, () => setTheme((t) => (t === 'light' ? 'dark' : 'light'))];
-}
-
 export function App() {
-  const [theme, toggleTheme] = useTheme();
   const [mode, setMode] = useState<Mode>('classic');
   const [captainMode, setCaptainMode] = useState<CaptainMode>('bot');
   const [risk, setRisk] = useState<BotRisk>('normal');
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const game = useCodenamesGame({ captainMode, risk });
   const roomApi = useRoom();
 
@@ -78,10 +67,11 @@ export function App() {
           )}
           <button
             className="cn-btn cn-btn--ghost"
-            onClick={toggleTheme}
-            aria-label="Переключить тему"
+            onClick={() => setSettingsOpen(true)}
+            aria-label="Настройки"
+            title="Настройки"
           >
-            {theme === 'light' ? '🌙' : '☀️'}
+            ⚙️
           </button>
         </div>
       </header>
@@ -95,6 +85,7 @@ export function App() {
         ) : (
           <OnlineGameScreen api={roomApi} />
         ))}
+      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
     </>
   );
 }
