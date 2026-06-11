@@ -87,3 +87,35 @@ describe('бот-капитан', () => {
     expect(t.targets[0]).toBe(reds[8]!.c.word);
   });
 });
+
+describe('бот-капитан: правила подсказок', () => {
+  test('не повторяет уже использованные подсказки и не берёт слова с поля', () => {
+    for (let seed = 1; seed <= 8; seed++) {
+      let g = newGame(seed * 17);
+      const used = new Set<string>();
+      const norm = (w: string) => w.trim().toLowerCase().replace(/ё/g, 'е');
+      const boardWords = new Set(g.cards.map((c) => norm(c.word)));
+      for (let turn = 0; turn < 6 && g.phase !== 'finished'; turn++) {
+        const trace = suggestClue(g, g.turn, 'normal');
+        expect(trace).not.toBeNull();
+        if (!trace) break;
+        const w = norm(trace.clue.word);
+        expect(used.has(w)).toBe(false); // подсказка не повторяется
+        expect(boardWords.has(w)).toBe(false); // подсказка не совпадает со словом поля (даже открытым)
+        used.add(w);
+        g = giveClue(g, trace.clue);
+        g = passTurn(g);
+      }
+    }
+  }, 30000);
+
+  test('validateClue запрещает слово, совпадающее с открытой картой', () => {
+    let g = newGame(99);
+    const target = g.cards[0]!;
+    g = giveClue(g, { word: 'тест', count: 1 });
+    g = guess(g, 0);
+    if (g.phase === 'clue' || g.phase === 'guess') {
+      expect(() => validateClue(g, { word: target.word.toLowerCase(), count: 1 })).toThrow();
+    }
+  });
+});
