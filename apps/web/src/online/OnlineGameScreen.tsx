@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Team } from '@boardgames/shared';
 import { CardTile } from '../codenames/CardTile';
+import { fireWinConfetti } from '../codenames/effects';
 import { LogList } from '../codenames/LogList';
 import { sounds } from '../codenames/sounds';
 import { Chat } from './Chat';
@@ -24,6 +25,7 @@ export function OnlineGameScreen({ api }: { api: RoomApi }) {
     const revealed = game.cards.filter((c) => c.revealed).length;
     if (revealed > prevRevealed.current && prevRevealed.current > 0) {
       if (game.phase === 'finished') {
+        if (game.winner) fireWinConfetti(game.winner);
         (game.winner === me?.team ? sounds.win : sounds.lose)();
       } else {
         sounds.flip();
@@ -50,6 +52,7 @@ export function OnlineGameScreen({ api }: { api: RoomApi }) {
               spymasterView={me.role === 'captain'}
               disabled={!iGuess}
               onReveal={() => api.guess(i)}
+              dealIndex={i}
             />
           ))}
         </div>
