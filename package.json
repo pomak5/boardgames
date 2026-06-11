@@ -2,7 +2,8 @@
   "name": "boardgames",
   "private": true,
   "workspaces": [
-    "apps/*",
+    "apps/web",
+    "apps/server",
     "packages/*"
   ],
   "packageManager": "bun@1.2.0",

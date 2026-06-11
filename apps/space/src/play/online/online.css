@@ -1,0 +1,326 @@
+/* Онлайн: главная, лобби, чат */
+.on-home {
+  display: grid;
+  place-items: start center;
+  padding: 40px 16px;
+}
+.on-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 20px);
+  box-shadow: var(--shadow);
+  padding: 28px;
+  width: min(380px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.on-card--wide {
+  width: min(760px, 100%);
+}
+.on-card__title {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 1.5rem;
+}
+.on-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.on-field input,
+.on-clue-form input,
+.on-chat__form input {
+  font: inherit;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.on-divider {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.on-error {
+  background: color-mix(in srgb, var(--team-red) 14%, transparent);
+  color: var(--team-red);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+/* Лобби */
+.on-lobby {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 16px;
+  align-items: start;
+  padding: 16px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+.on-lobby__main {
+  display: grid;
+  justify-items: center;
+}
+.on-code {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+}
+.on-code strong {
+  font-family: var(--font-display, inherit);
+  letter-spacing: 0.08em;
+}
+.on-code__copy {
+  margin-left: auto;
+}
+.on-teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.on-team {
+  border-radius: 16px;
+  padding: 14px;
+  border: 2px solid transparent;
+  background: var(--surface-2);
+}
+.on-team--red {
+  border-color: color-mix(in srgb, var(--team-red) 45%, transparent);
+}
+.on-team--blue {
+  border-color: color-mix(in srgb, var(--team-blue) 45%, transparent);
+}
+.on-team__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.on-team__name {
+  font-weight: 700;
+}
+.on-team--red .on-team__name {
+  color: var(--team-red);
+}
+.on-team--blue .on-team__name {
+  color: var(--team-blue);
+}
+.on-team__bot {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.on-team__list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 48px;
+}
+.on-team__empty,
+.on-player--away {
+  color: var(--muted);
+}
+.on-player--away {
+  text-decoration: line-through;
+}
+.on-team__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.on-check {
+  font-size: 0.85rem;
+  color: var(--muted);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.on-unassigned,
+.on-hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.on-settings-row {
+  font-size: 0.9rem;
+}
+.on-lobby__footer {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Чат */
+.on-chat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  height: 420px;
+  overflow: hidden;
+}
+.on-chat__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.on-chat__msg {
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  max-width: 90%;
+}
+.on-chat__msg--me {
+  align-self: flex-end;
+  background: color-mix(in srgb, var(--accent, #d98e4a) 18%, var(--surface-2));
+}
+.on-chat__author {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.on-chat__empty {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 20px;
+}
+.on-chat__form {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--border);
+}
+.on-chat__form input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Игра онлайн */
+.on-game {
+  min-width: 0;
+}
+.on-clue-form {
+  display: grid;
+  grid-template-columns: 1fr 64px;
+  gap: 8px;
+}
+.on-clue-form .cn-btn {
+  grid-column: 1 / -1;
+}
+.cn-banner--wait {
+  opacity: 0.85;
+}
+.cn-score__chip--active {
+  outline: 3px solid color-mix(in srgb, var(--ink) 35%, transparent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 980px) {
+  .on-lobby {
+    grid-template-columns: 1fr;
+  }
+  .on-chat {
+    height: 280px;
+  }
+}
+@media (max-width: 560px) {
+  .on-teams {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Таймер хода */
+.on-timer {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--ink);
+}
+.on-timer--low {
+  color: var(--red, #b3402e);
+  animation: on-timer-pulse 1s ease-in-out infinite;
+}
+@keyframes on-timer-pulse {
+  50% { opacity: 0.45; }
+}
+
+/* Счёт серии раундов */
+.on-series {
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+.on-series__red { color: var(--red, #b3402e); }
+.on-series__blue { color: var(--blue, #2e5e8f); }
+
+/* ===== #40: чат снизу, под полем (раньше был справа) ===== */
+.on-play {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 16px 16px;
+}
+.on-play .cn-layout {
+  padding-left: 0;
+  padding-right: 0;
+}
+/* шапка-переключатель сворачивания */
+.on-chat__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 800;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.on-chat__chevron {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.on-chat--collapsed {
+  height: auto;
+}
+.on-chat--collapsed .on-chat__toggle {
+  border-bottom: 0;
+}
+.on-chat--collapsed .on-chat__list,
+.on-chat--collapsed .on-chat__form {
+  display: none;
+}
+
+/* на мобильных чат прилипает к низу экрана и легко сворачивается */
+@media (max-width: 860px) {
+  .on-play .on-chat {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    height: 260px;
+  }
+  .on-play .on-chat--collapsed {
+    height: auto;
+  }
+}

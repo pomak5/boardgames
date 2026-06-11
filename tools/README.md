@@ -1,6 +1,7 @@
 # tools
 
 ## build-embeddings.py
+
 Пересборка `packages/shared/src/codenames/embeddings.data.json` (векторы слов для бота-капитана).
 
 ```bash
