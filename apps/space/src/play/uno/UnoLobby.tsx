@@ -48,11 +48,12 @@ export function UnoLobby({ api }: { api: UnoRoomApi }) {
   const rules = room.settings.rules;
   const setRule = (patch: Partial<UnoRules>) =>
     api.updateSettings({ rules: patch });
+  const activeCount = RULE_TOGGLES.filter(t => rules[t.key]).length;
 
   return (
     <div className="on-lobby">
       <div className="on-lobby__main">
-        <div className="on-card on-card--wide">
+        <div className="on-card on-card--wide uno-lobby">
           <div className="on-code">
             Код комнаты: <strong>{room.code}</strong>
             <button
@@ -64,19 +65,28 @@ export function UnoLobby({ api }: { api: UnoRoomApi }) {
             </button>
           </div>
 
-          <div className="uno-lobby-players">
-            <h3>
-              Игроки{" "}
+          <div className="uno-set">
+            <div className="uno-set__title">
+              Игроки
               <span className="uno-count">
                 {room.players.length} / {room.settings.maxPlayers}
               </span>
-            </h3>
-            <ul>
+            </div>
+            <ul className="uno-players">
               {room.players.map(p => (
                 <li key={p.id} className={p.connected ? "" : "on-player--away"}>
-                  {p.isBot && <IconBot />} {p.nickname}
-                  {p.id === room.hostId ? " (хост)" : ""}
-                  {p.id === api.playerId ? " — вы" : ""}
+                  <span className="uno-players__ava">
+                    {p.isBot ? (
+                      <IconBot />
+                    ) : (
+                      p.nickname.slice(0, 1).toUpperCase()
+                    )}
+                  </span>
+                  <span className="uno-players__name">{p.nickname}</span>
+                  {p.id === room.hostId && (
+                    <span className="uno-tag">хост</span>
+                  )}
+                  {p.id === api.playerId && <span className="uno-tag">вы</span>}
                   {isHost && p.isBot && (
                     <button
                       type="button"
@@ -94,7 +104,7 @@ export function UnoLobby({ api }: { api: UnoRoomApi }) {
             {isHost && room.players.length < room.settings.maxPlayers && (
               <button
                 type="button"
-                className="cn-btn cn-btn--ghost"
+                className="cn-btn cn-btn--ghost uno-addbot"
                 onClick={api.addBot}
               >
                 <IconBot /> Добавить бота
@@ -103,98 +113,95 @@ export function UnoLobby({ api }: { api: UnoRoomApi }) {
           </div>
 
           {isHost ? (
-            <div className="uno-rules">
-              <h3>Правила</h3>
-              <div className="on-settings-row">
-                <label>
-                  Карт на старте:{" "}
-                  <select
-                    value={rules.startingCards}
-                    onChange={e =>
-                      setRule({ startingCards: Number(e.target.value) })
-                    }
-                  >
-                    {[5, 6, 7, 8, 9, 10].map(n => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Игра:{" "}
-                  <select
-                    value={rules.targetScore ?? 0}
-                    onChange={e =>
-                      setRule({
-                        targetScore:
-                          Number(e.target.value) === 0
-                            ? null
-                            : Number(e.target.value),
-                      })
-                    }
-                  >
-                    <option value={0}>один раунд</option>
-                    <option value={200}>на очки до 200</option>
-                    <option value={300}>на очки до 300</option>
-                    <option value={500}>на очки до 500</option>
-                  </select>
-                </label>
-                <label>
-                  Штраф за «UNO!»:{" "}
-                  <select
-                    value={rules.unoPenalty}
-                    onChange={e =>
-                      setRule({ unoPenalty: Number(e.target.value) })
-                    }
-                  >
-                    {[1, 2, 3, 4].map(n => (
-                      <option key={n} value={n}>
-                        {n} карты
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Мест в комнате:{" "}
-                  <select
-                    value={room.settings.maxPlayers}
-                    onChange={e =>
-                      api.updateSettings({ maxPlayers: Number(e.target.value) })
-                    }
-                  >
-                    {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <div className="on-settings-row">
-                <label className="on-check">
-                  <input
-                    type="checkbox"
-                    checked={room.settings.timer.enabled}
-                    onChange={e =>
-                      api.updateSettings({
-                        timer: { enabled: e.target.checked },
-                      })
-                    }
-                  />
-                  таймер хода
-                </label>
-                {room.settings.timer.enabled && (
-                  <label>
-                    Время хода:{" "}
+            <>
+              <div className="uno-set">
+                <div className="uno-set__title">Параметры партии</div>
+                <div className="uno-fields">
+                  <label className="uno-field">
+                    <span className="uno-field__label">Карт на старте</span>
                     <select
-                      value={room.settings.timer.turnSec}
+                      value={rules.startingCards}
                       onChange={e =>
-                        api.updateSettings({
-                          timer: { turnSec: Number(e.target.value) },
+                        setRule({ startingCards: Number(e.target.value) })
+                      }
+                    >
+                      {[5, 6, 7, 8, 9, 10].map(n => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="uno-field">
+                    <span className="uno-field__label">Формат</span>
+                    <select
+                      value={rules.targetScore ?? 0}
+                      onChange={e =>
+                        setRule({
+                          targetScore:
+                            Number(e.target.value) === 0
+                              ? null
+                              : Number(e.target.value),
                         })
                       }
                     >
+                      <option value={0}>один раунд</option>
+                      <option value={200}>на очки до 200</option>
+                      <option value={300}>на очки до 300</option>
+                      <option value={500}>на очки до 500</option>
+                    </select>
+                  </label>
+                  <label className="uno-field">
+                    <span className="uno-field__label">Штраф за «UNO!»</span>
+                    <select
+                      value={rules.unoPenalty}
+                      onChange={e =>
+                        setRule({ unoPenalty: Number(e.target.value) })
+                      }
+                    >
+                      {[1, 2, 3, 4].map(n => (
+                        <option key={n} value={n}>
+                          {n} {n === 1 ? "карта" : "карты"}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="uno-field">
+                    <span className="uno-field__label">Мест в комнате</span>
+                    <select
+                      value={room.settings.maxPlayers}
+                      onChange={e =>
+                        api.updateSettings({
+                          maxPlayers: Number(e.target.value),
+                        })
+                      }
+                    >
+                      {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="uno-field">
+                    <span className="uno-field__label">Таймер хода</span>
+                    <select
+                      value={
+                        room.settings.timer.enabled
+                          ? room.settings.timer.turnSec
+                          : 0
+                      }
+                      onChange={e => {
+                        const v = Number(e.target.value);
+                        api.updateSettings({
+                          timer:
+                            v === 0
+                              ? { enabled: false }
+                              : { enabled: true, turnSec: v },
+                        });
+                      }}
+                    >
+                      <option value={0}>выключен</option>
                       {[15, 30, 45, 60, 90, 120].map(n => (
                         <option key={n} value={n}>
                           {n} сек
@@ -202,32 +209,45 @@ export function UnoLobby({ api }: { api: UnoRoomApi }) {
                       ))}
                     </select>
                   </label>
-                )}
+                </div>
               </div>
-              <div className="uno-toggle-grid">
-                {RULE_TOGGLES.map(t => (
-                  <label
-                    key={t.key}
-                    className="on-check uno-toggle"
-                    title={t.hint}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={Boolean(rules[t.key])}
-                      onChange={e => setRule({ [t.key]: e.target.checked })}
-                    />
-                    <span>
-                      {t.label}
-                      <small>{t.hint}</small>
-                    </span>
-                  </label>
-                ))}
+
+              <div className="uno-set">
+                <div className="uno-set__title">
+                  Вариации правил
+                  <span className="uno-count">
+                    {activeCount === 0
+                      ? "классика"
+                      : `включено: ${activeCount}`}
+                  </span>
+                </div>
+                <div className="uno-toggles">
+                  {RULE_TOGGLES.map(t => {
+                    const on = Boolean(rules[t.key]);
+                    return (
+                      <label
+                        key={t.key}
+                        className={`uno-toggle-card ${on ? "is-on" : ""}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={on}
+                          onChange={e => setRule({ [t.key]: e.target.checked })}
+                        />
+                        <span className="uno-switch" aria-hidden="true" />
+                        <span className="uno-toggle-card__text">
+                          <b>{t.label}</b>
+                          <small>{t.hint}</small>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="on-hint">Всё выключено — классическое Уно.</div>
-            </div>
+            </>
           ) : (
-            <div className="uno-rules">
-              <h3>Правила</h3>
+            <div className="uno-set">
+              <div className="uno-set__title">Правила</div>
               <div className="on-hint">
                 Карт на старте: {rules.startingCards} ·{" "}
                 {rules.targetScore
@@ -240,9 +260,7 @@ export function UnoLobby({ api }: { api: UnoRoomApi }) {
                 {RULE_TOGGLES.filter(t => rules[t.key])
                   .map(t => ` · ${t.label}`)
                   .join("")}
-                {RULE_TOGGLES.every(t => !rules[t.key])
-                  ? " · классические правила"
-                  : ""}
+                {activeCount === 0 ? " · классические правила" : ""}
               </div>
             </div>
           )}

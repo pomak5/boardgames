@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { UnoCard, UnoColor } from "../../../convex/engine/uno/types";
 import { IconBot } from "../icons";
 import { Chat } from "../online/Chat";
+import { unoSounds } from "./sounds";
 import type { UnoRoomApi } from "./useUnoRoom";
 
 const COLOR_RU: Record<UnoColor, string> = {
@@ -22,6 +23,25 @@ function cardLabel(card: UnoCard): string {
 
 function colorClass(card: UnoCard): string {
   return card.color ? `pc-${card.color}` : "pc-wild";
+}
+
+function isSpecial(card: UnoCard): boolean {
+  return (
+    card.value === "skip" ||
+    card.value === "reverse" ||
+    card.value === "draw2" ||
+    card.value === "wild" ||
+    card.value === "wild4"
+  );
+}
+
+/** Места соперников по дуге над столом (игрок — внизу по центру). */
+function seatPos(i: number, n: number): { x: number; y: number } {
+  const span = Math.min(232, 84 + n * 26);
+  const start = 270 - span / 2;
+  const f = n <= 1 ? 0.5 : i / (n - 1);
+  const a = ((start + f * span) * Math.PI) / 180;
+  return { x: 50 + 43 * Math.cos(a), y: 45 + 38 * Math.sin(a) };
 }
 
 export function PlayCard({
@@ -66,6 +86,29 @@ export function PlayCard({
   );
 }
 
+/** Веер рубашек у соперника. */
+function BackFan({ count }: { count: number }) {
+  const show = Math.min(Math.max(count, 1), 6);
+  const mid = (show - 1) / 2;
+  return (
+    <span className="uno-backs" aria-hidden="true">
+      {Array.from({ length: show }).map((_, i) => (
+        <i
+          // карты-рубашки декоративны и без своих id
+          key={`back-${i}`}
+          style={
+            {
+              "--r": `${(i - mid) * 10}deg`,
+              "--ty": `${Math.abs(i - mid) * 2}px`,
+              zIndex: i,
+            } as React.CSSProperties
+          }
+        />
+      ))}
+    </span>
+  );
+}
+
 function DirArrows({ ccw }: { ccw: boolean }) {
   return (
     <svg
@@ -101,35 +144,97 @@ function useCountdown(deadline: number | null): number | null {
   return left;
 }
 
+interface FlyCard {
+  id: number;
+  card: UnoCard;
+  dx: number;
+  dy: number;
+  spin: number;
+}
+
 export function UnoTable({ api }: { api: UnoRoomApi }) {
   const room = api.room;
   const game = api.game;
   const [shout, setShout] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
   const [pressed, setPressed] = useState(false);
+  const [flies, setFlies] = useState<FlyCard[]>([]);
   const seenLog = useRef(0);
+  const flyId = useRef(0);
+  const prevTurn = useRef<string | null>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
   const left = useCountdown(api.turnDeadline);
 
   const nickOf = (id: string) =>
     room?.players.find(p => p.id === id)?.nickname ?? "—";
 
-  // реагируем на новые события лога: крик UNO!, тряска при поимке
+  // реагируем на новые события лога: полёт карты, звуки, крик UNO!, тряска
   useEffect(() => {
     if (!game || !room) return;
     const prev = seenLog.current;
     seenLog.current = game.log.length;
     if (prev === 0) return;
+
+    const meId = api.playerId;
+    const meIdx = game.players.findIndex(p => p.id === meId);
+    const order = [
+      ...game.players.slice(meIdx + 1),
+      ...game.players.slice(0, Math.max(meIdx, 0)),
+    ];
+    const srcPos = (pid: string) => {
+      if (pid === meId) return { x: 50, y: 97 };
+      const idx = order.findIndex(p => p.id === pid);
+      return seatPos(idx < 0 ? 0 : idx, order.length);
+    };
+    const launch = (card: UnoCard, pid: string) => {
+      const rect = tableRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const pos = srcPos(pid);
+      const dx = ((pos.x - 50) / 100) * rect.width;
+      const dy = ((pos.y - 50) / 100) * rect.height;
+      const id = ++flyId.current;
+      const spin = pid === meId ? -8 : (pos.x - 50) * 0.7;
+      setFlies(f => [...f, { id, card, dx, dy, spin }]);
+      setTimeout(() => setFlies(f => f.filter(c => c.id !== id)), 520);
+    };
+
     for (const e of game.log.slice(prev)) {
-      if (e.type === "uno") {
+      if (e.type === "play") {
+        launch(e.card, e.player);
+        if (isSpecial(e.card)) unoSounds.special();
+        else unoSounds.play();
+      } else if (e.type === "jumpIn") {
+        launch(e.card, e.player);
+        unoSounds.play();
+      } else if (e.type === "draw") {
+        unoSounds.draw();
+      } else if (e.type === "uno") {
         setShout(room.players.find(p => p.id === e.player)?.nickname ?? "");
         setTimeout(() => setShout(null), 1400);
-      }
-      if (e.type === "caught") {
+        unoSounds.uno();
+      } else if (e.type === "caught") {
         setShake(true);
         setTimeout(() => setShake(false), 700);
+        unoSounds.caught();
+      } else if (e.type === "roundEnd" || e.type === "gameOver") {
+        (e.winner === meId ? unoSounds.win : unoSounds.lose)();
       }
     }
-  }, [game, room]);
+  }, [game, room, api.playerId]);
+
+  // звук «ваш ход»
+  useEffect(() => {
+    if (!game) return;
+    const cur = game.turnPlayerId;
+    if (
+      prevTurn.current !== null &&
+      prevTurn.current !== cur &&
+      cur === api.playerId &&
+      game.phase === "play"
+    )
+      unoSounds.turn();
+    prevTurn.current = cur;
+  }, [game, api.playerId]);
 
   if (!room || !game) return null;
 
@@ -182,38 +287,42 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
 
   return (
     <div className="uno-screen">
-      <div className={`uno-table ${shake ? "shake" : ""}`}>
+      <div className={`uno-table ${shake ? "shake" : ""}`} ref={tableRef}>
         <DirArrows ccw={game.dir === -1} />
 
-        <div className="uno-opps">
-          {opps.map(p => (
+        {opps.map((p, i) => {
+          const pos = seatPos(i, opps.length);
+          const rp = room.players.find(rp => rp.id === p.id);
+          return (
             <div
               key={p.id}
-              className={`uno-opp ${game.turnPlayerId === p.id ? "uno-opp--turn" : ""}`}
+              className={`uno-seat ${game.turnPlayerId === p.id ? "uno-seat--turn" : ""}`}
+              style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
             >
+              <BackFan count={p.handCount} />
               <span className="ava">
-                {room.players.find(rp => rp.id === p.id)?.isBot ? (
+                {rp?.isBot ? (
                   <IconBot />
                 ) : (
                   <b>{nickOf(p.id).slice(0, 1).toUpperCase()}</b>
                 )}
                 {p.saidUno && p.handCount === 1 && (
-                  <span className="uno-opp__uno">UNO!</span>
+                  <span className="uno-seat__uno">UNO!</span>
+                )}
+                {rp && !rp.connected && (
+                  <span className="uno-seat__away" title="отключился">
+                    z
+                  </span>
                 )}
               </span>
-              <span className="uno-opp__name">{nickOf(p.id)}</span>
-              <span className="cards-mini" aria-hidden="true">
-                {p.handCount >= 1 && <i />}
-                {p.handCount >= 2 && <i />}
-                {p.handCount >= 3 && <i />}
-              </span>
+              <span className="uno-seat__name">{nickOf(p.id)}</span>
               <span className="cnt">
                 {p.handCount} карт
                 {game.rules.targetScore ? ` · ${p.score} очк` : ""}
               </span>
             </div>
-          ))}
-        </div>
+          );
+        })}
 
         <div className="uno-pile">
           <button
@@ -250,6 +359,22 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
             </span>
           </div>
         </div>
+
+        {flies.map(f => (
+          <div
+            key={f.id}
+            className="uno-fly"
+            style={
+              {
+                "--dx": `${f.dx}px`,
+                "--dy": `${f.dy}px`,
+                "--spin": `${f.spin}deg`,
+              } as React.CSSProperties
+            }
+          >
+            <PlayCard card={f.card} />
+          </div>
+        ))}
 
         {me && (
           <div className="uno-hand">
