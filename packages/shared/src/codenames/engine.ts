@@ -80,7 +80,7 @@ export function validateClue(state: CodenamesState, clue: Clue): void {
     throw new CodenamesError('INVALID_CLUE_COUNT', 'Число должно быть целым от 0 до 9');
   }
   for (const card of state.cards) {
-    if (!card.revealed && looksRelated(card.word, clue.word)) {
+    if (looksRelated(card.word, clue.word)) {
       throw new CodenamesError(
         'INVALID_CLUE_WORD',
         `Подсказка похожа на слово с поля: «${card.word}»`,

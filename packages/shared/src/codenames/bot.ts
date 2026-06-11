@@ -78,7 +78,12 @@ export function suggestClue(
 ): BotClueTrace | null {
   const { words, index } = load();
   const unrevealed = state.cards.filter((c) => !c.revealed);
-  const boardWords = unrevealed.map((c) => c.word);
+  const boardWordsAll = state.cards.map((c) => c.word); // все слова поля, включая открытые
+  const usedClues = new Set(
+    state.log
+      .filter((e) => e.type === 'clue')
+      .map((e) => normalize((e as { clue: { word: string } }).clue.word)),
+  );
   const margin = RISK_MARGIN[risk];
 
   const targets: { word: string; idx: number }[] = [];
@@ -102,7 +107,8 @@ export function suggestClue(
 
   for (let ci = 0; ci < words.length; ci++) {
     const candidate = words[ci] as string;
-    if (relatedToBoard(candidate, boardWords)) continue;
+    if (usedClues.has(normalize(candidate))) continue; // не повторяем подсказки
+    if (relatedToBoard(candidate, boardWordsAll)) continue;
 
     let assassinSim = -1;
     let dangerSim = -1;
