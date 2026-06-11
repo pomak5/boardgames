@@ -1,8 +1,11 @@
 import type { Card } from '@boardgames/shared';
 import './codenames.css';
 
+/** Карточка локальной игры или редактированный онлайн-вид (owner: null = скрыт). */
+type TileCard = Pick<Card, 'word' | 'revealed'> & { owner: Card['owner'] | null };
+
 interface Props {
-  card: Card;
+  card: TileCard;
   disabled: boolean;
   spymasterView: boolean;
   onReveal: () => void;
@@ -44,9 +47,11 @@ export function CardTile({ card, disabled, spymasterView, onReveal }: Props) {
       <span className="cn-card__inner">
         <span className="cn-card__face cn-card__front">
           {card.word}
-          {spymasterView && !card.revealed && <KeyStamp owner={card.owner} />}
+          {spymasterView && !card.revealed && card.owner && <KeyStamp owner={card.owner} />}
         </span>
-        <span className={`cn-card__face cn-card__back ${OWNER_CLASS[card.owner]}`}>
+        <span
+          className={`cn-card__face cn-card__back ${card.owner ? OWNER_CLASS[card.owner] : ''}`}
+        >
           {card.word}
         </span>
       </span>
