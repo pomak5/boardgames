@@ -99,21 +99,25 @@
   transform: rotateX(180deg);
   color: #fff;
 }
-.cn-card--red {
+.cn-card__face.cn-card--red {
   background: var(--team-red);
 }
-.cn-card--blue {
+.cn-card__face.cn-card--blue {
   background: var(--team-blue);
 }
-.cn-card--neutral {
-  background: var(--surface-2);
-  color: var(--muted);
+.cn-card__face.cn-card--neutral {
+  background: #5c5650;
+  color: #ddd8d0;
 }
-.cn-card--assassin {
+.cn-card__face.cn-card--assassin {
   background: #23201c;
   color: #f5f1e6;
 }
-[data-theme='dark'] .cn-card--assassin {
+[data-theme='dark'] .cn-card__face.cn-card--neutral {
+  background: #43454c;
+  color: #b9bcc5;
+}
+[data-theme='dark'] .cn-card__face.cn-card--assassin {
   background: #000;
 }
 

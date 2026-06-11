@@ -32,7 +32,7 @@ function KeyStamp({ owner }: { owner: Card['owner'] }) {
 }
 
 export function CardTile({ card, disabled, spymasterView, onReveal }: Props) {
-  const revealedClass = card.revealed ? `cn-card--flipped ${OWNER_CLASS[card.owner]}` : '';
+  const revealedClass = card.revealed ? 'cn-card--flipped' : '';
   return (
     <button
       type="button"
