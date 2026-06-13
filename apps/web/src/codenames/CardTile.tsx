@@ -1,4 +1,5 @@
 import type { Card } from '@boardgames/shared';
+import { useSettings } from '../settings';
 import './codenames.css';
 
 /** Карточка локальной игры или редактированный онлайн-вид (owner: null = скрыт). */
@@ -86,6 +87,8 @@ function SealArt({ owner }: { owner: Exclude<Card['owner'], null> }) {
 }
 
 export function CardTile({ card, disabled, spymasterView, onReveal, dealIndex }: Props) {
+  const { flatCards } = useSettings();
+  const tilt = flatCards ? 0 : tiltOf(card.word);
   const revealedClass = card.revealed ? 'cn-card--flipped' : '';
   const dimClass = spymasterView && !card.revealed && card.owner ? `cn-key--${card.owner}` : '';
   const dealClass = dealIndex !== undefined ? 'cn-card--deal' : '';
@@ -95,7 +98,7 @@ export function CardTile({ card, disabled, spymasterView, onReveal, dealIndex }:
       className={`cn-card ${revealedClass} ${dealClass}`}
       style={
         {
-          '--tilt': `${tiltOf(card.word)}deg`,
+          '--tilt': `${tilt}deg`,
           '--deal-i': dealIndex ?? 0,
         } as React.CSSProperties
       }
