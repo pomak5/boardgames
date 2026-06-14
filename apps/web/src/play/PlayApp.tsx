@@ -10,7 +10,7 @@ import { LobbyScreen } from "./online/LobbyScreen";
 import { OnlineGameScreen } from "./online/OnlineGameScreen";
 import { useRoom } from "./online/useRoom";
 import { SettingsModal } from "./SettingsModal";
-import type { BotRisk } from "./shared";
+import type { BotRisk } from "@shared";
 import "./theme.css";
 
 type Mode = "classic" | "coop" | "online";

@@ -48,11 +48,11 @@ export type CodenamesErrorCode =
   | 'INVALID_CLUE_COUNT';
 
 export class CodenamesError extends Error {
-  constructor(
-    public readonly code: CodenamesErrorCode,
-    message: string,
-  ) {
+  readonly code: CodenamesErrorCode;
+
+  constructor(code: CodenamesErrorCode, message: string) {
     super(message);
+    this.code = code;
     this.name = 'CodenamesError';
   }
 }

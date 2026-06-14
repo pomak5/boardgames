@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { UnoColor, UnoRules } from "@shared/uno/types";
 import type { UnoView } from "@shared/uno/view";
+import type { Socket } from "socket.io-client";
 import { getUnoSocket } from "../net/socket";
 
 export interface UnoRoomPlayerView {
@@ -119,7 +120,7 @@ const SESSION_KEY = "uno-room-session";
 
 export function useUnoRoom(): UnoRoomApi {
   const socket = useMemo(
-    () => getUnoSocket<UnoServerEvents, UnoClientEvents>(),
+    () => getUnoSocket() as Socket<UnoServerEvents, UnoClientEvents>,
     [],
   );
   const [room, setRoom] = useState<UnoRoomView | null>(null);
