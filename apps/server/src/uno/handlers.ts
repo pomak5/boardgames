@@ -10,6 +10,8 @@ import type { UnoRoom } from './manager';
 interface SocketData {
   roomCode?: string;
   playerId?: string;
+  /** id авторизованного пользователя (из JWT handshake); undefined у гостей. */
+  userId?: string;
 }
 
 type UnoNamespace = Namespace<
@@ -22,6 +24,34 @@ type UnoNamespace = Namespace<
 export function registerUno(nsp: UnoNamespace): void {
   // broadcast вызывается и менеджером (ходы бота/таймаут), и хендлерами (ходы игрока)
   const manager = new UnoRoomManager((room) => broadcast(room));
+  /** Комнаты, для которых финал уже записан (анти-дубль). */
+  const recorded = new Set<string>();
+
+  /** Пишет результат матча в БД для всех авторизованных игроков. */
+  async function recordFinish(room: UnoRoom): Promise<void> {
+    const game = room.game;
+    if (!process.env.DATABASE_URL || !game || !game.winner) return;
+    const recipients: { userId: string; won: boolean; score: number }[] = [];
+    for (const [, socket] of nsp.sockets) {
+      const d = socket.data;
+      if (d.roomCode !== room.code || !d.playerId || !d.userId) continue;
+      const p = game.players.find((pl) => pl.id === d.playerId);
+      if (!p) continue;
+      recipients.push({ userId: d.userId, won: game.winner === d.playerId, score: p.score });
+    }
+    if (recipients.length === 0) return;
+    try {
+      const { recordGameResult } = await import('@boardgames/db');
+      await Promise.all(
+        recipients.map((r) =>
+          recordGameResult({ game: 'uno', userId: r.userId, won: r.won, score: r.score }),
+        ),
+      );
+    } catch (e) {
+      console.error('recordGameResult failed', e);
+    }
+  }
+
 
   function broadcast(room: UnoRoom): void {
     for (const [, socket] of nsp.sockets) {
@@ -31,6 +61,14 @@ export function registerUno(nsp: UnoNamespace): void {
       const gameView = manager.viewFor(room, data.playerId);
       if (gameView) socket.emit('game:state', gameView);
       socket.emit('game:timer', room.phase === 'playing' ? room.turnDeadline : null);
+    }
+    if (room.phase === 'finished' && room.game?.winner) {
+      if (!recorded.has(room.code)) {
+        recorded.add(room.code);
+        void recordFinish(room);
+      }
+    } else {
+      recorded.delete(room.code);
     }
   }
 
