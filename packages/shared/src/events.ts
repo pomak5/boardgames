@@ -19,7 +19,14 @@ export interface RoomSettings {
   botCaptains: Record<Team, boolean>;
   botRisk: 'cautious' | 'normal' | 'bold';
   /** Настройка таймера хода (опционально; по умолчанию включён, 60с). */
-  timer?: { enabled: boolean; turnSec: number; firstTurnSec?: number };
+  timer?: {
+    enabled: boolean;
+    turnSec: number;
+    /** Время первого хода (обычно двойное). */
+    firstTurnSec?: number;
+    /** Бонус секунд за каждое угаданное слово. */
+    bonusSec?: number;
+  };
 }
 
 export type RoomPhase = 'lobby' | 'playing' | 'finished';
