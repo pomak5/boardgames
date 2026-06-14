@@ -2,9 +2,13 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { SettingsModal } from "../SettingsModal";
 import "./home.css";
+import { useAuth } from "../net/useAuth";
+import { AuthModal } from "../AuthModal";
 
 export function HomeHub() {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const auth = useAuth();
+  const [authOpen, setAuthOpen] = useState(false);
 
   const handleEmptyClick = (e: React.MouseEvent) => {
     const target = e.currentTarget as HTMLAnchorElement | HTMLButtonElement;
@@ -44,8 +48,21 @@ export function HomeHub() {
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
                 </svg>
               </button>
-              <div className="profile-pill">
-                <div className="user-avatar" aria-hidden="true" />
+              <div
+                className="profile-pill"
+                role="button"
+                tabIndex={0}
+                style={{ cursor: "pointer" }}
+                aria-label={auth.user ? auth.user.nickname : "Войти"}
+                title={auth.user ? auth.user.nickname : "Войти"}
+                onClick={() => setAuthOpen(true)}
+                onKeyDown={(e) =>
+                  (e.key === "Enter" || e.key === " ") && setAuthOpen(true)
+                }
+              >
+                <div className="user-avatar" aria-hidden="true">
+                  {auth.user ? auth.user.nickname.charAt(0).toUpperCase() : ""}
+                </div>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
@@ -569,6 +586,7 @@ export function HomeHub() {
       </main>
 
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
+      {authOpen && <AuthModal api={auth} onClose={() => setAuthOpen(false)} />}
     </div>
   );
 }
