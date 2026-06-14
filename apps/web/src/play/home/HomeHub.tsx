@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { SettingsModal } from "../SettingsModal";
 import "./home.css";
 import { useAuth } from "../net/useAuth";
 import { AuthModal } from "../AuthModal";
+import { Avatar } from "../components/Avatar";
 
 export function HomeHub() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const auth = useAuth();
+  const navigate = useNavigate();
   const [authOpen, setAuthOpen] = useState(false);
 
   const handleEmptyClick = (e: React.MouseEvent) => {
@@ -55,14 +57,26 @@ export function HomeHub() {
                 style={{ cursor: "pointer" }}
                 aria-label={auth.user ? auth.user.nickname : "Войти"}
                 title={auth.user ? auth.user.nickname : "Войти"}
-                onClick={() => setAuthOpen(true)}
-                onKeyDown={(e) =>
-                  (e.key === "Enter" || e.key === " ") && setAuthOpen(true)
+                onClick={() =>
+                  auth.user ? navigate("/profile") : setAuthOpen(true)
                 }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    if (auth.user) navigate("/profile");
+                    else setAuthOpen(true);
+                  }
+                }}
               >
-                <div className="user-avatar" aria-hidden="true">
-                  {auth.user ? auth.user.nickname.charAt(0).toUpperCase() : ""}
-                </div>
+                {auth.user ? (
+                  <Avatar
+                    nickname={auth.user.nickname}
+                    avatarUrl={auth.user.avatarUrl}
+                    size={36}
+                    className="user-avatar"
+                  />
+                ) : (
+                  <div className="user-avatar" aria-hidden="true" />
+                )}
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
