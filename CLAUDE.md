@@ -1,80 +1,148 @@
 # CLAUDE.md — память проекта
 
-Краткая сводка для людей и AI-агентов. Поддерживается актуальной: после каждой
-заметной задачи дописывай краткую выжимку в «Журнал» (1–3 строки, новые сверху).
+Краткая сводка для людей и AI-агентов. Держи актуальной: после заметной задачи
+обновляй затронутый раздел (структуру, конвенции, «Как добавить игру»), а не
+плоди дубли. История внизу — 1–3 строки на веху, новые сверху.
 
 ## О проекте
 
 «Настолки» (boardgames) — настольные игры онлайн с уютным «вечерним» дизайном.
-Сейчас играбелен Коднеймс (классика с ботом, кооп, онлайн-комнаты с чатом).
-Дальше — UNO, Alias и другие игры.
+Реалтайм-мультиплеер: комнаты по коду/ссылке, чат, боты, таймеры ходов.
 
-## Структура репозитория
+- **Codenames** — играбелен (классика с ботом-капитаном, кооп, онлайн-комнаты).
+- **Uno** — движок и онлайн-комнаты с ботами готовы (108 карт, очки, 7 вариаций
+  правил, кнопка «UNO!» со штрафом, таймер хода).
+- **Alias** — в планах.
 
-- `apps/web/` — **актуальная версия** (Convex + React/Vite). Standalone-проект:
-  свой `package.json`, biome (двойные кавычки), свой tsconfig. Бэкенд — Convex
-  (`convex/rooms.ts` и др.), фронт — `src/play/` (`home/` главный экран,
-  `codenames/`, `online/`, `shared/` движок, `icons.tsx` SVG-иконки).
-- `apps/web` + `apps/server` — старая socket.io-версия (Fastify, только localhost).
-  Не хостится публично; считается legacy.
-- `packages/shared` — чистый TS-движок Коднеймс для старой версии (56 тестов).
-- `design/` — дизайн: **`design/final.html` — выбранный референс** («дизайн-система
-  v2»), `design/index.html` — 10 концептов.
+Сервер авторитарен: клиент шлёт намерения, сервер валидирует ходы единым движком
+и рассылает каждому игроку только видимую ему часть состояния.
 
-## Правила дизайна и кода
+## Стек
 
-- Дизайн строго по `design/final.html`: токены в `src/play/theme.css`,
-  светлая тема «Уютный вечер», тёмная «Лаунж», шрифты Nunito + Caveat.
-- **Никаких эмодзи в интерфейсе — только свои SVG-иконки** (`src/play/icons.tsx`).
-  Без «AI-слопа»: никаких выдуманных цифр, лишних бейджей и пустых украшательств.
-- UI и тексты на русском.
-- `apps/web` форматируется biome (`bun run check`), остальной монорепозиторий —
-  prettier/eslint. `apps/web` намеренно исключён из root workspaces,
-  `.prettierignore` и eslint ignores — не включать обратно, иначе падает CI
-  (frozen lockfile + format check).
-- CI (root): `bun install --frozen-lockfile`, lint, format:check, typecheck, test.
+| Слой       | Технология                                              |
+| ---------- | ------------------------------------------------------- |
+| Язык       | TypeScript везде                                        |
+| Рантайм/PM | bun (workspaces, без turbo)                             |
+| Фронтенд   | React 19 + Vite 7, react-router, framer-motion          |
+| Реалтайм   | socket.io (неймспейс на игру)                           |
+| Сервер     | Fastify (health + auth) + socket.io                     |
+| БД         | PostgreSQL + Prisma (аккаунты, статистика, словари)     |
+| Хостинг    | Self-hosted VPS (docker-compose); фронт — статика Vite  |
 
-## Хостинг
+> История: проект мигрировал с Convex на self-hosted socket.io + Postgres
+> (см. «История»). Convex полностью удалён, в `main` его нет.
 
-- Прод-версия (Convex) хостится на Viktor Space `boardnight`:
-  https://preview-boardnight-f7caeff8.viktor.space (Convex dev deployment).
-  Прод-домен/прод-база — по готовности.
-- Деплой: содержимое `apps/web` синкается в Space, `bunx convex dev --once`
-  пушит функции, `vite build` собирает фронт.
+## Структура монорепо
 
-## Сделано
+```
+boardgames/
+├── apps/
+│   ├── server/                 # socket.io + Fastify (bun, в workspaces)
+│   │   └── src/
+│   │       ├── index.ts        # bootstrap: Fastify + io, крутит реестр games
+│   │       ├── games.ts        # РЕЕСТР игр (GameModule[]) — точка расширения
+│   │       ├── auth/           # JWT (jose) + пароли (Bun.password) + routes
+│   │       │                   #   маунтятся только если задан DATABASE_URL
+│   │       ├── codenames/      # manager.ts (логика комнат) + handlers.ts
+│   │       └── uno/            # manager.ts + handlers.ts
+│   └── web/                    # фронтенд (Vite). STANDALONE: вне workspaces,
+│       └── src/                #   свой bun.lock, форматируется biome
+│           ├── App.tsx, main.tsx
+│           ├── components/ui/  # ТОЛЬКО используемые shadcn-компоненты
+│           ├── lib/utils.ts    # cn()
+│           └── play/           # игровой фронт
+│               ├── home/       # хаб выбора игры
+│               ├── net/        # socket.ts (клиент socket.io)
+│               ├── online/     # общий онлайн-флоу: лобби, чат, комната
+│               ├── codenames/  # экраны + useCodenamesGame
+│               ├── uno/        # экраны + useUnoRoom
+│               ├── theme.css, icons.tsx, settings.ts
+│               └── (движок — НЕ здесь; берётся из packages/shared)
+├── packages/
+│   ├── shared/                 # ЕДИНЫЙ чистый TS-движок (без I/O), с тестами
+│   │   └── src/
+│   │       ├── index.ts        # barrel: codenames + uno + events + roomCode
+│   │       ├── events.ts       # типизированные socket-события client⇄server
+│   │       ├── roomCode.ts
+│   │       ├── codenames/      # types, engine, dictionary, bot, coop, view
+│   │       └── uno/            # types, deck, rules, round, play, special,
+│   │                           #   draw, timeout, engine, bot, view
+│   └── db/                     # Prisma client + schema (User, GameResult, AliasWord)
+├── docs/                       # архитектура, спеки игр, БД, mvp-план
+├── design/final.html           # утверждённый дизайн-референс («Уютный вечер»)
+├── docker-compose.yml          # Postgres (+ сервис под деплой)
+└── tsconfig.base.json
+```
 
-- Коднеймс: движок, бот-капитан, кооп, онлайн-комнаты (Convex), чат, таймер ходов.
-- УНО: движок (108 карт, очки, 7 вариаций правил: стэкинг +2/+4, добор до
-  играбельной, force play, jump-in, 7-0, челлендж +4), онлайн-комнаты с ботами,
-  кнопка «UNO!» со штрафом и поимкой, стол по design/final.html, таймер хода.
-- Перенос на Convex и merge в `main` (PR #47), деплой на boardnight.
-- UI-правки: светлее нейтральные карты (#39), чат под полем/сворачиваемый (#40),
-  модал настроек: тема, ровные карточки, звук+громкость (#43).
-- Главный экран-хаб по design/final.html: выбор игры (Коднеймс / UNO «скоро» /
-  ALIAS «скоро»), роуты `/` и `/codenames`; все эмодзи заменены на SVG-иконки.
+### Один движок на всех (DRY)
 
-## В планах
+`packages/shared` — **единственный** источник игровой логики и типов. Его
+использует и сервер (`workspace:*`), и фронт. Фронт импортит через алиас
+`@shared` (`vite.config.ts` + tsconfig `paths` → `packages/shared/src`;
+`server.fs.allow` пускает Vite читать пакет выше корня `apps/web`):
 
-- Alias: таймер раунда, словари по сложности.
-- Прод-деплой boardnight (отдельная база, без тестовых комнат).
-- Решить судьбу старых PR #44/#45/#46 (правки для legacy socket.io-версии).
+```ts
+import type { Team } from "@shared";            // barrel
+import type { UnoRules } from "@shared/uno/types"; // глубокий импорт
+```
 
-## Журнал
+Не копируй движок в `apps/web`. Любая правка правил — только в `packages/shared`.
 
-- 2026-06-13: Hero главной страницы (`src/play/home/`) сведён с макетом Figma:
-  фоновое изображение из Figma, flex-раскладка, H1 с градиентом, CTA-кнопки,
-  активная комната с отступами 52/64/52px, адаптивный контейнер 95% до 1920px;
-  убраны CSS-сцена и hero-features.
-- 2026-06-11: УНО Стол v2 (`src/play/uno/`): большой стол, соперники по дуге
-  (`seatPos`), веер рубашек (`BackFan`), анимация полёта карты на сброс
-  (`.uno-fly`, по событиям лога), новый `sounds.ts` (WebAudio, уважает настройки
-  звука), полностью перерисованные настройки лобби (карточки-тогглы + поля).
-- 2026-06-11: УНО целиком: `convex/engine/uno/` (движок + бот + redacted view,
-  24 теста), `convex/unoRooms.ts` (комнаты, боты, таймер), `src/play/uno/`
-  (лобби с настройками правил, стол с анимациями). Дефолт — классика,
-  вариации включаются тогглами в лобби.
-- 2026-06-11: Главный экран-хаб (выбор игры) по design/final.html; убраны все
-  эмодзи из UI — заменены SVG-иконками (`icons.tsx`); добавлен CLAUDE.md.
-- 2026-06-11: Convex-версия слита в main (PR #47) вместе с #39/#40/#43;
-  задеплоена на https://preview-boardnight-f7caeff8.viktor.space, онлайн проверен.
+## Как добавить новую игру
+
+1. **Движок** — `packages/shared/src/<game>/`: чистые функции
+   (`applyAction(state, action) -> newState | error`), типы, `view` (redacted
+   под каждого игрока), при желании `bot`. Добавь тесты (`*.test.ts`, `bun test`)
+   и реэкспорт в `packages/shared/src/index.ts`.
+2. **Серверная комната** — `apps/server/src/<game>/manager.ts` (комнаты, боты,
+   таймеры поверх движка) + `handlers.ts` с
+   `export function register<Game>(nsp: <Game>Namespace): void`.
+3. **Регистрация** — одна запись в `apps/server/src/games.ts`:
+   `{ namespace: "/<game>", name: "<Game>", register: (nsp) => register<Game>(nsp as never) }`.
+   `index.ts` поднимет неймспейс автоматически — больше серверный bootstrap не трогаем.
+4. **Фронт** — `apps/web/src/play/<game>/` (экраны + хук комнаты, импорт движка
+   из `@shared`), и добавь игру в хаб `play/home/`.
+
+## Конвенции
+
+- **Дизайн строго по `design/final.html`**: токены в `play/theme.css`, светлая
+  тема «Уютный вечер», тёмная «Лаунж», шрифты Nunito + Caveat.
+- **Никаких эмодзи в UI** — только свои SVG-иконки (`play/icons.tsx`). Без
+  «AI-слопа»: без выдуманных цифр, лишних бейджей и пустых украшательств.
+- UI и тексты — на русском (архитектура готова к i18n).
+- В `components/ui` держим **только реально используемые** shadcn-компоненты.
+- Серверные хендлеры авторитарны; клиент шлёт намерения, не состояния.
+
+## Форматирование, тесты, CI
+
+- **Корень монорепо** (`apps/server`, `packages/*`): prettier + eslint,
+  типчек через `bun run --filter '*' typecheck`, тесты `bun test`.
+- **`apps/web` — STANDALONE**: намеренно вне root workspaces, форматируется
+  biome (`bun run check`). Не возвращай его в workspaces / `.prettierignore` /
+  eslint-ignore — иначе root-CI падает (frozen lockfile + format check).
+- **Root CI** (`.github/workflows/ci.yml`, на каждый PR и push в main):
+  `bun install --frozen-lockfile` → `lint` → `format:check` → `typecheck` →
+  `bun test`. CI **не** трогает `apps/web` — фронтовую сборку (`bun run build` /
+  `bun run dev`) проверяй локально.
+
+## Локальный запуск
+
+- БД: `docker compose up -d` (Postgres). Миграции/клиент — `packages/db` (Prisma).
+- Сервер: `bun run dev:server` (без `DATABASE_URL` — гостевой режим, auth выключен).
+- Фронт: `cd apps/web && bun install && bun run dev` (Vite, по умолчанию :5173;
+  сервер на :3001, переопределяется `VITE_SERVER_URL`).
+
+## Работа с репозиторием
+
+- Изменения — через PR в `main`, **squash merge**. Ветки именуй по типу:
+  `feat/…`, `refactor/…`, `chore/…`.
+
+## История
+
+- 2026-06-14: Чистка и DRY. Удалены неиспользуемые shadcn-компоненты и осиротевший
+  код; сервер переведён на реестр игр (`games.ts`); фронт перестал дублировать
+  движок и импортит `@shared` из `packages/shared` (единый источник).
+- 2026-06-14: Полная миграция с Convex на self-hosted VPS-стек: единый socket.io
+  сервер (`apps/server`, неймспейсы по играм), Postgres + Prisma (`packages/db`,
+  аккаунты и статистика), Convex и старый фронт удалены, Uno-движок разнесён по
+  модулям в `packages/shared`.
