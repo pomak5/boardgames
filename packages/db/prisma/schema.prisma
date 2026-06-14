@@ -1,0 +1,40 @@
+// Схема БД boardgames: аккаунты, статистика партий, словари Alias.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  nickname     String
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  results      GameResult[]
+}
+
+model GameResult {
+  id       String   @id @default(cuid())
+  game     String // "codenames" | "uno"
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  won      Boolean
+  team     String? // команда в Коднеймс; null для Uno
+  score    Int? // очки в Uno; null для Коднеймс
+  playedAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([game])
+}
+
+model AliasWord {
+  id         String @id @default(cuid())
+  word       String @unique
+  difficulty String // "easy" | "medium" | "hard"
+
+  @@index([difficulty])
+}
