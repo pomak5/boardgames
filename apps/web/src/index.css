@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -187,5 +188,29 @@
       padding-right: 2rem;
       max-width: 1280px;
     }
+  }
+}
+
+
+/* ===== Codenames game design tokens (из pomak5/codenames) ===== */
+@theme {
+  --color-game-bg: #f5ebe0;
+  --color-game-red: #c04533;
+  --color-game-blue: #4482ba;
+  --color-game-neutral: #f4eadc;
+  --color-game-assassin: #2d2d2d;
+  --color-game-text: #4a3e35;
+  --color-game-border: #e3d3c1;
+  --color-game-panel: #fbf5ee;
+}
+@layer utilities {
+  .shadow-card-sm {
+    box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.1), 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+  }
+  .shadow-card-md {
+    box-shadow: 0 6px 0 0 rgba(0, 0, 0, 0.1), 0 4px 6px 0 rgba(0, 0, 0, 0.05);
+  }
+  .shadow-panel {
+    box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.05);
   }
 }
