@@ -33,8 +33,17 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
     }
   }
 
-  /** Снимает активный таймер хода и обнуляет дедлайн. */
-  function clearTimer(room: Room): void {
+  /** Шлёт текущий дедлайн хода всем сокетам комнаты (отдельно от полного broadcast). */
+  function emitTimer(room: Room): void {
+    for (const [, socket] of nsp.sockets) {
+      const data = socket.data;
+      if (data.roomCode !== room.code || !data.playerId) continue;
+      socket.emit('game:timer', room.phase === 'playing' ? room.turnDeadline : null);
+    }
+  }
+
+  /** Снимает таймер хода без рассылки. */
+  function dropTimer(room: Room): void {
     if (room.timer) {
       clearTimeout(room.timer);
       room.timer = null;
@@ -42,9 +51,18 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
     room.turnDeadline = null;
   }
 
-  /** Ставит таймер на дедлайн (ms) с произвольным действием по срабатыванию. */
+  /** Снимает таймер хода и рассылает обнулённый дедлайн. */
+  function clearTimer(room: Room): void {
+    dropTimer(room);
+    emitTimer(room);
+  }
+
+  /**
+   * Ставит таймер на дедлайн (ms) и СРАЗУ рассылает его клиентам.
+   * По срабатыванию: фаза clue → тайм-аут капитана, фаза guess → авто-пас.
+   */
   function setDeadline(room: Room, deadline: number, onExpire: () => void): void {
-    clearTimer(room);
+    dropTimer(room);
     room.turnDeadline = deadline;
     const game = room.game;
     const delay = Math.max(0, deadline - Date.now());
@@ -54,6 +72,7 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
       if (!manager.get(room.code) || room.game !== game || room.phase !== 'playing') return;
       onExpire();
     }, delay);
+    emitTimer(room);
   }
 
   /** Тайм-аут отгадывания: ход переходит другой команде. */
@@ -75,7 +94,10 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
   /** Таймер фазы отгадывания (turnSec). */
   function armGuessTimer(room: Room): void {
     const t = room.settings.timer;
-    if (!t?.enabled) return;
+    if (!t?.enabled) {
+      clearTimer(room);
+      return;
+    }
     setDeadline(room, Date.now() + t.turnSec * 1000, () => onGuessTimeout(room));
   }
 
@@ -87,16 +109,21 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
    * Фаза guess: turnSec на отгадывание. Бот-капитану таймер не нужен — ответит сам.
    */
   function scheduleTurnTimer(room: Room): void {
-    clearTimer(room);
     const t = room.settings.timer;
     const game = room.game;
-    if (!t?.enabled || room.phase !== 'playing' || !game || game.phase === 'finished') return;
+    if (!t?.enabled || room.phase !== 'playing' || !game || game.phase === 'finished') {
+      clearTimer(room);
+      return;
+    }
     if (game.phase === 'guess') {
       armGuessTimer(room);
       return;
     }
     // фаза clue
-    if (room.settings.botCaptains[game.turn]) return;
+    if (room.settings.botCaptains[game.turn]) {
+      clearTimer(room);
+      return;
+    }
     const isFirstClue = game.log.length === 0;
     const sec = isFirstClue ? (t.firstTurnSec ?? t.turnSec * 2) : t.turnSec;
     setDeadline(room, Date.now() + sec * 1000, () => {
