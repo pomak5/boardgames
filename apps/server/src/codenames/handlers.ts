@@ -1,6 +1,6 @@
 /** Socket-хендлеры Коднеймс на namespace /codenames. Авторитарный сервер: клиент шлёт намерения. */
 import type { Namespace } from 'socket.io';
-import type { ClientToServerEvents, ServerToClientEvents } from '@boardgames/shared';
+import type { ClientToServerEvents, ServerToClientEvents, Team } from '@boardgames/shared';
 import { RoomError, RoomManager } from './manager';
 import type { Room } from './manager';
 
@@ -9,6 +9,8 @@ const BOT_DELAY_MS = Number(process.env.BOT_DELAY_MS ?? 1200);
 interface SocketData {
   roomCode?: string;
   playerId?: string;
+  /** id авторизованного пользователя (из JWT handshake); undefined у гостей. */
+  userId?: string;
 }
 
 type CodenamesNamespace = Namespace<
@@ -30,6 +32,37 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
       const gameView = manager.viewFor(room, data.playerId);
       if (gameView) socket.emit('game:state', gameView);
       socket.emit('game:timer', room.phase === 'playing' ? room.turnDeadline : null);
+    }
+  }
+
+  /** Пишет результат партии в БД для всех авторизованных игроков комнаты. */
+  async function recordFinish(room: Room): Promise<void> {
+    const game = room.game;
+    if (!process.env.DATABASE_URL || !game || game.winner == null) return;
+    const winner = game.winner;
+    const recipients: { userId: string; team: Team }[] = [];
+    for (const [, socket] of nsp.sockets) {
+      const d = socket.data;
+      if (d.roomCode !== room.code || !d.playerId || !d.userId) continue;
+      const player = room.players.get(d.playerId);
+      if (!player || !player.team) continue;
+      recipients.push({ userId: d.userId, team: player.team });
+    }
+    if (recipients.length === 0) return;
+    try {
+      const { recordGameResult } = await import('@boardgames/db');
+      await Promise.all(
+        recipients.map((r) =>
+          recordGameResult({
+            game: 'codenames',
+            userId: r.userId,
+            won: r.team === winner,
+            team: r.team,
+          }),
+        ),
+      );
+    } catch (e) {
+      console.error('recordGameResult failed', e);
     }
   }
 
@@ -287,6 +320,7 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
           scheduleTurnTimer(room);
         }
         scheduleBot(room);
+        if (after?.phase === 'finished') void recordFinish(room);
       }),
     );
 
