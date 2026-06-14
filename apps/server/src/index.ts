@@ -12,6 +12,11 @@ await app.register(cors, { origin: WEB_ORIGIN });
 app.get('/health', () => ({ ok: true, ts: Date.now() }));
 
 if (process.env.DATABASE_URL) {
+  if (!process.env.JWT_SECRET) {
+    throw new Error(
+      'JWT_SECRET обязателен при заданном DATABASE_URL (включён auth). Задайте длинную случайную строку.',
+    );
+  }
   const { registerAuthRoutes } = await import('./auth/routes');
   await registerAuthRoutes(app);
   app.log.info('auth routes mounted: /auth/register, /auth/login, /auth/me');
