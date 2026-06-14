@@ -19,9 +19,33 @@ interface LoginBody {
   password?: string;
 }
 
+/**
+ * Простейший in-memory лимитер «N попыток за окно» по ключу (IP+маршрут).
+ * Без внешних зависимостей; защищает от брутфорса и спам-регистрации.
+ */
+const RATE_LIMIT = 10;
+const RATE_WINDOW_MS = 60_000;
+const rateHits = new Map<string, { count: number; resetAt: number }>();
+
+function rateLimited(key: string): boolean {
+  const now = Date.now();
+  if (rateHits.size > 5000) {
+    for (const [k, v] of rateHits) if (now > v.resetAt) rateHits.delete(k);
+  }
+  const entry = rateHits.get(key);
+  if (!entry || now > entry.resetAt) {
+    rateHits.set(key, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return false;
+  }
+  entry.count += 1;
+  return entry.count > RATE_LIMIT;
+}
+
 export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
   app.post("/auth/register", async (req, reply) => {
     const { email, nickname, password } = (req.body ?? {}) as RegisterBody;
+    if (rateLimited(`register:${req.ip}`))
+      return reply.code(429).send({ error: "Слишком много попыток, попробуйте позже" });
     if (!email || !nickname || !password)
       return reply.code(400).send({ error: "email, nickname и password обязательны" });
     if (password.length < 6)
@@ -35,6 +59,8 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
 
   app.post("/auth/login", async (req, reply) => {
     const { email, password } = (req.body ?? {}) as LoginBody;
+    if (rateLimited(`login:${req.ip}`))
+      return reply.code(429).send({ error: "Слишком много попыток, попробуйте позже" });
     if (!email || !password)
       return reply.code(400).send({ error: "email и password обязательны" });
     const row = await findUserByEmail(email);
