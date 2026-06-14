@@ -13,6 +13,7 @@ export interface UserPublic {
   id: string;
   email: string;
   nickname: string;
+  avatarUrl: string | null;
   createdAt: Date;
 }
 
@@ -20,10 +21,15 @@ export interface UserWithHash extends UserPublic {
   passwordHash: string;
 }
 
-export interface UserStats {
+export interface GameStats {
   total: number;
   wins: number;
   losses: number;
+}
+
+/** Сводная статистика игрока: общая + разбивка по играм. */
+export interface UserStats extends GameStats {
+  byGame: Record<GameId, GameStats>;
 }
 
 export interface GameResultInput {
@@ -34,13 +40,36 @@ export interface GameResultInput {
   score?: number | null;
 }
 
+export interface RecentResult {
+  game: GameId;
+  won: boolean;
+  team: string | null;
+  score: number | null;
+  playedAt: Date;
+}
+
+export interface LeaderboardEntry {
+  userId: string;
+  nickname: string;
+  avatarUrl: string | null;
+  wins: number;
+  total: number;
+}
+
 function toPublic(u: {
   id: string;
   email: string;
   nickname: string;
+  avatarUrl: string | null;
   createdAt: Date;
 }): UserPublic {
-  return { id: u.id, email: u.email, nickname: u.nickname, createdAt: u.createdAt };
+  return {
+    id: u.id,
+    email: u.email,
+    nickname: u.nickname,
+    avatarUrl: u.avatarUrl,
+    createdAt: u.createdAt,
+  };
 }
 
 export async function createUser(
@@ -64,6 +93,14 @@ export async function getUserById(id: string): Promise<UserPublic | null> {
   return u ? toPublic(u) : null;
 }
 
+export async function updateUserAvatar(
+  userId: string,
+  avatarUrl: string | null,
+): Promise<UserPublic> {
+  const u = await prisma.user.update({ where: { id: userId }, data: { avatarUrl } });
+  return toPublic(u);
+}
+
 export async function recordGameResult(r: GameResultInput): Promise<void> {
   await prisma.gameResult.create({
     data: {
@@ -76,12 +113,90 @@ export async function recordGameResult(r: GameResultInput): Promise<void> {
   });
 }
 
+function emptyStats(): GameStats {
+  return { total: 0, wins: 0, losses: 0 };
+}
+
 export async function getUserStats(userId: string): Promise<UserStats> {
-  const [total, wins] = await Promise.all([
-    prisma.gameResult.count({ where: { userId } }),
-    prisma.gameResult.count({ where: { userId, won: true } }),
+  const rows = await prisma.gameResult.groupBy({
+    by: ["game", "won"],
+    where: { userId },
+    _count: { _all: true },
+  });
+  const byGame: Record<GameId, GameStats> = {
+    codenames: emptyStats(),
+    uno: emptyStats(),
+  };
+  const overall = emptyStats();
+  for (const r of rows) {
+    const count = r._count._all;
+    const bucket = byGame[r.game as GameId] ?? (byGame[r.game as GameId] = emptyStats());
+    bucket.total += count;
+    overall.total += count;
+    if (r.won) {
+      bucket.wins += count;
+      overall.wins += count;
+    } else {
+      bucket.losses += count;
+      overall.losses += count;
+    }
+  }
+  return { ...overall, byGame };
+}
+
+export async function getRecentResults(
+  userId: string,
+  limit = 30,
+): Promise<RecentResult[]> {
+  const rows = await prisma.gameResult.findMany({
+    where: { userId },
+    orderBy: { playedAt: "desc" },
+    take: limit,
+    select: { game: true, won: true, team: true, score: true, playedAt: true },
+  });
+  return rows.map((r) => ({
+    game: r.game as GameId,
+    won: r.won,
+    team: r.team,
+    score: r.score,
+    playedAt: r.playedAt,
+  }));
+}
+
+export async function getLeaderboard(limit = 20): Promise<LeaderboardEntry[]> {
+  const [totals, wins] = await Promise.all([
+    prisma.gameResult.groupBy({ by: ["userId"], _count: { _all: true } }),
+    prisma.gameResult.groupBy({
+      by: ["userId"],
+      where: { won: true },
+      _count: { _all: true },
+    }),
   ]);
-  return { total, wins, losses: total - wins };
+  const winMap = new Map(wins.map((w) => [w.userId, w._count._all]));
+  const ranked = totals
+    .map((t) => ({
+      userId: t.userId,
+      total: t._count._all,
+      wins: winMap.get(t.userId) ?? 0,
+    }))
+    .sort((a, b) => b.wins - a.wins || b.total - a.total)
+    .slice(0, limit);
+  if (ranked.length === 0) return [];
+  const users = await prisma.user.findMany({
+    where: { id: { in: ranked.map((r) => r.userId) } },
+    select: { id: true, nickname: true, avatarUrl: true },
+  });
+  const userMap = new Map(users.map((u) => [u.id, u]));
+  return ranked.map((r) => {
+    const u = userMap.get(r.userId);
+    return {
+      userId: r.userId,
+      nickname: u?.nickname ?? "—",
+      avatarUrl: u?.avatarUrl ?? null,
+      wins: r.wins,
+      total: r.total,
+    };
+  });
 }
 
 export async function seedAliasWords(
