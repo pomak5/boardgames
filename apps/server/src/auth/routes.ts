@@ -3,8 +3,11 @@ import type { FastifyInstance } from "fastify";
 import {
   createUser,
   findUserByEmail,
+  getLeaderboard,
+  getRecentResults,
   getUserById,
   getUserStats,
+  updateUserAvatar,
 } from "@boardgames/db";
 import { hashPassword, verifyPassword } from "./password";
 import { payloadFromHeader, signToken } from "./jwt";
@@ -18,6 +21,12 @@ interface LoginBody {
   email?: string;
   password?: string;
 }
+interface AvatarBody {
+  avatarUrl?: string | null;
+}
+
+/** Лимит размера аватара (~140 КБ data-URL). Аватары храним прямо в БД. */
+const MAX_AVATAR_LEN = 200_000;
 
 /**
  * Простейший in-memory лимитер «N попыток за окно» по ключу (IP+маршрут).
@@ -73,6 +82,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
         id: row.id,
         email: row.email,
         nickname: row.nickname,
+        avatarUrl: row.avatarUrl,
         createdAt: row.createdAt,
       },
     });
@@ -85,5 +95,31 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
     if (!user) return reply.code(404).send({ error: "Пользователь не найден" });
     const stats = await getUserStats(user.id);
     return reply.send({ user, stats });
+  });
+
+  app.post("/auth/avatar", async (req, reply) => {
+    const payload = await payloadFromHeader(req.headers.authorization);
+    if (!payload) return reply.code(401).send({ error: "Не авторизован" });
+    const { avatarUrl } = (req.body ?? {}) as AvatarBody;
+    if (avatarUrl != null) {
+      if (typeof avatarUrl !== "string" || !avatarUrl.startsWith("data:image/"))
+        return reply.code(400).send({ error: "Ожидается data:image/* URL" });
+      if (avatarUrl.length > MAX_AVATAR_LEN)
+        return reply.code(413).send({ error: "Аватар слишком большой (макс ~140 КБ)" });
+    }
+    const user = await updateUserAvatar(payload.userId, avatarUrl ?? null);
+    return reply.send({ user });
+  });
+
+  app.get("/auth/history", async (req, reply) => {
+    const payload = await payloadFromHeader(req.headers.authorization);
+    if (!payload) return reply.code(401).send({ error: "Не авторизован" });
+    const results = await getRecentResults(payload.userId, 30);
+    return reply.send({ results });
+  });
+
+  app.get("/leaderboard", async (_req, reply) => {
+    const entries = await getLeaderboard(20);
+    return reply.send({ entries });
   });
 }

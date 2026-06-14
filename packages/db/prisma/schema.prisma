@@ -13,6 +13,7 @@ model User {
   email        String       @unique
   nickname     String
   passwordHash String
+  avatarUrl    String? // data:image/* URL (загруженный аватар); null — инициалы
   createdAt    DateTime     @default(now())
   results      GameResult[]
 }
