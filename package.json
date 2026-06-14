@@ -2,7 +2,6 @@
   "name": "boardgames",
   "private": true,
   "workspaces": [
-    "apps/web",
     "apps/server",
     "packages/*"
   ],
@@ -14,7 +13,7 @@
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun test",
     "dev:server": "bun run --filter @boardgames/server dev",
-    "dev:web": "bun run --filter @boardgames/web dev"
+    "dev:web": "cd apps/space && bun run dev"
   },
   "devDependencies": {
     "@eslint/js": "^9.24.0",

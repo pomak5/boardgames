@@ -1,5 +1,5 @@
 {
-  "name": "convex-vite-starter",
+  "name": "boardgames-web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,21 +10,9 @@
     "check": "biome check .",
     "format": "biome check --write .",
     "lint": "biome lint .",
-    "typecheck": "tsc --noEmit",
-    "sync": "bunx convex dev --once",
-    "sync:build": "bunx convex dev --once && bun run build",
-    "logs": "bunx convex logs",
-    "logs:fetch": "bun run --bun scripts/logs.ts",
-    "test": "bun run --bun scripts/test.ts",
-    "test:auth": "bun run --bun scripts/auth.ts",
-    "test:demo": "bun run --bun scripts/demo-test.ts",
-    "screenshot": "bun run --bun scripts/screenshot.ts",
-    "env:get": "bunx convex env get",
-    "env:list": "bunx convex env list"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@auth/core": "^0.37.4",
-    "@convex-dev/auth": "^0.0.90",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -55,7 +43,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
-    "convex": "^1.31.2",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.23.22",
