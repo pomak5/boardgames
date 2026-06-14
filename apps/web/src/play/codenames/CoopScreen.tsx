@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { IconBot } from "../icons";
-import type { BotRisk, CoopGame } from "../shared";
+import type { BotRisk, CoopGame } from "@shared";
 import {
   BOARD_SIZE,
   coopGiveClue,
@@ -9,7 +9,7 @@ import {
   coopResult,
   createCoopGame,
   pickWords,
-} from "../shared";
+} from "@shared";
 import { CardTile } from "./CardTile";
 import { LogList } from "./LogList";
 import { sounds } from "./sounds";

@@ -5,7 +5,7 @@ import type {
   Clue,
   CodenamesState,
   Team,
-} from "../shared";
+} from "@shared";
 import {
   BOARD_SIZE,
   createGame,
@@ -15,7 +15,7 @@ import {
   pickWords,
   score,
   suggestClue,
-} from "../shared";
+} from "@shared";
 import { sounds } from "./sounds";
 
 export type CaptainMode = "bot" | "human";

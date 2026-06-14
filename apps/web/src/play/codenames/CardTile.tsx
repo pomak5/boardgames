@@ -1,5 +1,5 @@
 import { useSettings } from "../settings";
-import type { Card } from "../shared";
+import type { Card } from "@shared";
 import "./codenames.css";
 
 /** Карточка локальной игры или редактированный онлайн-вид (owner: null = скрыт). */

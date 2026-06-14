@@ -1,4 +1,4 @@
-import type { UnoRules } from "../shared/uno/types";
+import type { UnoRules } from "@shared/uno/types";
 import { IconBot, IconClose } from "../icons";
 import { Chat } from "../online/Chat";
 import type { UnoRoomApi } from "./useUnoRoom";

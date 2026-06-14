@@ -1,4 +1,4 @@
-import type { LogEntry, Team } from "../shared";
+import type { LogEntry, Team } from "@shared";
 
 const TEAM_RU: Record<Team, string> = { red: "Красные", blue: "Синие" };
 

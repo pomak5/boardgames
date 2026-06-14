@@ -8,7 +8,7 @@ import type {
   RoomSettings,
   RoomView,
   Team,
-} from "../shared";
+} from "@shared";
 import { getCodenamesSocket } from "../net/socket";
 
 export interface RoomApi {
