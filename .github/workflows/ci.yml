@@ -23,3 +23,21 @@ jobs:
         run: bun run typecheck
       - name: Tests
         run: bun test
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install (web)
+        run: bun install
+      - name: Biome check
+        run: bun run check
+      - name: Typecheck (web)
+        run: bun run typecheck
+      - name: Build (web)
+        run: bun run build
