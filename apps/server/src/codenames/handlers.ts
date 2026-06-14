@@ -42,11 +42,8 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
     room.turnDeadline = null;
   }
 
-  /**
-   * Ставит таймер на конкретный дедлайн (ms). По срабатыванию:
-   * фаза clue → тайм-аут капитана (пропуск хода), фаза guess → авто-пас.
-   */
-  function armTimer(room: Room, deadline: number): void {
+  /** Ставит таймер на дедлайн (ms) с произвольным действием по срабатыванию. */
+  function setDeadline(room: Room, deadline: number, onExpire: () => void): void {
     clearTimer(room);
     room.turnDeadline = deadline;
     const game = room.game;
@@ -55,37 +52,66 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
       room.timer = null;
       // Состояние сменилось (был ход) или комнаты уже нет — таймер устарел.
       if (!manager.get(room.code) || room.game !== game || room.phase !== 'playing') return;
-      if (!game) return;
-      if (game.phase === 'clue') manager.timeoutSkipClue(room);
-      else if (game.phase === 'guess') manager.timeoutPass(room);
-      else return;
-      broadcast(room);
-      scheduleTurnTimer(room);
-      scheduleBot(room);
+      onExpire();
     }, delay);
+  }
+
+  /** Тайм-аут отгадывания: ход переходит другой команде. */
+  function onGuessTimeout(room: Room): void {
+    manager.timeoutPass(room);
+    broadcast(room);
+    scheduleTurnTimer(room);
+    scheduleBot(room);
+  }
+
+  /** «Время игроков» истекло, а подсказки так и нет — ход переходит другой команде. */
+  function onClueGraceTimeout(room: Room): void {
+    manager.timeoutSkipClue(room);
+    broadcast(room);
+    scheduleTurnTimer(room);
+    scheduleBot(room);
+  }
+
+  /** Таймер фазы отгадывания (turnSec). */
+  function armGuessTimer(room: Room): void {
+    const t = room.settings.timer;
+    if (!t?.enabled) return;
+    setDeadline(room, Date.now() + t.turnSec * 1000, () => onGuessTimeout(room));
   }
 
   /**
    * Назначает таймер для текущего хода с нуля (вход в фазу).
-   * Первый ход партии — firstTurnSec (120), остальные — turnSec (60).
-   * Для бот-капитана на фазе clue таймер не нужен — бот ответит сам.
+   * Фаза clue (живой капитан): firstTurnSec (120) на первом ходу, иначе turnSec (60).
+   * Если капитан не успел — ход НЕ пропускаем: запускаем «время игроков» (turnSec),
+   * ход остаётся у капитана; только если и оно истекло — ход переходит.
+   * Фаза guess: turnSec на отгадывание. Бот-капитану таймер не нужен — ответит сам.
    */
   function scheduleTurnTimer(room: Room): void {
     clearTimer(room);
     const t = room.settings.timer;
     const game = room.game;
     if (!t?.enabled || room.phase !== 'playing' || !game || game.phase === 'finished') return;
-    if (game.phase === 'clue' && room.settings.botCaptains[game.turn]) return;
-    const isFirstClue = game.phase === 'clue' && game.log.length === 0;
+    if (game.phase === 'guess') {
+      armGuessTimer(room);
+      return;
+    }
+    // фаза clue
+    if (room.settings.botCaptains[game.turn]) return;
+    const isFirstClue = game.log.length === 0;
     const sec = isFirstClue ? (t.firstTurnSec ?? t.turnSec * 2) : t.turnSec;
-    armTimer(room, Date.now() + sec * 1000);
+    setDeadline(room, Date.now() + sec * 1000, () => {
+      // капитан не успел подумать — даём «время игроков», ход всё ещё у капитана
+      setDeadline(room, Date.now() + t.turnSec * 1000, () => onClueGraceTimeout(room));
+      broadcast(room);
+    });
   }
 
   /** Бонус за верное слово: продлевает текущий дедлайн отгадывания на bonusSec. */
   function addGuessBonus(room: Room): void {
     const t = room.settings.timer;
     if (!t?.enabled || room.turnDeadline == null) return;
-    armTimer(room, room.turnDeadline + (t.bonusSec ?? 0) * 1000);
+    const deadline = room.turnDeadline + (t.bonusSec ?? 0) * 1000;
+    setDeadline(room, deadline, () => onGuessTimeout(room));
   }
 
   /** Если у текущей команды бот-капитан — даёт подсказку с задержкой. */

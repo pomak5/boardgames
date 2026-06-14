@@ -165,11 +165,22 @@ export function OnlineGameScreen({ api }: { api: RoomApi }) {
                 >
                   Дать подсказку
                 </button>
+                {api.turnDeadline != null && (
+                  <div className="cn-clue__meta" style={{ textAlign: "center" }}>
+                    Осталось: <Countdown deadline={api.turnDeadline} />
+                  </div>
+                )}
               </div>
             ) : (
               <div className="cn-banner cn-banner--wait">
                 Ход: {TEAM_RU[game.turn]} — ждём подсказку
                 {room.settings.botCaptains[game.turn] ? " бота" : " капитана"}
+                {api.turnDeadline != null && (
+                  <>
+                    {" · "}
+                    <Countdown deadline={api.turnDeadline} />
+                  </>
+                )}
               </div>
             )
           ) : (
