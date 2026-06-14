@@ -13,7 +13,7 @@
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun test",
     "dev:server": "bun run --filter @boardgames/server dev",
-    "dev:web": "cd apps/space && bun run dev"
+    "dev:web": "cd apps/web && bun run dev"
   },
   "devDependencies": {
     "@eslint/js": "^9.24.0",
