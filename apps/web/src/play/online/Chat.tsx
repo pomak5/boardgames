@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { IconChat, IconChevron, IconSend } from "../icons";
-import type { ChatMessage } from "../shared";
+import type { ChatMessage } from "@shared";
 
 const COLLAPSE_KEY = "chat-collapsed";
 

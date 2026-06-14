@@ -1,5 +1,5 @@
 import { IconBot, IconKey } from "../icons";
-import type { RoomPlayer, Team } from "../shared";
+import type { RoomPlayer, Team } from "@shared";
 import { Chat } from "./Chat";
 import type { RoomApi } from "./useRoom";
 import "./online.css";

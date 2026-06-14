@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { UnoColor, UnoRules } from "../shared/uno/types";
-import type { UnoView } from "../shared/uno/view";
+import type { UnoColor, UnoRules } from "@shared/uno/types";
+import type { UnoView } from "@shared/uno/view";
 import { getUnoSocket } from "../net/socket";
 
 export interface UnoRoomPlayerView {

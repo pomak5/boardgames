@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { CardTile } from "../codenames/CardTile";
 import { LogList } from "../codenames/LogList";
 import { sounds } from "../codenames/sounds";
-import type { Team } from "../shared";
+import type { Team } from "@shared";
 import { Chat } from "./Chat";
 import type { RoomApi } from "./useRoom";
 import "../codenames/codenames.css";

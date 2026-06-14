@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { UnoCard, UnoColor } from "../shared/uno/types";
+import type { UnoCard, UnoColor } from "@shared/uno/types";
 import { IconBot } from "../icons";
 import { Chat } from "../online/Chat";
 import { unoSounds } from "./sounds";

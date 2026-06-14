@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { IconBot, IconKey } from "../icons";
-import type { Clue, Team } from "../shared";
+import type { Clue, Team } from "@shared";
 import { CardTile } from "./CardTile";
 import { LogList } from "./LogList";
 import type { GameApi } from "./useCodenamesGame";
