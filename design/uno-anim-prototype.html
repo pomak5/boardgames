@@ -14,8 +14,9 @@
   html,body{height:100%}
   body{margin:0; font-family:'Nunito','Inter',system-ui,sans-serif; color:var(--ink); overflow:hidden;
     background:radial-gradient(120% 90% at 50% 6%, #fbf2e2 0%, var(--paper) 55%, var(--paper2) 100%)}
-  .bg-doodles{position:fixed; inset:0; opacity:.06; pointer-events:none; font-size:34px; line-height:2.4; color:#6b4f33;
-    background:transparent; will-change:transform}
+  /* статичные дудлы — без анимации на движение мыши (это и лагало) */
+  .bg-doodles{position:fixed; inset:-40px; opacity:.05; pointer-events:none; color:#6b4f33; font-size:30px;
+    line-height:2.6; letter-spacing:18px; white-space:pre-wrap; overflow:hidden}
   .wrap{position:relative; height:100vh; display:flex; flex-direction:column}
   header{padding:12px 22px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; z-index:5}
   header h1{margin:0 12px 0 0; font-size:18px}
@@ -28,7 +29,6 @@
     background:radial-gradient(120% 100% at 50% 40%, #f7ecd8 0%, #ecdcc0 70%, #e4d0ac 100%);
     box-shadow: inset 0 0 0 2px rgba(120,90,55,.18), inset 0 14px 60px rgba(120,90,55,.12), 0 20px 50px rgba(80,55,30,.10)}
 
-  /* сиденья */
   .seat{position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:5px; width:120px}
   .seat .ava{position:relative; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center;
     font-weight:900; font-size:22px; color:#fff; box-shadow:0 4px 12px rgba(40,25,10,.25); border:3px solid #fff}
@@ -36,19 +36,19 @@
     box-shadow:0 0 0 3px #e3aa2e, 0 0 18px 4px rgba(227,170,46,.7); transition:opacity .3s}
   .seat.turn .ring{opacity:1; animation:pulse 1.4s ease-in-out infinite}
   @keyframes pulse{50%{box-shadow:0 0 0 4px #e3aa2e, 0 0 26px 8px rgba(227,170,46,.55)}}
-  .seat .nm{font-weight:800; font-size:13px}
-  .seat .cnt{font-size:11px; color:var(--muted)}
+  .seat .nm{font-weight:800; font-size:13px} .seat .cnt{font-size:11px; color:var(--muted)}
   .seat .stamp{position:absolute; left:50%; top:24px; transform:translate(-50%,-50%) scale(0); width:54px; height:54px;
-    border-radius:50%; border:4px solid var(--red); color:var(--red); display:flex; align-items:center; justify-content:center;
-    font-size:30px; font-weight:900; z-index:9}
+    border-radius:50%; border:4px solid var(--red); color:var(--red); display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:900; z-index:9}
 
-  .draw{position:absolute; left:calc(50% - 130px); top:48%; transform:translate(-50%,-50%); cursor:pointer}
+  .draw{position:absolute; left:calc(50% - 135px); top:48%; width:var(--card-w); height:var(--card-h);
+    transform:translate(-50%,-50%); cursor:pointer}
+  .draw .label{position:absolute; left:50%; top:calc(100% + 12px); transform:translateX(-50%); color:var(--muted); font-size:11px; font-weight:700; white-space:nowrap}
   .discard{position:absolute; left:50%; top:48%; width:0; height:0}
-  .dir{position:absolute; left:50%; top:48%; width:230px; height:230px; transform:translate(-50%,-50%); color:#b08a5c; opacity:.6; pointer-events:none}
+  .dir{position:absolute; left:50%; top:48%; width:230px; height:230px; transform:translate(-50%,-50%); color:#b08a5c; opacity:.55; pointer-events:none}
 
   .card{position:absolute; width:var(--card-w); height:var(--card-h); border-radius:13px; border:3px solid #fff;
     box-shadow:0 6px 14px rgba(40,25,10,.28); display:flex; align-items:center; justify-content:center;
-    transform:translate(-50%,-50%); will-change:transform; user-select:none; backface-visibility:hidden}
+    transform:translate(-50%,-50%); user-select:none; backface-visibility:hidden}
   .card .oval{position:absolute; inset:9px; border-radius:50%/40%; background:rgba(255,255,255,.92); transform:rotate(-22deg)}
   .card .big{position:relative; font-weight:900; font-size:40px}
   .card .idx{position:absolute; font-weight:900; font-size:14px}
@@ -60,18 +60,18 @@
   .c-back,.c-wild{background:var(--wild)}
   .c-back .oval,.c-wild .oval{background:conic-gradient(var(--red) 0 25%,var(--blue) 0 50%,var(--green) 0 75%,var(--yellow) 0)}
   .c-wild .big,.c-wild .idx{color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.5)}
-  /* глянец-блик, едет за курсором */
-  .card .gloss{position:absolute; inset:0; border-radius:13px; pointer-events:none;
-    background:radial-gradient(120px 120px at var(--gx,50%) var(--gy,0%), rgba(255,255,255,.5), rgba(255,255,255,0) 60%); opacity:0; transition:opacity .2s}
+  /* глянец только на hover, CSS — без JS на каждое движение */
+  .card .gloss{position:absolute; inset:0; border-radius:13px; pointer-events:none; opacity:0; transition:opacity .2s;
+    background:linear-gradient(120deg, rgba(255,255,255,0) 35%, rgba(255,255,255,.45) 50%, rgba(255,255,255,0) 65%)}
 
   .hand{position:absolute; left:50%; bottom:8px; transform:translateX(-50%); height:165px; display:flex; align-items:flex-end; justify-content:center}
   .slot{position:relative; margin:0 -16px; transform-origin:bottom center; transition:transform .18s cubic-bezier(.2,.8,.2,1)}
-  .slot .card{position:relative; transform:none; cursor:grab; transition:transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .16s; transform-style:preserve-3d}
+  .slot .card{position:relative; transform:none; cursor:grab; transition:transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .16s}
   .slot.deal .card{visibility:hidden}
   .slot:hover{transform:translateY(-20px) scale(1.06); z-index:50}
   .slot:hover .card .gloss{opacity:1}
   .slot.dragging{transition:none; z-index:200}
-  .flier{position:absolute; z-index:300; pointer-events:none}
+  .flier{position:absolute; z-index:300; pointer-events:none; will-change:transform}
   .burst{position:absolute; left:50%; top:48%; width:10px; height:10px; transform:translate(-50%,-50%); border-radius:50%; pointer-events:none; z-index:120}
   .uno-shout{position:absolute; left:50%; top:42%; transform:translate(-50%,-50%) scale(0); font-size:64px; font-weight:900;
     color:#fff; -webkit-text-stroke:3px var(--red); text-shadow:0 6px 0 rgba(0,0,0,.18); z-index:150; pointer-events:none}
@@ -88,7 +88,7 @@
     <h1>🎴 УНО — витрина анимаций</h1>
     <button class="btn" id="deal">Раздать (флип)</button>
     <button class="btn ghost" id="draw2">Тяни карту</button>
-    <button class="btn ghost" id="turn">Сменить ход (кольцо)</button>
+    <button class="btn ghost" id="turn">Сменить ход</button>
     <button class="btn ghost" id="rev">Реверс</button>
     <button class="btn ghost" id="wild">Wild-вспышка</button>
     <button class="btn ghost" id="plus2">+2 сопернику</button>
@@ -102,7 +102,7 @@
       <path d="M80 38a32 32 0 0 0-56-6"/><path d="M24 16v16h16" fill="currentColor" stroke="none"/>
       <path d="M20 62a32 32 0 0 0 56 6"/><path d="M76 84V68H60" fill="currentColor" stroke="none"/>
     </svg>
-    <div class="draw" id="draw" title="Взять карту"></div>
+    <div class="draw" id="draw" title="Взять карту"><span class="label">колода · взять карту</span></div>
     <div class="discard" id="discard"></div>
     <div class="timer" id="timer">30</div>
     <div class="hand" id="hand"></div>
@@ -113,7 +113,7 @@
 <script>
 const COLORS=["red","yellow","green","blue"];
 const VALUES=["0","1","2","3","4","5","6","7","8","9","⊘","⇄","+2"];
-const EASE=["cubic-bezier(.34,1.2,.5,1)","cubic-bezier(.22,1,.36,1)","cubic-bezier(.45,1.35,.55,1)","cubic-bezier(.3,.9,.4,1)"];
+const EASE=["cubic-bezier(.34,1.2,.5,1)","cubic-bezier(.22,1,.36,1)","cubic-bezier(.45,1.3,.55,1)","cubic-bezier(.3,.9,.4,1)"];
 const rand=(a,b)=>a+Math.random()*(b-a);
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -133,9 +133,25 @@ const dirEl=document.getElementById("dir");
 const timerEl=document.getElementById("timer");
 const shoutEl=document.getElementById("shout");
 
-drawEl.appendChild(makeCard({back:true}));
+// ── объёмная, чуть неряшливая колода ──
+function buildDeck(){
+  drawEl.querySelectorAll(".card").forEach(c=>c.remove());
+  const layers=7;
+  for(let i=0;i<layers;i++){
+    const c=makeCard({back:true});
+    const top=i===layers-1;
+    c.style.transform=`translate(-50%,-50%) translate(${rand(-3,3)}px, ${-i*2.2}px) rotate(${rand(-4,4)}deg)`;
+    c.style.zIndex=String(i);
+    c.style.boxShadow= top ? "0 8px 16px rgba(40,25,10,.32)" : "0 2px 4px rgba(40,25,10,.18)";
+    drawEl.appendChild(c);
+  }
+}
+buildDeck();
+function nudgeDeck(){ // лёгкое «снятие» верхней карты
+  const top=drawEl.querySelector(".card:last-of-type");
+  if(top) top.animate([{transform:top.style.transform},{transform:top.style.transform+" translateY(-4px)"},{transform:top.style.transform}],{duration:160,easing:"ease-out"});
+}
 
-// ── сиденья ──
 const SEATS=[
   {name:"Ты", col:"#2f6bb0", x:50, y:88},
   {name:"Маша", col:"#d6452f", x:50, y:10},
@@ -143,12 +159,9 @@ const SEATS=[
   {name:"Катя", col:"#e3aa2e", x:91, y:46},
 ];
 const seatEls=[];
-SEATS.forEach((s,i)=>{
-  const el=document.createElement("div"); el.className="seat"; el.style.left=s.x+"%"; el.style.top=s.y+"%";
-  el.innerHTML=`<div class="ava" style="background:${s.col}"><span class="ring"></span>${s.name[0]}<span class="stamp">⊘</span></div>
-    <div class="nm">${s.name}</div><div class="cnt">7 карт</div>`;
-  table.appendChild(el); seatEls.push(el);
-});
+SEATS.forEach(s=>{ const el=document.createElement("div"); el.className="seat"; el.style.left=s.x+"%"; el.style.top=s.y+"%";
+  el.innerHTML=`<div class="ava" style="background:${s.col}"><span class="ring"></span>${s.name[0]}<span class="stamp">⊘</span></div><div class="nm">${s.name}</div><div class="cnt">7 карт</div>`;
+  table.appendChild(el); seatEls.push(el); });
 let turn=0;
 function setTurn(i){ turn=(i+SEATS.length)%SEATS.length; seatEls.forEach((e,k)=>e.classList.toggle("turn",k===turn)); }
 function seatCenter(i){ const a=seatEls[i].querySelector(".ava").getBoundingClientRect(); return {x:a.left+a.width/2,y:a.top+a.height/2}; }
@@ -156,146 +169,109 @@ setTurn(0);
 
 function center(){ const t=table.getBoundingClientRect(); return {x:t.left+t.width*0.5, y:t.top+t.height*0.48}; }
 function deckCenter(){ const r=drawEl.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; }
+function discardOrigin(){ const r=discardEl.getBoundingClientRect(); return {x:r.left,y:r.top}; }
 
-/** Полёт с дугой/спином/переменной скоростью; flip=true → переворот рубашка→лицо. */
-function fly(card, from, to, {dur,lift,spin,ease,flip=false}={}){
-  return new Promise(resolve=>{
-    dur??=rand(440,800); lift??=rand(45,95); spin??=rand(-22,22); ease??=pick(EASE);
-    const flier=makeCard(flip?{back:true}:card); flier.classList.add("flier");
-    flier.style.left=from.x+"px"; flier.style.top=from.y+"px";
-    document.body.appendChild(flier);
-    const dx=to.x-from.x, dy=to.y-from.y, wob=rand(-18,18);
-    const a=flier.animate([
-      {transform:`translate(-50%,-50%) rotate(0) scale(1)`},
-      {transform:`translate(-50%,-50%) translate(${dx*.5+wob}px,${dy*.5-lift}px) rotate(${spin*.6}deg) scale(1.1)`,offset:.55},
-      {transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) rotate(${spin*1.1}deg) scale(.98)`,offset:.86},
-      {transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) rotate(${spin}deg) scale(1)`}
-    ],{duration:dur,easing:ease,fill:"forwards"});
-    if(flip){ // переворот к концу полёта
-      flier.animate([{transform:"rotateY(180deg)"},{transform:"rotateY(180deg)",offset:.6},{transform:"rotateY(0deg)"}],{duration:dur,easing:"ease-out",fill:"forwards"})
-        .onfinish=()=>{}; setTimeout(()=>flier.innerHTML=cardHTML(card), dur*0.62);
-    }
-    a.onfinish=()=>{ flier.remove(); resolve({spin}); };
-  });
-}
-
-// ── стопка сброса: карты остаются «неровно», новая чуть толкает соседей ──
 let pile=0;
-function landToPile(card, spin){
-  const jx=rand(-16,16), jy=rand(-12,12), rot=spin??rand(-26,26);
-  const el=makeCard(card); el.style.left=jx+"px"; el.style.top=jy+"px";
-  el.style.transform=`translate(-50%,-50%) rotate(${rot}deg)`; el.style.zIndex=String(100+pile);
-  el.style.boxShadow="0 10px 18px rgba(40,25,10,.28)"; discardEl.appendChild(el);
-  el.animate([{transform:`translate(-50%,-50%) rotate(${rot}deg) scale(1.07)`},{transform:`translate(-50%,-50%) rotate(${rot}deg) scale(1)`}],{duration:150,easing:"ease-out"});
-  // отдача: пара верхних карт чуть сдвигается
-  [...discardEl.children].slice(-4,-1).forEach(c=>{
-    const nx=rand(-3,3),ny=rand(-3,3); const base=c.style.transform;
-    c.animate([{transform:base},{transform:base+` translate(${nx}px,${ny}px)`}],{duration:180,easing:"ease-out",fill:"forwards"});
-  });
+
+/** Бросок ОДНОЙ карты: летит из стартовой точки в стопку и ТАМ ОСТАЁТСЯ — без подмены/телепорта. */
+function throwToPile(card, startScreen, startRot=0){
+  const o=discardOrigin();
+  const sx=startScreen.x-o.x, sy=startScreen.y-o.y;        // старт в координатах стопки
+  const jx=rand(-15,15), jy=rand(-11,11), rot=rand(-24,24); // «неровное» место
+  const lift=rand(50,95), dur=rand(460,800), ease=pick(EASE);
+  const mx=(sx+jx)/2+rand(-16,16), my=(sy+jy)/2-lift, spinMid=(startRot+rot)/2*0.7;
+  const el=makeCard(card); el.style.zIndex=String(100+pile); el.style.willChange="transform";
+  el.style.transform=`translate(-50%,-50%) translate(${jx}px,${jy}px) rotate(${rot}deg)`; // финальное (останется)
+  discardEl.appendChild(el);
+  const a=el.animate([
+    {transform:`translate(-50%,-50%) translate(${sx}px,${sy}px) rotate(${startRot}deg) scale(1)`},
+    {transform:`translate(-50%,-50%) translate(${mx}px,${my}px) rotate(${spinMid}deg) scale(1.1)`, offset:.55},
+    {transform:`translate(-50%,-50%) translate(${jx}px,${jy}px) rotate(${rot*1.05}deg) scale(1)`, offset:.9},
+    {transform:`translate(-50%,-50%) translate(${jx}px,${jy}px) rotate(${rot}deg) scale(1)`}
+  ],{duration:dur,easing:ease});
+  a.onfinish=()=>{ el.style.willChange="auto"; };
   pile++;
 }
 
 // ── рука ──
-function reflow(){
-  const slots=[...handEl.children]; const n=slots.length;
-  slots.forEach((s,i)=>{ const off=i-(n-1)/2; s.style.transform=`rotate(${off*4}deg) translateY(${Math.abs(off)*6}px)`; });
-}
+function reflow(){ const slots=[...handEl.children]; const n=slots.length;
+  slots.forEach((s,i)=>{ const off=i-(n-1)/2; s.style.transform=`rotate(${off*4}deg) translateY(${Math.abs(off)*6}px)`; }); }
+
 function addSlot(card){
   const slot=document.createElement("div"); slot.className="slot";
   const el=makeCard(card); slot.appendChild(el); handEl.appendChild(slot);
-  enableTilt(el); enableDrag(slot,el,card);
-  reflow(); return slot;
+  wireCard(slot,el,card); reflow(); return slot;
 }
+
+function playFrom(slot,el,card){
+  const r=el.getBoundingClientRect();
+  slot.remove(); reflow();
+  throwToPile(card,{x:r.left+r.width/2,y:r.top+r.height/2}, (parseFloat(slot.style.transform.match(/rotate\(([-\d.]+)deg\)/)?.[1])||0));
+}
+
+/** Клик = бросок. Драг = прицелиться: близко к центру — бросок, далеко — вернуть. */
+function wireCard(slot,el,card){
+  let st=null, moved=false;
+  el.addEventListener("pointerdown",e=>{ e.preventDefault(); el.setPointerCapture(e.pointerId);
+    st={x:e.clientX,y:e.clientY}; moved=false; slot.classList.add("dragging"); el.style.cursor="grabbing"; });
+  el.addEventListener("pointermove",e=>{ if(!st)return; const dx=e.clientX-st.x, dy=e.clientY-st.y;
+    if(Math.hypot(dx,dy)>6) moved=true;
+    el.style.transform=`translate(${dx}px,${dy}px) rotate(${dx*0.04}deg) scale(1.05)`; });
+  el.addEventListener("pointerup",e=>{ if(!st)return; slot.classList.remove("dragging"); el.style.cursor="grab";
+    const c=center(), dist=Math.hypot(e.clientX-c.x,e.clientY-c.y);
+    if(!moved || dist<190){ playFrom(slot,el,card); } else { el.style.transform=""; }
+    st=null; });
+}
+
 async function dealHand(n=7){
   handEl.innerHTML="";
   for(let i=0;i<n;i++){ const c=randomCard(); const slot=addSlot(c); slot.classList.add("deal");
-    const r=slot.querySelector(".card").getBoundingClientRect();
-    await fly(c, deckCenter(), {x:r.left+r.width/2,y:r.top+r.height/2}, {dur:rand(380,560),lift:rand(30,60),spin:rand(-8,8),flip:true});
-    slot.classList.remove("deal");
-    await sleep(rand(80,170));
-  }
+    const r=slot.querySelector(".card").getBoundingClientRect(); nudgeDeck();
+    await flyDeal(c, deckCenter(), {x:r.left+r.width/2,y:r.top+r.height/2});
+    slot.classList.remove("deal"); await sleep(rand(80,160)); }
 }
-async function drawOne(){
-  const c=randomCard(); const slot=addSlot(c); slot.classList.add("deal");
-  const r=slot.querySelector(".card").getBoundingClientRect();
-  await fly(c, deckCenter(), {x:r.left+r.width/2,y:r.top+r.height/2}, {dur:rand(360,520),lift:rand(30,55),flip:true});
-  slot.classList.remove("deal");
+async function drawOne(){ const c=randomCard(); const slot=addSlot(c); slot.classList.add("deal");
+  const r=slot.querySelector(".card").getBoundingClientRect(); nudgeDeck();
+  await flyDeal(c,deckCenter(),{x:r.left+r.width/2,y:r.top+r.height/2}); slot.classList.remove("deal"); }
+
+/** Раздача: рубашка летит из колоды и переворачивается на лицо у руки. */
+function flyDeal(card, from, to){
+  return new Promise(res=>{
+    const dur=rand(360,520), lift=rand(28,55), spin=rand(-8,8);
+    const flier=makeCard({back:true}); flier.classList.add("flier");
+    flier.style.left=from.x+"px"; flier.style.top=from.y+"px"; document.body.appendChild(flier);
+    const dx=to.x-from.x, dy=to.y-from.y;
+    flier.animate([
+      {transform:`translate(-50%,-50%) rotate(0) scale(1)`},
+      {transform:`translate(-50%,-50%) translate(${dx*.5}px,${dy*.5-lift}px) rotate(${spin}deg) scale(1.06)`, offset:.55},
+      {transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) rotate(0) scale(1)`}
+    ],{duration:dur,easing:"cubic-bezier(.3,.9,.4,1)",fill:"forwards"});
+    setTimeout(()=>{ flier.className="card flier "+("c-"+(card.color||"wild")); flier.innerHTML=cardHTML(card); }, dur*0.6);
+    setTimeout(()=>{ flier.remove(); res(); }, dur);
+  });
 }
 
-// глянец за курсором + лёгкий 3D-наклон
-function enableTilt(el){
-  el.addEventListener("pointermove",e=>{
-    const r=el.getBoundingClientRect(); const px=(e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
-    el.style.setProperty("--gx",(px*100)+"%"); el.style.setProperty("--gy",(py*100)+"%");
-  });
-}
-
-// drag-to-play
-function enableDrag(slot,el,card){
-  let drag=null;
-  el.addEventListener("pointerdown",e=>{
-    e.preventDefault(); el.setPointerCapture(e.pointerId);
-    const r=el.getBoundingClientRect();
-    drag={sx:e.clientX, sy:e.clientY, ox:r.left+r.width/2, oy:r.top+r.height/2};
-    slot.classList.add("dragging"); el.style.cursor="grabbing";
-  });
-  el.addEventListener("pointermove",e=>{
-    if(!drag) return;
-    const dx=e.clientX-drag.sx, dy=e.clientY-drag.sy;
-    el.style.transform=`translate(${dx}px,${dy}px) rotate(${dx*0.04}deg) scale(1.05)`;
-  });
-  el.addEventListener("pointerup",e=>{
-    if(!drag) return; const c=center();
-    const dist=Math.hypot(e.clientX-c.x, e.clientY-c.y);
-    slot.classList.remove("dragging");
-    if(dist < 180){ // доведён до центра — играем
-      const r=el.getBoundingClientRect(); slot.remove(); reflow();
-      fly(card,{x:r.left+r.width/2,y:r.top+r.height/2}, {x:c.x+rand(-14,14),y:c.y+rand(-10,10)}, {dur:rand(280,460),lift:rand(20,45),spin:rand(-26,26)})
-        .then(({spin})=>landToPile(card,spin));
-    } else { el.style.transform=""; } // не доведён — вернуть
-    drag=null; el.style.cursor="grab";
-  });
-}
-// клик = тоже бросок (для тех, кто не тащит)
-handEl.addEventListener("click",e=>{
-  const el=e.target.closest(".card"); const slot=el?.closest(".slot"); if(!slot||slot.classList.contains("dragging"))return;
-});
-
-// ── спецэффекты ──
+// ── эффекты ──
 function reverse(){ dirEl.animate([{transform:"translate(-50%,-50%) rotate(0)"},{transform:"translate(-50%,-50%) rotate(180deg)"}],{duration:600,easing:"cubic-bezier(.4,1.3,.5,1)",fill:"forwards"}); }
-function wildBurst(){
-  const c=pick(["#d6452f","#2f6bb0","#3f9956","#e3aa2e"]);
-  const b=document.createElement("div"); b.className="burst"; b.style.background=c; table.appendChild(b);
-  b.animate([{transform:"translate(-50%,-50%) scale(0)",opacity:.85},{transform:"translate(-50%,-50%) scale(60)",opacity:0}],{duration:650,easing:"ease-out"}).onfinish=()=>b.remove();
-}
-function flyPenalty(target,label,count){
-  const from=center();
-  for(let i=0;i<count;i++){
-    setTimeout(()=>fly({color:null,label}, {x:from.x+rand(-6,6),y:from.y+rand(-6,6)}, seatCenter(target), {dur:rand(420,600),lift:rand(40,70),spin:rand(-30,30),flip:false}), i*120);
-  }
-}
-function stampSkip(target){
-  const st=seatEls[target].querySelector(".stamp");
-  st.animate([{transform:"translate(-50%,-50%) scale(0) rotate(-30deg)",opacity:0},{transform:"translate(-50%,-50%) scale(1.15) rotate(8deg)",opacity:1,offset:.5},{transform:"translate(-50%,-50%) scale(1) rotate(0)",opacity:1,offset:.7},{transform:"translate(-50%,-50%) scale(1) rotate(0)",opacity:0}],{duration:1100,easing:"ease-out"});
-}
-function shoutUno(){
-  shoutEl.animate([{transform:"translate(-50%,-50%) scale(0) rotate(-12deg)",opacity:0},{transform:"translate(-50%,-50%) scale(1.25) rotate(6deg)",opacity:1,offset:.45},{transform:"translate(-50%,-50%) scale(1) rotate(-2deg)",opacity:1,offset:.7},{transform:"translate(-50%,-50%) scale(1) rotate(0)",opacity:0}],{duration:1300,easing:"cubic-bezier(.34,1.5,.5,1)"});
-  table.animate([{transform:"translate(0,0)"},{transform:"translate(-4px,2px)"},{transform:"translate(4px,-2px)"},{transform:"translate(0,0)"}],{duration:260});
-}
-function winFx(){
-  const w=seatEls[turn]; w.animate([{transform:"translate(-50%,-50%) scale(1)"},{transform:"translate(-50%,-50%) scale(1.35)"},{transform:"translate(-50%,-50%) scale(1.2)"}],{duration:700,easing:"cubic-bezier(.34,1.4,.5,1)",fill:"forwards"});
-  seatEls.forEach((e,k)=>{ if(k!==turn) e.animate([{opacity:1},{opacity:.25}],{duration:600,fill:"forwards"}); });
-}
-let timer=30, tInt=null;
+function wildBurst(){ const c=pick(["#d6452f","#2f6bb0","#3f9956","#e3aa2e"]); const b=document.createElement("div"); b.className="burst"; b.style.background=c; table.appendChild(b);
+  b.animate([{transform:"translate(-50%,-50%) scale(0)",opacity:.8},{transform:"translate(-50%,-50%) scale(55)",opacity:0}],{duration:600,easing:"ease-out"}).onfinish=()=>b.remove(); }
+function flyPenalty(target,label,count){ const from=center();
+  for(let i=0;i<count;i++){ setTimeout(()=>{ const fl=makeCard({color:null,label}); fl.classList.add("flier");
+    fl.style.left=from.x+"px"; fl.style.top=from.y+"px"; document.body.appendChild(fl);
+    const to=seatCenter(target), dx=to.x-from.x, dy=to.y-from.y;
+    fl.animate([{transform:"translate(-50%,-50%) scale(1)"},{transform:`translate(-50%,-50%) translate(${dx*.5}px,${dy*.5-60}px) rotate(${rand(-20,20)}deg) scale(1.05)`,offset:.55},{transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) rotate(${rand(-30,30)}deg) scale(.8)`}],{duration:rand(440,600),easing:"cubic-bezier(.34,1.1,.5,1)",fill:"forwards"}).onfinish=()=>fl.remove();
+  }, i*120); } }
+function stampSkip(t){ const st=seatEls[t].querySelector(".stamp");
+  st.animate([{transform:"translate(-50%,-50%) scale(0) rotate(-30deg)",opacity:0},{transform:"translate(-50%,-50%) scale(1.15) rotate(8deg)",opacity:1,offset:.5},{transform:"translate(-50%,-50%) scale(1) rotate(0)",opacity:1,offset:.7},{transform:"translate(-50%,-50%) scale(1) rotate(0)",opacity:0}],{duration:1100,easing:"ease-out"}); }
+function shoutUno(){ shoutEl.animate([{transform:"translate(-50%,-50%) scale(0) rotate(-12deg)",opacity:0},{transform:"translate(-50%,-50%) scale(1.25) rotate(6deg)",opacity:1,offset:.45},{transform:"translate(-50%,-50%) scale(1) rotate(-2deg)",opacity:1,offset:.7},{transform:"translate(-50%,-50%) scale(1)",opacity:0}],{duration:1300,easing:"cubic-bezier(.34,1.5,.5,1)"});
+  table.animate([{transform:"translate(0,0)"},{transform:"translate(-4px,2px)"},{transform:"translate(4px,-2px)"},{transform:"translate(0,0)"}],{duration:240}); }
+function winFx(){ const w=seatEls[turn]; w.animate([{transform:"translate(-50%,-50%) scale(1)"},{transform:"translate(-50%,-50%) scale(1.35)"},{transform:"translate(-50%,-50%) scale(1.2)"}],{duration:700,easing:"cubic-bezier(.34,1.4,.5,1)",fill:"forwards"});
+  seatEls.forEach((e,k)=>{ if(k!==turn) e.animate([{opacity:1},{opacity:.25}],{duration:600,fill:"forwards"}); }); }
+let tInt=null,timer=30;
 function runTimer(){ clearInterval(tInt); timer=30; timerEl.textContent=timer; timerEl.classList.remove("low");
   tInt=setInterval(()=>{ timer--; timerEl.textContent=timer; if(timer<=5)timerEl.classList.add("low"); if(timer<=0){clearInterval(tInt); setTurn(turn+1); runTimer();} },1000); }
 
-// фоновый параллакс
-const doodles=document.getElementById("doodles");
-doodles.innerHTML=("★ ✦ ◆ ✏ 🎲 ").repeat(400);
-window.addEventListener("pointermove",e=>{ const x=(e.clientX/innerWidth-.5)*16, y=(e.clientY/innerHeight-.5)*16; doodles.style.transform=`translate(${x}px,${y}px)`; });
-
-// кнопки
+document.getElementById("doodles").textContent=("★ ✦ ◆ ✏ 🎲 ♠ ").repeat(120);
 document.getElementById("deal").onclick=()=>dealHand();
 document.getElementById("draw2").onclick=()=>drawOne();
 drawEl.onclick=()=>drawOne();
@@ -308,8 +284,7 @@ document.getElementById("uno").onclick=shoutUno;
 document.getElementById("win").onclick=winFx;
 document.getElementById("reset").onclick=()=>{discardEl.innerHTML="";pile=0;};
 
-// старт
-setTimeout(()=>{ landToPile(randomCard()); dealHand(); runTimer(); },250);
+setTimeout(()=>{ throwToPile(randomCard(), center()); dealHand(); runTimer(); },250);
 </script>
 </body>
 </html>
