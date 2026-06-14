@@ -108,4 +108,5 @@ export interface ClientToServerEvents {
   "game:clue": (clue: Clue) => void;
   "game:guess": (cardIndex: number) => void;
   "game:pass": () => void;
+  "room:newRound": () => void;
 }

@@ -176,5 +176,14 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
         scheduleBot(room);
       }),
     );
+
+    socket.on('room:newRound', () =>
+      guard(() => {
+        const room = inRoom();
+        if (!room || !data.playerId) return;
+        manager.newRound(room, data.playerId);
+        broadcast(room);
+      }),
+    );
   });
 }

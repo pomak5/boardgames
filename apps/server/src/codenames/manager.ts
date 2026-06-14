@@ -40,6 +40,8 @@ export interface Room {
   game: CodenamesState | null;
   /** Подсказка бота уже запрошена (анти-дубль). */
   botPending: boolean;
+  /** Счёт серии в этой комнате (red/blue выигрыши). */
+  series: Record<Team, number>;
 }
 
 export const MAX_PLAYERS = 8;
@@ -72,6 +74,7 @@ export class RoomManager {
       chat: [],
       game: null,
       botPending: false,
+      series: { red: 0, blue: 0 },
     };
     this.rooms.set(code, room);
     return { room, player };
@@ -177,7 +180,11 @@ export class RoomManager {
     if (player.team !== game.turn || player.role !== 'guesser')
       throw new RoomError('Сейчас отгадывает другая команда');
     room.game = guess(game, cardIndex);
-    if (room.game.phase === 'finished') room.phase = 'finished';
+    if (room.game.phase === 'finished') {
+      room.phase = 'finished';
+      const winner = room.game.winner;
+      if (winner) room.series[winner] += 1;
+    }
   }
 
   pass(room: Room, playerId: string): void {
@@ -185,6 +192,15 @@ export class RoomManager {
     if (player.team !== game.turn || player.role !== 'guesser')
       throw new RoomError('Сейчас ходит другая команда');
     room.game = pass(game);
+  }
+
+  /** Новый раунд: комната возвращается в лобби, игроки и счёт серии остаются. */
+  newRound(room: Room, playerId: string): void {
+    if (playerId !== room.hostId) throw new RoomError('Новый раунд начинает хост');
+    if (room.phase !== 'finished') throw new RoomError('Игра ещё не закончена');
+    room.game = null;
+    room.phase = 'lobby';
+    room.botPending = false;
   }
 
   viewFor(room: Room, playerId: string): CodenamesView | null {
@@ -201,6 +217,7 @@ export class RoomManager {
       hostId: room.hostId,
       phase: room.phase,
       settings: room.settings,
+      series: room.series,
       players: [...room.players.values()].map(({ token: _token, ...p }) => p),
     };
   }

@@ -1,8 +1,7 @@
-import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
-import { api } from "../../../convex/_generated/api";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { UnoColor, UnoRules } from "../../../convex/engine/uno/types";
 import type { UnoView } from "../../../convex/engine/uno/view";
+import { getUnoSocket } from "../net/socket";
 
 export interface UnoRoomPlayerView {
   id: string;
@@ -43,6 +42,12 @@ export type UnoAction =
   | { type: "uno" }
   | { type: "catch" };
 
+export interface UnoSettingsPatch {
+  rules?: Partial<UnoRules>;
+  maxPlayers?: number;
+  timer?: Partial<{ enabled: boolean; turnSec: number }>;
+}
+
 export interface UnoRoomApi {
   room: UnoRoomView | null;
   game: UnoView | null;
@@ -54,11 +59,7 @@ export interface UnoRoomApi {
   create: (nickname: string) => void;
   join: (code: string, nickname: string) => void;
   leave: () => void;
-  updateSettings: (patch: {
-    rules?: Partial<UnoRules>;
-    maxPlayers?: number;
-    timer?: Partial<{ enabled: boolean; turnSec: number }>;
-  }) => void;
+  updateSettings: (patch: UnoSettingsPatch) => void;
   addBot: () => void;
   removeBot: (botId: string) => void;
   start: () => void;
@@ -69,126 +70,162 @@ export interface UnoRoomApi {
   clearError: () => void;
 }
 
+interface UnoJoinAck {
+  ok: boolean;
+  error?: string;
+  room?: UnoRoomView;
+  playerId?: string;
+  token?: string;
+}
+
+interface UnoServerEvents {
+  "room:state": (room: UnoRoomView) => void;
+  "room:closed": (reason: string) => void;
+  "chat:message": (msg: ChatMessage) => void;
+  "chat:history": (msgs: ChatMessage[]) => void;
+  "game:state": (view: UnoView) => void;
+  "game:timer": (deadline: number | null) => void;
+  "game:error": (message: string) => void;
+}
+
+interface UnoClientEvents {
+  "room:create": (
+    nickname: string,
+    settings: UnoSettingsPatch,
+    ack: (a: UnoJoinAck) => void,
+  ) => void;
+  "room:join": (
+    code: string,
+    nickname: string,
+    ack: (a: UnoJoinAck) => void,
+  ) => void;
+  "room:rejoin": (
+    code: string,
+    token: string,
+    ack: (a: UnoJoinAck) => void,
+  ) => void;
+  "room:leave": () => void;
+  "room:settings": (settings: UnoSettingsPatch) => void;
+  "room:addBot": () => void;
+  "room:removeBot": (botId: string) => void;
+  "room:start": () => void;
+  "room:nextRound": () => void;
+  "room:newGame": () => void;
+  "game:act": (action: UnoAction) => void;
+  "chat:send": (text: string) => void;
+}
+
 const SESSION_KEY = "uno-room-session";
 
-interface Session {
-  code: string;
-  token: string;
-}
-
-function loadSession(): Session | null {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as Session) : null;
-  } catch {
-    return null;
-  }
-}
-
-/** Ошибки Convex приходят как "Uncaught Error: текст ..." — достаём текст. */
-function cleanError(e: unknown): string {
-  const msg = e instanceof Error ? e.message : String(e);
-  const m = msg.match(/Uncaught Error: (.+?)(?: at handler| at |$)/s);
-  return (m?.[1] ?? msg).trim();
-}
-
 export function useUnoRoom(): UnoRoomApi {
-  const [session, setSession] = useState<Session | null>(loadSession);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const state = useQuery(
-    api.unoRooms.roomState,
-    session ? { code: session.code, token: session.token } : "skip",
+  const socket = useMemo(
+    () => getUnoSocket<UnoServerEvents, UnoClientEvents>(),
+    [],
   );
+  const [room, setRoom] = useState<UnoRoomView | null>(null);
+  const [game, setGame] = useState<UnoView | null>(null);
+  const [chat, setChat] = useState<ChatMessage[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [playerId, setPlayerId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [turnDeadline, setTurnDeadline] = useState<number | null>(null);
 
-  const mCreate = useMutation(api.unoRooms.create);
-  const mJoin = useMutation(api.unoRooms.join);
-  const mLeave = useMutation(api.unoRooms.leave);
-  const mSettings = useMutation(api.unoRooms.updateSettings);
-  const mAddBot = useMutation(api.unoRooms.addBot);
-  const mRemoveBot = useMutation(api.unoRooms.removeBot);
-  const mStart = useMutation(api.unoRooms.start);
-  const mNextRound = useMutation(api.unoRooms.nextRound);
-  const mNewGame = useMutation(api.unoRooms.newGame);
-  const mAct = useMutation(api.unoRooms.act);
-  const mChat = useMutation(api.unoRooms.sendChat);
-
-  const saveSession = useCallback((s: Session | null) => {
-    setSession(s);
-    if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s));
-    else localStorage.removeItem(SESSION_KEY);
+  const reset = useCallback(() => {
+    setRoom(null);
+    setGame(null);
+    setChat([]);
+    setPlayerId(null);
+    setTurnDeadline(null);
+    localStorage.removeItem(SESSION_KEY);
   }, []);
 
-  const run = useCallback(async (fn: () => Promise<unknown>) => {
-    setBusy(true);
-    setError(null);
-    try {
-      await fn();
-    } catch (e) {
-      setError(cleanError(e));
-    } finally {
-      setBusy(false);
+  const applyAck = useCallback((ack: UnoJoinAck) => {
+    if (ack.room && ack.playerId && ack.token) {
+      setRoom(ack.room);
+      setPlayerId(ack.playerId);
+      localStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({ code: ack.room.code, token: ack.token }),
+      );
     }
   }, []);
 
-  const create = useCallback(
-    (nickname: string) =>
-      void run(async () => {
-        const r = await mCreate({ nickname, settings: {} });
-        saveSession({ code: r.code, token: r.token });
-      }),
-    [mCreate, run, saveSession],
-  );
-
-  const join = useCallback(
-    (code: string, nickname: string) =>
-      void run(async () => {
-        const r = await mJoin({ code, nickname });
-        saveSession({ code: r.code, token: r.token });
-      }),
-    [mJoin, run, saveSession],
-  );
-
-  const leave = useCallback(() => {
-    if (session)
-      void mLeave({ code: session.code, token: session.token }).catch(() => {});
-    saveSession(null);
-  }, [session, mLeave, saveSession]);
-
-  const withSession = useCallback(
-    (fn: (s: Session) => Promise<unknown>) => {
-      if (!session) return;
-      void run(() => fn(session));
-    },
-    [session, run],
-  );
-
-  // комната пропала (распущена) или токен невалиден — чистим сессию
   useEffect(() => {
-    if (session && state === null) saveSession(null);
-  }, [session, state, saveSession]);
+    const onRoom = (r: UnoRoomView) => setRoom(r);
+    const onGame = (g: UnoView) => setGame(g);
+    const onTimer = (d: number | null) => setTurnDeadline(d);
+    const onMsg = (m: ChatMessage) => setChat((c) => [...c.slice(-99), m]);
+    const onHistory = (msgs: ChatMessage[]) => setChat(msgs);
+    const onError = (message: string) => setError(message);
+    const onClosed = () => reset();
+    socket.on("room:state", onRoom);
+    socket.on("game:state", onGame);
+    socket.on("game:timer", onTimer);
+    socket.on("chat:message", onMsg);
+    socket.on("chat:history", onHistory);
+    socket.on("game:error", onError);
+    socket.on("room:closed", onClosed);
+    return () => {
+      socket.off("room:state", onRoom);
+      socket.off("game:state", onGame);
+      socket.off("game:timer", onTimer);
+      socket.off("chat:message", onMsg);
+      socket.off("chat:history", onHistory);
+      socket.off("game:error", onError);
+      socket.off("room:closed", onClosed);
+    };
+  }, [socket, reset]);
+
+  // восстановление сессии после перезагрузки страницы
+  useEffect(() => {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return;
+    const { code, token } = JSON.parse(raw) as { code: string; token: string };
+    socket.emit("room:rejoin", code, token, (ack) => {
+      if (ack.ok) applyAck(ack);
+      else localStorage.removeItem(SESSION_KEY);
+    });
+  }, [socket, applyAck]);
+
+  const withAck = useCallback(
+    (emit: (done: (a: UnoJoinAck) => void) => void) => {
+      setBusy(true);
+      setError(null);
+      emit((ack) => {
+        setBusy(false);
+        if (ack.ok) applyAck(ack);
+        else setError(ack.error ?? "Ошибка");
+      });
+    },
+    [applyAck],
+  );
 
   return {
-    room: (state?.room ?? null) as UnoRoomView | null,
-    game: (state?.game ?? null) as UnoView | null,
-    chat: (state?.chat ?? []) as ChatMessage[],
+    room,
+    game,
+    chat,
     error,
-    playerId: state?.playerId ?? null,
+    playerId,
     busy,
-    turnDeadline: (state?.turnDeadline ?? null) as number | null,
-    create,
-    join,
-    leave,
-    updateSettings: patch =>
-      withSession(s => mSettings({ ...s, settings: patch })),
-    addBot: () => withSession(s => mAddBot({ ...s })),
-    removeBot: botId => withSession(s => mRemoveBot({ ...s, botId })),
-    start: () => withSession(s => mStart({ ...s })),
-    nextRound: () => withSession(s => mNextRound({ ...s })),
-    newGame: () => withSession(s => mNewGame({ ...s })),
-    act: action => withSession(s => mAct({ ...s, action })),
-    sendChat: text => withSession(s => mChat({ ...s, text })),
+    turnDeadline,
+    create: (nickname) =>
+      withAck((done) => socket.emit("room:create", nickname, {}, done)),
+    join: (code, nickname) =>
+      withAck((done) =>
+        socket.emit("room:join", code.trim().toUpperCase(), nickname, done),
+      ),
+    leave: () => {
+      socket.emit("room:leave");
+      reset();
+    },
+    updateSettings: (patch) => socket.emit("room:settings", patch),
+    addBot: () => socket.emit("room:addBot"),
+    removeBot: (botId) => socket.emit("room:removeBot", botId),
+    start: () => socket.emit("room:start"),
+    nextRound: () => socket.emit("room:nextRound"),
+    newGame: () => socket.emit("room:newGame"),
+    act: (action) => socket.emit("game:act", action),
+    sendChat: (text) => socket.emit("chat:send", text),
     clearError: () => setError(null),
   };
 }

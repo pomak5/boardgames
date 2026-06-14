@@ -1,15 +1,15 @@
-import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
-import { api } from "../../../convex/_generated/api";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   ChatMessage,
   Clue,
   CodenamesView,
+  JoinAck,
   PlayerRole,
   RoomSettings,
   RoomView,
   Team,
 } from "../shared";
+import { getCodenamesSocket } from "../net/socket";
 
 export interface RoomApi {
   room: RoomView | null;
@@ -35,124 +35,109 @@ export interface RoomApi {
 
 const SESSION_KEY = "room-session";
 
-interface Session {
-  code: string;
-  token: string;
-}
-
-function loadSession(): Session | null {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as Session) : null;
-  } catch {
-    return null;
-  }
-}
-
-/** Ошибки Convex приходят как "Uncaught Error: текст ..." — достаём текст. */
-function cleanError(e: unknown): string {
-  const msg = e instanceof Error ? e.message : String(e);
-  const m = msg.match(/Uncaught Error: (.+?)(?: at handler| at |$)/s);
-  return (m?.[1] ?? msg).trim();
-}
-
 export function useRoom(): RoomApi {
-  const [session, setSession] = useState<Session | null>(loadSession);
+  const socket = useMemo(getCodenamesSocket, []);
+  const [room, setRoom] = useState<RoomView | null>(null);
+  const [game, setGame] = useState<CodenamesView | null>(null);
+  const [chat, setChat] = useState<ChatMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [playerId, setPlayerId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Таймер ходов Коднеймс пока сервером не рассылается — задел на будущее.
+  const [turnDeadline] = useState<number | null>(null);
 
-  const state = useQuery(
-    api.rooms.roomState,
-    session ? { code: session.code, token: session.token } : "skip",
-  );
-
-  const mCreate = useMutation(api.rooms.create);
-  const mJoin = useMutation(api.rooms.join);
-  const mLeave = useMutation(api.rooms.leave);
-  const mSetTeam = useMutation(api.rooms.setTeam);
-  const mSettings = useMutation(api.rooms.updateSettings);
-  const mStart = useMutation(api.rooms.start);
-  const mNewRound = useMutation(api.rooms.newRound);
-  const mChat = useMutation(api.rooms.sendChat);
-  const mClue = useMutation(api.rooms.giveClue);
-  const mGuess = useMutation(api.rooms.guess);
-  const mPass = useMutation(api.rooms.pass);
-
-  const saveSession = useCallback((s: Session | null) => {
-    setSession(s);
-    if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s));
-    else localStorage.removeItem(SESSION_KEY);
+  const reset = useCallback(() => {
+    setRoom(null);
+    setGame(null);
+    setChat([]);
+    setPlayerId(null);
+    localStorage.removeItem(SESSION_KEY);
   }, []);
 
-  const run = useCallback(async (fn: () => Promise<unknown>) => {
-    setBusy(true);
-    setError(null);
-    try {
-      await fn();
-    } catch (e) {
-      setError(cleanError(e));
-    } finally {
-      setBusy(false);
+  const applyAck = useCallback((ack: JoinAck) => {
+    if (ack.room && ack.playerId && ack.token) {
+      setRoom(ack.room);
+      setPlayerId(ack.playerId);
+      localStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({ code: ack.room.code, token: ack.token }),
+      );
     }
   }, []);
 
-  const create = useCallback(
-    (nickname: string, settings: RoomSettings) =>
-      void run(async () => {
-        const r = await mCreate({ nickname, settings });
-        saveSession({ code: r.code, token: r.token });
-      }),
-    [mCreate, run, saveSession],
-  );
-
-  const join = useCallback(
-    (code: string, nickname: string) =>
-      void run(async () => {
-        const r = await mJoin({ code, nickname });
-        saveSession({ code: r.code, token: r.token });
-      }),
-    [mJoin, run, saveSession],
-  );
-
-  const leave = useCallback(() => {
-    if (session)
-      void mLeave({ code: session.code, token: session.token }).catch(() => {});
-    saveSession(null);
-  }, [session, mLeave, saveSession]);
-
-  const withSession = useCallback(
-    (fn: (s: Session) => Promise<unknown>) => {
-      if (!session) return;
-      void run(() => fn(session));
-    },
-    [session, run],
-  );
-
-  // комната пропала (распущена) или токен невалиден — чистим сессию
-  const room = state?.room ?? null;
   useEffect(() => {
-    if (session && state === null) saveSession(null);
-  }, [session, state, saveSession]);
+    const onRoom = (r: RoomView) => setRoom(r);
+    const onGame = (g: CodenamesView) => setGame(g);
+    const onMsg = (m: ChatMessage) => setChat((c) => [...c.slice(-99), m]);
+    const onHistory = (msgs: ChatMessage[]) => setChat(msgs);
+    const onError = (message: string) => setError(message);
+    const onClosed = () => reset();
+    socket.on("room:state", onRoom);
+    socket.on("game:state", onGame);
+    socket.on("chat:message", onMsg);
+    socket.on("chat:history", onHistory);
+    socket.on("game:error", onError);
+    socket.on("room:closed", onClosed);
+    return () => {
+      socket.off("room:state", onRoom);
+      socket.off("game:state", onGame);
+      socket.off("chat:message", onMsg);
+      socket.off("chat:history", onHistory);
+      socket.off("game:error", onError);
+      socket.off("room:closed", onClosed);
+    };
+  }, [socket, reset]);
+
+  // восстановление сессии после перезагрузки страницы
+  useEffect(() => {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return;
+    const { code, token } = JSON.parse(raw) as { code: string; token: string };
+    socket.emit("room:rejoin", code, token, (ack) => {
+      if (ack.ok) applyAck(ack);
+      else localStorage.removeItem(SESSION_KEY);
+    });
+  }, [socket, applyAck]);
+
+  const withAck = useCallback(
+    (emit: (done: (a: JoinAck) => void) => void) => {
+      setBusy(true);
+      setError(null);
+      emit((ack) => {
+        setBusy(false);
+        if (ack.ok) applyAck(ack);
+        else setError(ack.error ?? "Ошибка");
+      });
+    },
+    [applyAck],
+  );
 
   return {
-    room: room as RoomView | null,
-    game: (state?.game ?? null) as CodenamesView | null,
-    chat: (state?.chat ?? []) as ChatMessage[],
+    room,
+    game,
+    chat,
     error,
-    playerId: state?.playerId ?? null,
+    playerId,
     busy,
-    create,
-    join,
-    leave,
-    setTeam: (team, role) => withSession(s => mSetTeam({ ...s, team, role })),
-    updateSettings: settings => withSession(s => mSettings({ ...s, settings })),
-    start: () => withSession(s => mStart({ ...s })),
-    newRound: () => withSession(s => mNewRound({ ...s })),
-    sendChat: text => withSession(s => mChat({ ...s, text })),
-    giveClue: clue => withSession(s => mClue({ ...s, clue })),
-    guess: cardIndex => withSession(s => mGuess({ ...s, cardIndex })),
-    pass: () => withSession(s => mPass({ ...s })),
-    turnDeadline: (state?.turnDeadline ?? null) as number | null,
+    turnDeadline,
+    create: (nickname, settings) =>
+      withAck((done) => socket.emit("room:create", nickname, settings, done)),
+    join: (code, nickname) =>
+      withAck((done) =>
+        socket.emit("room:join", code.trim().toUpperCase(), nickname, done),
+      ),
+    leave: () => {
+      socket.emit("room:leave");
+      reset();
+    },
+    setTeam: (team, role) => socket.emit("room:setTeam", team, role),
+    updateSettings: (settings) => socket.emit("room:settings", settings),
+    start: () => socket.emit("room:start"),
+    newRound: () => socket.emit("room:newRound"),
+    sendChat: (text) => socket.emit("chat:send", text),
+    giveClue: (clue) => socket.emit("game:clue", clue),
+    guess: (cardIndex) => socket.emit("game:guess", cardIndex),
+    pass: () => socket.emit("game:pass"),
     clearError: () => setError(null),
   };
 }
