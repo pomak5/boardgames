@@ -6,9 +6,9 @@
  *   2. добавь одну запись в массив `games` ниже.
  * Больше менять ничего не нужно — `index.ts` поднимет неймспейс автоматически.
  */
-import type { Namespace } from "socket.io";
-import { registerCodenames } from "./codenames/handlers";
-import { registerUno } from "./uno/handlers";
+import type { Namespace } from 'socket.io';
+import { registerCodenames } from './codenames/handlers';
+import { registerUno } from './uno/handlers';
 
 export interface GameModule {
   /** socket.io namespace, напр. "/codenames" */
@@ -24,13 +24,13 @@ export interface GameModule {
 
 export const games: readonly GameModule[] = [
   {
-    namespace: "/codenames",
-    name: "Codenames",
+    namespace: '/codenames',
+    name: 'Codenames',
     register: (nsp) => registerCodenames(nsp as never),
   },
   {
-    namespace: "/uno",
-    name: "Uno",
+    namespace: '/uno',
+    name: 'Uno',
     register: (nsp) => registerUno(nsp as never),
   },
 ];

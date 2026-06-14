@@ -1,6 +1,6 @@
 /** Типы движка Uno. */
 
-export type UnoColor = "red" | "yellow" | "green" | "blue";
+export type UnoColor = 'red' | 'yellow' | 'green' | 'blue';
 
 export type UnoValue =
   | 0
@@ -13,11 +13,11 @@ export type UnoValue =
   | 7
   | 8
   | 9
-  | "skip"
-  | "reverse"
-  | "draw2"
-  | "wild"
-  | "wild4";
+  | 'skip'
+  | 'reverse'
+  | 'draw2'
+  | 'wild'
+  | 'wild4';
 
 export interface UnoCard {
   /** Уникальный id карты в колоде (0..107). */
@@ -75,27 +75,27 @@ export interface UnoPlayer {
 }
 
 export type UnoPhase =
-  | "play" // обычный ход
-  | "chooseColor" // сыграна дикая — ходивший выбирает цвет
-  | "choosePlayer" // правило 7-0: выбрать, с кем меняться руками
-  | "challenge" // сыгран +4 — следующий решает, оспаривать ли
-  | "roundEnd" // раунд окончен (игра на очки, матч продолжается)
-  | "finished"; // матч окончен
+  | 'play' // обычный ход
+  | 'chooseColor' // сыграна дикая — ходивший выбирает цвет
+  | 'choosePlayer' // правило 7-0: выбрать, с кем меняться руками
+  | 'challenge' // сыгран +4 — следующий решает, оспаривать ли
+  | 'roundEnd' // раунд окончен (игра на очки, матч продолжается)
+  | 'finished'; // матч окончен
 
 export type UnoLogEntry =
-  | { type: "play"; player: string; card: UnoCard; color?: UnoColor }
-  | { type: "jumpIn"; player: string; card: UnoCard }
-  | { type: "draw"; player: string; n: number }
-  | { type: "pass"; player: string }
-  | { type: "uno"; player: string }
-  | { type: "caught"; player: string; by: string; n: number }
-  | { type: "challenge"; by: string; success: boolean; n: number }
-  | { type: "swapHands"; player: string; with: string }
-  | { type: "rotateHands"; player: string }
-  | { type: "skip"; player: string }
-  | { type: "reverse"; player: string }
-  | { type: "roundEnd"; winner: string; points: number }
-  | { type: "gameOver"; winner: string };
+  | { type: 'play'; player: string; card: UnoCard; color?: UnoColor }
+  | { type: 'jumpIn'; player: string; card: UnoCard }
+  | { type: 'draw'; player: string; n: number }
+  | { type: 'pass'; player: string }
+  | { type: 'uno'; player: string }
+  | { type: 'caught'; player: string; by: string; n: number }
+  | { type: 'challenge'; by: string; success: boolean; n: number }
+  | { type: 'swapHands'; player: string; with: string }
+  | { type: 'rotateHands'; player: string }
+  | { type: 'skip'; player: string }
+  | { type: 'reverse'; player: string }
+  | { type: 'roundEnd'; winner: string; points: number }
+  | { type: 'gameOver'; winner: string };
 
 export interface UnoState {
   rules: UnoRules;
@@ -113,7 +113,7 @@ export interface UnoState {
   /** Накопленный штраф (+2/+4 стэки). */
   pendingDraw: number;
   /** Тип последней штрафной карты (для стэкинга). */
-  pendingType: "draw2" | "wild4" | null;
+  pendingType: 'draw2' | 'wild4' | null;
   /** id карты, взятой в этот ход и играбельной (можно сыграть только её). */
   drawnPlayable: number | null;
   /** Уже добирал в этот ход (нельзя добирать второй раз). */

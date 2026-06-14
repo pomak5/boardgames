@@ -3,11 +3,11 @@
  * Наружу торчат доменные функции и простые типы — потребителям (apps/server)
  * не нужно знать про Prisma и не нужен сгенерированный клиент для их тайпчека.
  */
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
 export const prisma = new PrismaClient();
 
-export type GameId = "codenames" | "uno";
+export type GameId = 'codenames' | 'uno';
 
 export interface UserPublic {
   id: string;
@@ -119,7 +119,7 @@ function emptyStats(): GameStats {
 
 export async function getUserStats(userId: string): Promise<UserStats> {
   const rows = await prisma.gameResult.groupBy({
-    by: ["game", "won"],
+    by: ['game', 'won'],
     where: { userId },
     _count: { _all: true },
   });
@@ -144,13 +144,10 @@ export async function getUserStats(userId: string): Promise<UserStats> {
   return { ...overall, byGame };
 }
 
-export async function getRecentResults(
-  userId: string,
-  limit = 30,
-): Promise<RecentResult[]> {
+export async function getRecentResults(userId: string, limit = 30): Promise<RecentResult[]> {
   const rows = await prisma.gameResult.findMany({
     where: { userId },
-    orderBy: { playedAt: "desc" },
+    orderBy: { playedAt: 'desc' },
     take: limit,
     select: { game: true, won: true, team: true, score: true, playedAt: true },
   });
@@ -165,9 +162,9 @@ export async function getRecentResults(
 
 export async function getLeaderboard(limit = 20): Promise<LeaderboardEntry[]> {
   const [totals, wins] = await Promise.all([
-    prisma.gameResult.groupBy({ by: ["userId"], _count: { _all: true } }),
+    prisma.gameResult.groupBy({ by: ['userId'], _count: { _all: true } }),
     prisma.gameResult.groupBy({
-      by: ["userId"],
+      by: ['userId'],
       where: { won: true },
       _count: { _all: true },
     }),
@@ -191,7 +188,7 @@ export async function getLeaderboard(limit = 20): Promise<LeaderboardEntry[]> {
     const u = userMap.get(r.userId);
     return {
       userId: r.userId,
-      nickname: u?.nickname ?? "—",
+      nickname: u?.nickname ?? '—',
       avatarUrl: u?.avatarUrl ?? null,
       wins: r.wins,
       total: r.total,

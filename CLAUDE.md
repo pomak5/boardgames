@@ -19,15 +19,15 @@
 
 ## Стек
 
-| Слой       | Технология                                              |
-| ---------- | ------------------------------------------------------- |
-| Язык       | TypeScript везде                                        |
-| Рантайм/PM | bun (workspaces, без turbo)                             |
-| Фронтенд   | React 19 + Vite 7, react-router, framer-motion          |
-| Реалтайм   | socket.io (неймспейс на игру)                           |
-| Сервер     | Fastify (health + auth) + socket.io                     |
-| БД         | PostgreSQL + Prisma (аккаунты, статистика, словари)     |
-| Хостинг    | Self-hosted VPS (docker-compose); фронт — статика Vite  |
+| Слой       | Технология                                             |
+| ---------- | ------------------------------------------------------ |
+| Язык       | TypeScript везде                                       |
+| Рантайм/PM | bun (workspaces, без turbo)                            |
+| Фронтенд   | React 19 + Vite 7, react-router, framer-motion         |
+| Реалтайм   | socket.io (неймспейс на игру)                          |
+| Сервер     | Fastify (health + auth) + socket.io                    |
+| БД         | PostgreSQL + Prisma (аккаунты, статистика, словари)    |
+| Хостинг    | Self-hosted VPS (docker-compose); фронт — статика Vite |
 
 > История: проект мигрировал с Convex на self-hosted socket.io + Postgres
 > (см. «История»). Convex полностью удалён, в `main` его нет.
@@ -82,8 +82,8 @@ boardgames/
 `server.fs.allow` пускает Vite читать пакет выше корня `apps/web`):
 
 ```ts
-import type { Team } from "@shared";            // barrel
-import type { UnoRules } from "@shared/uno/types"; // глубокий импорт
+import type { Team } from '@shared'; // barrel
+import type { UnoRules } from '@shared/uno/types'; // глубокий импорт
 ```
 
 Не копируй движок в `apps/web`. Любая правка правил — только в `packages/shared`.

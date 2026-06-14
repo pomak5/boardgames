@@ -1,6 +1,6 @@
-import type { UnoCard, UnoColor, UnoValue } from "./types";
+import type { UnoCard, UnoColor, UnoValue } from './types';
 
-export const UNO_COLORS: UnoColor[] = ["red", "yellow", "green", "blue"];
+export const UNO_COLORS: UnoColor[] = ['red', 'yellow', 'green', 'blue'];
 
 /** Стандартная колода 108 карт. */
 export function buildDeck(): UnoCard[] {
@@ -12,14 +12,14 @@ export function buildDeck(): UnoCard[] {
       cards.push({ id: id++, color, value: n as UnoValue });
       cards.push({ id: id++, color, value: n as UnoValue });
     }
-    for (const value of ["skip", "reverse", "draw2"] as const) {
+    for (const value of ['skip', 'reverse', 'draw2'] as const) {
       cards.push({ id: id++, color, value });
       cards.push({ id: id++, color, value });
     }
   }
   for (let i = 0; i < 4; i++) {
-    cards.push({ id: id++, color: null, value: "wild" });
-    cards.push({ id: id++, color: null, value: "wild4" });
+    cards.push({ id: id++, color: null, value: 'wild' });
+    cards.push({ id: id++, color: null, value: 'wild4' });
   }
   return cards;
 }
@@ -35,7 +35,7 @@ export function shuffle<T>(arr: T[]): T[] {
 
 /** Очки карты при подсчёте раунда. */
 export function cardPoints(card: UnoCard): number {
-  if (card.value === "wild" || card.value === "wild4") return 50;
-  if (typeof card.value === "string") return 20;
+  if (card.value === 'wild' || card.value === 'wild4') return 50;
+  if (typeof card.value === 'string') return 20;
   return card.value;
 }

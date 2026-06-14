@@ -195,8 +195,7 @@ export class UnoRoomManager {
   start(room: UnoRoom, token: string): void {
     this.host(room, token);
     if (room.phase !== 'lobby') throw new UnoRoomError('Игра уже началась');
-    if (room.players.length < 2)
-      throw new UnoRoomError('Нужно минимум 2 игрока (добавьте бота)');
+    if (room.players.length < 2) throw new UnoRoomError('Нужно минимум 2 игрока (добавьте бота)');
     room.game = createUnoRound(
       room.players.map((p) => p.id),
       room.settings.rules,

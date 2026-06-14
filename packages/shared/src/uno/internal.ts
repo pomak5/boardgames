@@ -1,5 +1,5 @@
-import type { UnoCard, UnoLogEntry, UnoPlayer, UnoState } from "./types";
-import { shuffle } from "./deck";
+import type { UnoCard, UnoLogEntry, UnoPlayer, UnoState } from './types';
+import { shuffle } from './deck';
 
 const MAX_LOG = 60;
 
@@ -48,13 +48,12 @@ export function clone(state: UnoState): UnoState {
 }
 
 export function playerIdx(state: UnoState, playerId: string): number {
-  const idx = state.players.findIndex(p => p.id === playerId);
-  if (idx < 0) throw new Error("Игрок не в игре");
+  const idx = state.players.findIndex((p) => p.id === playerId);
+  if (idx < 0) throw new Error('Игрок не в игре');
   return idx;
 }
 
 /** Окно поимки «UNO!» закрывается, когда сходил кто-то другой. */
 export function closeUnoWindow(state: UnoState, actorIdx: number): void {
-  if (state.unoVulnerable !== null && state.unoVulnerable !== actorIdx)
-    state.unoVulnerable = null;
+  if (state.unoVulnerable !== null && state.unoVulnerable !== actorIdx) state.unoVulnerable = null;
 }

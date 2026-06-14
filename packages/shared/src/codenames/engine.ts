@@ -170,8 +170,7 @@ export function pass(state: CodenamesState): CodenamesState {
  */
 export function skipClue(state: CodenamesState): CodenamesState {
   if (state.phase === 'finished') throw new CodenamesError('GAME_FINISHED', 'Игра окончена');
-  if (state.phase !== 'clue')
-    throw new CodenamesError('WRONG_PHASE', 'Сейчас не фаза подсказки');
+  if (state.phase !== 'clue') throw new CodenamesError('WRONG_PHASE', 'Сейчас не фаза подсказки');
   return endTurn({ ...state, log: [...state.log, { type: 'pass', team: state.turn }] });
 }
 
