@@ -164,6 +164,17 @@ export function pass(state: CodenamesState): CodenamesState {
   return endTurn({ ...state, log: [...state.log, { type: 'pass', team: state.turn }] });
 }
 
+/**
+ * Принудительный конец хода в фазе подсказки (напр. тайм-аут капитана):
+ * ход переходит другой команде, подсказка так и не была дана.
+ */
+export function skipClue(state: CodenamesState): CodenamesState {
+  if (state.phase === 'finished') throw new CodenamesError('GAME_FINISHED', 'Игра окончена');
+  if (state.phase !== 'clue')
+    throw new CodenamesError('WRONG_PHASE', 'Сейчас не фаза подсказки');
+  return endTurn({ ...state, log: [...state.log, { type: 'pass', team: state.turn }] });
+}
+
 /** Счёт: сколько слов осталось открыть каждой команде. */
 export function score(state: CodenamesState): Record<Team, number> {
   return { red: remainingWords(state, 'red'), blue: remainingWords(state, 'blue') };

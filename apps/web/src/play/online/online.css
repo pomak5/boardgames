@@ -260,6 +260,16 @@
   50% { opacity: 0.45; }
 }
 
+/* Счётчик-вверх «Время игры» */
+.on-elapsed {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--muted);
+}
+.on-elapsed-row {
+  margin-top: 2px;
+}
+
 /* Счёт серии раундов */
 .on-series {
   text-align: center;
