@@ -623,6 +623,91 @@
   border-color: color-mix(in srgb, var(--team-red) 35%, transparent);
 }
 
+/* ---------- доска под референс: чистые залитые плитки ---------- */
+.cg-board .cn-card,
+.cg-board .cn-card__face {
+  min-height: 80px;
+}
+.cg-board .cn-card__face {
+  border-radius: 13px;
+  padding: 12px 10px;
+}
+.cg-board .cn-card__front {
+  background: linear-gradient(
+    176deg,
+    #fffdf8 0%,
+    color-mix(in srgb, var(--card-face) 86%, #d6bd95) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--card-ink) 13%, transparent);
+  box-shadow:
+    0 2px 0 #ffffffcc inset,
+    0 6px 14px #0000001f,
+    0 2px 4px #0000001a;
+}
+.cg-board .cn-card__frame,
+.cg-board .cn-card__corner,
+.cg-board .cn-stamp {
+  display: none;
+}
+.cg-board .cn-card__front .cn-card__word {
+  font-family: "Nunito", sans-serif;
+  font-weight: 800;
+  font-size: clamp(11px, 1.55vw, 15px);
+  letter-spacing: 0.03em;
+  color: var(--card-ink);
+  text-shadow: 0 1px 0 #ffffff7a;
+}
+.cg-board .cn-card:not(:disabled):hover .cn-card__front {
+  box-shadow:
+    0 2px 0 #ffffffcc inset,
+    0 10px 20px #0000002e,
+    0 3px 6px #00000022;
+}
+
+/* вид шпион-мастера: полностью залитые цветные плитки, как в референсе */
+.cg-board .cn-key--red,
+.cg-board .cn-key--blue,
+.cg-board .cn-key--neutral,
+.cg-board .cn-key--assassin {
+  border-color: transparent;
+  box-shadow:
+    0 6px 14px #00000026,
+    0 2px 4px #0000001f;
+}
+.cg-board .cn-key--red {
+  background: linear-gradient(172deg, #e8654c 0%, var(--team-red) 68%, #b53b27 100%);
+}
+.cg-board .cn-key--blue {
+  background: linear-gradient(172deg, #4f86bf 0%, var(--team-blue) 68%, #2d5783 100%);
+}
+.cg-board .cn-key--neutral {
+  background: linear-gradient(172deg, #efe4cf 0%, #e1d0b0 100%);
+}
+.cg-board .cn-key--assassin {
+  background: linear-gradient(172deg, #39342e 0%, #211d18 100%);
+}
+.cg-board .cn-key--red .cn-card__word,
+.cg-board .cn-key--blue .cn-card__word,
+.cg-board .cn-key--assassin .cn-card__word {
+  color: #fff7ec;
+  text-shadow: 0 1px 2px #00000055;
+}
+.cg-board .cn-key--neutral .cn-card__word {
+  color: #5b4a35;
+  text-shadow: 0 1px 0 #ffffff7a;
+}
+
+/* активная команда — лёгкая подсветка фоном */
+.cg-team--active {
+  background: color-mix(in srgb, var(--team-color) 6%, var(--surface));
+}
+.cg-hat {
+  width: 1.05em;
+  height: 1.05em;
+  flex: none;
+}
+
+
 /* ---------- адаптив ---------- */
 @media (max-width: 1100px) {
   .cg-main {
