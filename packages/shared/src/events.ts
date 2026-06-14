@@ -28,6 +28,8 @@ export interface RoomView {
   phase: RoomPhase;
   settings: RoomSettings;
   players: RoomPlayer[];
+  /** Счёт серии в комнате (опционально). */
+  series?: Record<Team, number>;
 }
 
 export interface ChatMessage {
@@ -88,6 +90,7 @@ export interface ClientToServerEvents {
   'game:clue': (clue: Clue) => void;
   'game:guess': (cardIndex: number) => void;
   'game:pass': () => void;
+  'room:newRound': () => void;
 }
 
 // ============================ Uno ============================
