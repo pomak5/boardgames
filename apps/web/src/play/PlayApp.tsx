@@ -25,9 +25,12 @@ export function App() {
 
   // если мы в комнате — переключаемся на онлайн-режим автоматически (rejoin после F5)
   const effectiveMode: Mode = roomApi.room ? "online" : mode;
+  // В онлайн-партии у игрового экрана своя полноценная шапка (лого, код, настройки).
+  const inGame = effectiveMode === "online" && roomApi.room?.phase === "playing";
 
   return (
     <>
+      {!inGame && (
       <header className="cn-topbar">
         <h1 className="cn-title">
           <Link
@@ -88,6 +91,7 @@ export function App() {
           </button>
         </div>
       </header>
+      )}
       {effectiveMode === "classic" && <GameScreen game={game} />}
       {effectiveMode === "coop" && <CoopScreen key={risk} risk={risk} />}
       {effectiveMode === "online" &&
@@ -96,7 +100,10 @@ export function App() {
         ) : roomApi.room.phase === "lobby" ? (
           <LobbyScreen api={roomApi} />
         ) : (
-          <OnlineGameScreen api={roomApi} />
+          <OnlineGameScreen
+            api={roomApi}
+            onOpenSettings={() => setSettingsOpen(true)}
+          />
         ))}
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
     </>
