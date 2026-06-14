@@ -1,8 +1,7 @@
-/** Bootstrap: Fastify (health) + socket.io с неймспейсами /codenames и /uno. */
+/** Bootstrap: Fastify (health) + socket.io. Неймспейсы игр берутся из реестра `games`. */
 import Fastify from 'fastify';
 import { Server } from 'socket.io';
-import { registerCodenames } from './codenames/handlers';
-import { registerUno } from './uno/handlers';
+import { games } from './games';
 import cors from '@fastify/cors';
 
 const PORT = Number(process.env.PORT ?? 3001);
@@ -25,8 +24,11 @@ const io = new Server(app.server, {
   cors: { origin: WEB_ORIGIN },
 });
 
-registerCodenames(io.of('/codenames') as unknown as Parameters<typeof registerCodenames>[0]);
-registerUno(io.of('/uno') as unknown as Parameters<typeof registerUno>[0]);
+for (const game of games) {
+  game.register(io.of(game.namespace));
+}
 
 await app.listen({ port: PORT, host: '0.0.0.0' });
-app.log.info(`socket.io namespaces ready: /codenames, /uno (cors: ${WEB_ORIGIN})`);
+app.log.info(
+  `socket.io namespaces ready: ${games.map((g) => g.namespace).join(', ')} (cors: ${WEB_ORIGIN})`,
+);
