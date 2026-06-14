@@ -89,6 +89,26 @@ function Caret({ dir }: { dir: "up" | "down" }) {
   );
 }
 
+/** Шляпа шпион-мастера (в цвет команды через currentColor). */
+function SpyHat() {
+  return (
+    <svg className="cg-hat" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M6 16.5c0-1.1 1.9-1.7 3-1.9.4-3 1.8-5.6 4-5.6s3.6 2.6 4 5.6c1.1.2 3 .8 3 1.9 0 1.3-3.1 2.1-7 2.1s-7-.8-7-2.1z"
+        fill="currentColor"
+      />
+      <path
+        d="M3.5 16.8c2.2 1.1 5.3 1.7 8.5 1.7s6.3-.6 8.5-1.7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        opacity="0.55"
+      />
+    </svg>
+  );
+}
+
 /** Обратный отсчёт хода (рисуется, только если сервер прислал дедлайн). */
 function Countdown({ deadline }: { deadline: number }) {
   const [now, setNow] = useState(() => Date.now());
@@ -148,7 +168,7 @@ function TeamPanel({
       </header>
 
       <div className="cg-team__role">
-        <IconKey /> Шпион-мастер
+        <SpyHat /> Шпион-мастер
       </div>
       {captain ? (
         <div className="cg-member">
@@ -487,7 +507,7 @@ export function OnlineGameScreen({
             <aside className="cg-turn">
               <div className="cg-turn__label">Текущий ход</div>
               <div className={`cg-turn__team cg-turn__team--${game.turn}`}>
-                <IconKey /> Ход {TEAM_RU[game.turn].toLowerCase()}
+                <SpyHat /> Ход {TEAM_RU[game.turn].toLowerCase()}
               </div>
               <div className="cg-turn__sub">
                 {game.phase === "clue"
