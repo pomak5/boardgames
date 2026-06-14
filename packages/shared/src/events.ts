@@ -1,4 +1,5 @@
 import type { Clue, LogEntry, Team } from './codenames';
+import type { UnoColor, UnoRules, UnoView } from './uno';
 
 export type GameId = 'codenames' | 'uno' | 'alias';
 
@@ -87,4 +88,84 @@ export interface ClientToServerEvents {
   'game:clue': (clue: Clue) => void;
   'game:guess': (cardIndex: number) => void;
   'game:pass': () => void;
+}
+
+// ============================ Uno ============================
+
+export interface UnoRoomPlayerView {
+  id: string;
+  nickname: string;
+  connected: boolean;
+  isBot: boolean;
+}
+
+export interface UnoRoomSettings {
+  game: 'uno';
+  rules: UnoRules;
+  maxPlayers: number;
+  timer: { enabled: boolean; turnSec: number };
+}
+
+export interface UnoRoomView {
+  code: string;
+  hostId: string;
+  phase: RoomPhase;
+  settings: UnoRoomSettings;
+  players: UnoRoomPlayerView[];
+}
+
+export type UnoAction =
+  | { type: 'play'; cardId: number; declareUno?: boolean }
+  | { type: 'draw' }
+  | { type: 'pass' }
+  | { type: 'chooseColor'; color: UnoColor }
+  | { type: 'choosePlayer'; targetId: string }
+  | { type: 'challenge'; accept: boolean }
+  | { type: 'uno' }
+  | { type: 'catch' };
+
+export interface UnoJoinAck {
+  ok: boolean;
+  error?: string;
+  room?: UnoRoomView;
+  playerId?: string;
+  token?: string;
+}
+
+/** Изменяемые хостом настройки комнаты Uno (глубоко-частичные). */
+export interface UnoSettingsPatch {
+  rules?: Partial<UnoRules>;
+  maxPlayers?: number;
+  timer?: Partial<{ enabled: boolean; turnSec: number }>;
+}
+
+/** События сервер → клиент (namespace /uno). */
+export interface UnoServerToClientEvents {
+  'room:state': (room: UnoRoomView) => void;
+  'room:closed': (reason: string) => void;
+  'chat:message': (msg: ChatMessage) => void;
+  'chat:history': (msgs: ChatMessage[]) => void;
+  'game:state': (view: UnoView) => void;
+  'game:timer': (deadline: number | null) => void;
+  'game:error': (message: string) => void;
+}
+
+/** События клиент → сервер (namespace /uno). */
+export interface UnoClientToServerEvents {
+  'room:create': (
+    nickname: string,
+    settings: UnoSettingsPatch,
+    ack: (a: UnoJoinAck) => void,
+  ) => void;
+  'room:join': (code: string, nickname: string, ack: (a: UnoJoinAck) => void) => void;
+  'room:rejoin': (code: string, token: string, ack: (a: UnoJoinAck) => void) => void;
+  'room:leave': () => void;
+  'room:settings': (settings: UnoSettingsPatch) => void;
+  'room:addBot': () => void;
+  'room:removeBot': (botId: string) => void;
+  'room:start': () => void;
+  'room:nextRound': () => void;
+  'room:newGame': () => void;
+  'game:act': (action: UnoAction) => void;
+  'chat:send': (text: string) => void;
 }
