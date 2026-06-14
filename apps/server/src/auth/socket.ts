@@ -6,10 +6,7 @@ import { verifyToken } from './jwt';
  * Гостям вход не запрещаем — просто не проставляем userId.
  * Подключается к каждому неймспейсу в index.ts через `nsp.use(attachUser)`.
  */
-export async function attachUser(
-  socket: Socket,
-  next: (err?: Error) => void,
-): Promise<void> {
+export async function attachUser(socket: Socket, next: (err?: Error) => void): Promise<void> {
   try {
     const token = (socket.handshake.auth as { token?: unknown } | undefined)?.token;
     if (typeof token === 'string' && token) {

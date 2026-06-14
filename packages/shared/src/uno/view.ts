@@ -1,13 +1,6 @@
 /** Вью состояния Uno глазами одного игрока (чужие руки скрыты). */
-import { legalPlays } from "./engine";
-import type {
-  UnoCard,
-  UnoColor,
-  UnoLogEntry,
-  UnoPhase,
-  UnoRules,
-  UnoState,
-} from "./types";
+import { legalPlays } from './engine';
+import type { UnoCard, UnoColor, UnoLogEntry, UnoPhase, UnoRules, UnoState } from './types';
 
 export interface UnoPlayerView {
   id: string;
@@ -43,11 +36,11 @@ export interface UnoView {
 }
 
 export function redactUno(state: UnoState, playerId: string): UnoView {
-  const me = state.players.find(p => p.id === playerId);
+  const me = state.players.find((p) => p.id === playerId);
   const isTurn = state.players[state.turn]?.id === playerId;
   return {
     rules: state.rules,
-    players: state.players.map(p => ({
+    players: state.players.map((p) => ({
       id: p.id,
       handCount: p.hand.length,
       saidUno: p.saidUno,
@@ -65,14 +58,13 @@ export function redactUno(state: UnoState, playerId: string): UnoView {
     canPass:
       !!me &&
       isTurn &&
-      state.phase === "play" &&
+      state.phase === 'play' &&
       state.drewThisTurn &&
       state.drawnPlayable !== null &&
       !state.rules.forcePlay,
     drewThisTurn: isTurn && state.drewThisTurn,
     catchablePlayerId:
-      state.unoVulnerable !== null &&
-      state.players[state.unoVulnerable]?.id !== playerId
+      state.unoVulnerable !== null && state.players[state.unoVulnerable]?.id !== playerId
         ? (state.players[state.unoVulnerable] as { id: string }).id
         : null,
     roundWinner: state.roundWinner,

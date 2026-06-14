@@ -1,9 +1,6 @@
 /** Socket-хендлеры Uno на namespace /uno. Боты и таймаут планируются менеджером и шлют broadcast. */
 import type { Namespace } from 'socket.io';
-import type {
-  UnoClientToServerEvents,
-  UnoServerToClientEvents,
-} from '@boardgames/shared';
+import type { UnoClientToServerEvents, UnoServerToClientEvents } from '@boardgames/shared';
 import { UnoRoomError, UnoRoomManager } from './manager';
 import type { UnoRoom } from './manager';
 
@@ -51,7 +48,6 @@ export function registerUno(nsp: UnoNamespace): void {
       console.error('recordGameResult failed', e);
     }
   }
-
 
   function broadcast(room: UnoRoom): void {
     for (const [, socket] of nsp.sockets) {
