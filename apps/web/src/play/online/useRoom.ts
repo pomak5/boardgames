@@ -43,14 +43,14 @@ export function useRoom(): RoomApi {
   const [error, setError] = useState<string | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  // Таймер ходов Коднеймс пока сервером не рассылается — задел на будущее.
-  const [turnDeadline] = useState<number | null>(null);
+  const [turnDeadline, setTurnDeadline] = useState<number | null>(null);
 
   const reset = useCallback(() => {
     setRoom(null);
     setGame(null);
     setChat([]);
     setPlayerId(null);
+    setTurnDeadline(null);
     localStorage.removeItem(SESSION_KEY);
   }, []);
 
@@ -72,12 +72,14 @@ export function useRoom(): RoomApi {
     const onHistory = (msgs: ChatMessage[]) => setChat(msgs);
     const onError = (message: string) => setError(message);
     const onClosed = () => reset();
+    const onTimer = (deadline: number | null) => setTurnDeadline(deadline);
     socket.on("room:state", onRoom);
     socket.on("game:state", onGame);
     socket.on("chat:message", onMsg);
     socket.on("chat:history", onHistory);
     socket.on("game:error", onError);
     socket.on("room:closed", onClosed);
+    socket.on("game:timer", onTimer);
     return () => {
       socket.off("room:state", onRoom);
       socket.off("game:state", onGame);
@@ -85,6 +87,7 @@ export function useRoom(): RoomApi {
       socket.off("chat:history", onHistory);
       socket.off("game:error", onError);
       socket.off("room:closed", onClosed);
+      socket.off("game:timer", onTimer);
     };
   }, [socket, reset]);
 

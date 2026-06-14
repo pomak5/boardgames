@@ -30,6 +30,23 @@ function Countdown({ deadline }: { deadline: number }) {
   );
 }
 
+/** Счётчик-вверх «Время игры»: m:ss от старта партии. */
+function Elapsed({ startedAt }: { startedAt: number }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const sec = Math.max(0, Math.floor((now - startedAt) / 1000));
+  const m = Math.floor(sec / 60);
+  const ss = String(sec % 60).padStart(2, "0");
+  return (
+    <span className="on-elapsed" aria-label="Время игры">
+      ⏱ {m}:{ss}
+    </span>
+  );
+}
+
 export function OnlineGameScreen({ api }: { api: RoomApi }) {
   const room = api.room!;
   const game = api.game;
@@ -92,6 +109,11 @@ export function OnlineGameScreen({ api }: { api: RoomApi }) {
             {me.role === "captain" ? "капитан" : "отгадывающий"}{" "}
             {me.team ? TEAM_RU[me.team] : ""}
           </div>
+          {room.startedAt != null && (
+            <div className="cn-clue__meta on-elapsed-row" style={{ textAlign: "center" }}>
+              <Elapsed startedAt={room.startedAt} />
+            </div>
+          )}
 
           {finished ? (
             <>

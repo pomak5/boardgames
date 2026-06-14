@@ -45,6 +45,10 @@ export interface Room {
   series: Record<Team, number>;
   /** Когда началась текущая партия (ms) или null в лобби. */
   startedAt: number | null;
+  /** Дедлайн текущего хода (ms, Date.now()) или null, если таймер выключен/не идёт. */
+  turnDeadline: number | null;
+  /** Активный таймер автоперехода хода (clearTimeout при любой смене состояния). */
+  timer: ReturnType<typeof setTimeout> | null;
 }
 
 export const MAX_PLAYERS = 8;
@@ -80,6 +84,8 @@ export class RoomManager {
       botPending: false,
       series: { red: 0, blue: 0 },
       startedAt: null,
+      turnDeadline: null,
+      timer: null,
     };
     this.rooms.set(code, room);
     return { room, player };
@@ -220,6 +226,7 @@ export class RoomManager {
     room.phase = 'lobby';
     room.botPending = false;
     room.startedAt = null;
+    room.turnDeadline = null;
   }
 
   viewFor(room: Room, playerId: string): CodenamesView | null {
