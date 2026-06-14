@@ -18,6 +18,8 @@ export interface RoomSettings {
   /** Бот-капитан для каждой команды (если выключен — капитаном должен стать игрок). */
   botCaptains: Record<Team, boolean>;
   botRisk: 'cautious' | 'normal' | 'bold';
+  /** Настройка таймера хода (опционально; по умолчанию включён, 60с). */
+  timer?: { enabled: boolean; turnSec: number };
 }
 
 export type RoomPhase = 'lobby' | 'playing' | 'finished';

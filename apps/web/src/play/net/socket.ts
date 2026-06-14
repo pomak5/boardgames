@@ -17,10 +17,10 @@ export function getCodenamesSocket(): CodenamesSocket {
 let unoSocket: Socket | null = null;
 
 /**
- * Сокет неймспейса /uno. Контракт событий задаётся вызывающим хуком через дженерики
- * (в apps/space нет общего uno-контракта — он живёт на сервере в @boardgames/shared).
+ * Сокет неймспейса /uno. Контракт событий уточняет вызывающий хук; net-слой
+ * намеренно не завязан на uno-типы, поэтому возвращает базовый Socket.
  */
-export function getUnoSocket<Server, Client>(): Socket<Server, Client> {
+export function getUnoSocket(): Socket {
   unoSocket ??= io(`${SERVER_URL}/uno`, { autoConnect: true });
-  return unoSocket as unknown as Socket<Server, Client>;
+  return unoSocket;
 }
