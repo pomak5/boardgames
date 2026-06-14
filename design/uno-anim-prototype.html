@@ -14,52 +14,34 @@
   html,body{height:100%}
   body{
     margin:0; font-family:'Nunito','Inter',system-ui,sans-serif; color:var(--ink);
-    background:
-      radial-gradient(120% 90% at 50% 8%, #fbf2e2 0%, var(--paper) 55%, var(--paper2) 100%);
+    background:radial-gradient(120% 90% at 50% 8%, #fbf2e2 0%, var(--paper) 55%, var(--paper2) 100%);
     overflow:hidden;
   }
   .wrap{position:relative; height:100vh; display:flex; flex-direction:column}
   header{padding:18px 26px; display:flex; align-items:center; gap:14px}
-  header h1{margin:0; font-size:20px; letter-spacing:.3px}
-  header .hint{color:var(--muted); font-size:13px; margin-left:auto}
-  .btn{
-    border:0; cursor:pointer; font:inherit; font-weight:800; color:#fff;
-    background:var(--red); padding:9px 16px; border-radius:12px;
-    box-shadow:0 3px 0 rgba(0,0,0,.18); transition:transform .08s, box-shadow .08s;
-  }
+  header h1{margin:0; font-size:20px}
+  header .hint{color:var(--muted); font-size:13px; margin-left:auto; max-width:46ch; text-align:right}
+  .btn{border:0; cursor:pointer; font:inherit; font-weight:800; color:#fff; background:var(--red);
+    padding:9px 16px; border-radius:12px; box-shadow:0 3px 0 rgba(0,0,0,.18); transition:transform .08s, box-shadow .08s}
   .btn:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.18)}
   .btn.ghost{background:#fff; color:var(--ink); box-shadow:0 2px 0 rgba(0,0,0,.10)}
+  .btn:disabled{opacity:.5; cursor:default}
 
-  /* овальный стол */
-  .table{
-    position:relative; flex:1; margin:6px 40px 0;
-    border-radius:50%/46%;
-    background:
-      radial-gradient(120% 100% at 50% 40%, #f7ecd8 0%, #ecdcc0 70%, #e4d0ac 100%);
-    box-shadow: inset 0 0 0 2px rgba(120,90,55,.18), inset 0 14px 60px rgba(120,90,55,.12), 0 20px 50px rgba(80,55,30,.10);
-  }
+  .table{position:relative; flex:1; margin:6px 40px 0; border-radius:50%/46%;
+    background:radial-gradient(120% 100% at 50% 40%, #f7ecd8 0%, #ecdcc0 70%, #e4d0ac 100%);
+    box-shadow: inset 0 0 0 2px rgba(120,90,55,.18), inset 0 14px 60px rgba(120,90,55,.12), 0 20px 50px rgba(80,55,30,.10)}
 
-  /* стопка сброса в центре */
   .discard{position:absolute; left:50%; top:46%; width:0; height:0}
-  .draw{
-    position:absolute; left:calc(50% - 150px); top:46%;
-    transform:translate(-50%,-50%);
-  }
-  .draw .card{cursor:pointer}
+  .draw{position:absolute; left:calc(50% - 150px); top:46%; transform:translate(-50%,-50%); cursor:pointer}
+  .draw .label{position:absolute; left:50%; top:calc(50% + 80px); transform:translateX(-50%);
+    color:var(--muted); font-size:12px; font-weight:700; white-space:nowrap}
+  .draw .deck-count{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    color:#fff; font-weight:900; font-size:13px; text-shadow:0 1px 2px rgba(0,0,0,.5); z-index:2}
 
-  /* карта */
-  .card{
-    position:absolute; width:var(--card-w); height:var(--card-h);
-    border-radius:14px; border:3px solid #fff;
-    box-shadow:0 6px 14px rgba(40,25,10,.28);
-    display:flex; align-items:center; justify-content:center;
-    transform:translate(-50%,-50%); will-change:transform;
-    user-select:none;
-  }
-  .card .oval{
-    position:absolute; inset:10px; border-radius:50%/40%;
-    background:rgba(255,255,255,.92); transform:rotate(-22deg);
-  }
+  .card{position:absolute; width:var(--card-w); height:var(--card-h); border-radius:14px; border:3px solid #fff;
+    box-shadow:0 6px 14px rgba(40,25,10,.28); display:flex; align-items:center; justify-content:center;
+    transform:translate(-50%,-50%); will-change:transform; user-select:none}
+  .card .oval{position:absolute; inset:10px; border-radius:50%/40%; background:rgba(255,255,255,.92); transform:rotate(-22deg)}
   .card .big{position:relative; font-weight:900; font-size:42px}
   .card .idx{position:absolute; font-weight:900; font-size:15px}
   .card .idx.tl{top:7px; left:9px} .card .idx.br{bottom:7px; right:9px; transform:rotate(180deg)}
@@ -67,22 +49,18 @@
   .c-yellow{background:var(--yellow)} .c-yellow .big,.c-yellow .idx{color:#b9841a}
   .c-green{background:var(--green)} .c-green .big,.c-green .idx{color:var(--green)}
   .c-blue{background:var(--blue)} .c-blue .big,.c-blue .idx{color:var(--blue)}
+  .c-back{background:var(--wild)}
+  .c-back .oval{background:conic-gradient(var(--red) 0 25%,var(--blue) 0 50%,var(--green) 0 75%,var(--yellow) 0)}
   .c-wild{background:var(--wild)}
   .c-wild .oval{background:conic-gradient(var(--red) 0 25%,var(--blue) 0 50%,var(--green) 0 75%,var(--yellow) 0)}
   .c-wild .big,.c-wild .idx{color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.5)}
 
-  /* рука снизу */
-  .hand{
-    position:absolute; left:50%; bottom:14px; transform:translateX(-50%);
-    height:170px; display:flex; align-items:flex-end; justify-content:center;
-  }
-  .hand .card{
-    position:relative; transform:none; margin:0 -18px; bottom:0;
-    transition:transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .16s;
-    transform-origin:bottom center; cursor:pointer;
-  }
-  .hand .card:hover{ transform:translateY(-22px) scale(1.05); box-shadow:0 16px 26px rgba(40,25,10,.34); z-index:50 }
-
+  .hand{position:absolute; left:50%; bottom:14px; transform:translateX(-50%); height:170px;
+    display:flex; align-items:flex-end; justify-content:center}
+  .hand .card{position:relative; transform:none; margin:0 -18px; bottom:0;
+    transition:transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .16s; transform-origin:bottom center; cursor:pointer}
+  .hand .card.dealing{visibility:hidden}
+  .hand .card:hover{transform:translateY(-22px) scale(1.05) !important; box-shadow:0 16px 26px rgba(40,25,10,.34); z-index:50}
   .flier{position:absolute; z-index:200; pointer-events:none}
 </style>
 </head>
@@ -91,131 +69,147 @@
   <header>
     <h1>🎴 УНО — прототип анимаций</h1>
     <button class="btn ghost" id="reset">Сбросить стол</button>
-    <button class="btn" id="deal">Раздать руку</button>
-    <span class="hint">Кликни карту в руке — она «улетит» в центр и останется на столе под своим углом</span>
+    <button class="btn" id="deal">Раздать заново</button>
+    <span class="hint">Раздача идёт по одной. Клик по колоде — взять карту. Клик по карте в руке — бросок в центр (каждый раз чуть по-разному).</span>
   </header>
-
   <div class="table" id="table">
-    <div class="draw" id="draw"></div>
+    <div class="draw" id="draw" title="Взять карту">
+      <span class="deck-count" id="deckCount"></span>
+      <span class="label">колода · взять карту</span>
+    </div>
     <div class="discard" id="discard"></div>
     <div class="hand" id="hand"></div>
   </div>
 </div>
 
 <script>
-const COLORS = ["red","yellow","green","blue"];
-const VALUES = ["0","1","2","3","4","5","6","7","8","9","⊘","⇄","+2"];
-const rand = (a,b)=>a+Math.random()*(b-a);
-const pick = a => a[Math.floor(Math.random()*a.length)];
+const COLORS=["red","yellow","green","blue"];
+const VALUES=["0","1","2","3","4","5","6","7","8","9","⊘","⇄","+2"];
+const rand=(a,b)=>a+Math.random()*(b-a);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+// разные кривые ускорения — чтобы броски ощущались «живыми», не одинаковыми
+const THROW_EASE=["cubic-bezier(.34,1.2,.5,1)","cubic-bezier(.22,1.0,.36,1)","cubic-bezier(.45,1.35,.55,1)","cubic-bezier(.3,.9,.4,1)"];
 
 function makeCardEl(card){
-  const el = document.createElement("div");
-  el.className = "card c-" + (card.color || "wild");
-  el.innerHTML = `<span class="oval"></span>
-    <span class="idx tl">${card.label}</span>
-    <span class="big">${card.label}</span>
-    <span class="idx br">${card.label}</span>`;
+  const el=document.createElement("div");
+  if(card.back){ el.className="card c-back"; el.innerHTML=`<span class="oval"></span><span class="big">УНО</span>`; return el; }
+  el.className="card c-"+(card.color||"wild");
+  el.innerHTML=`<span class="oval"></span><span class="idx tl">${card.label}</span><span class="big">${card.label}</span><span class="idx br">${card.label}</span>`;
   return el;
 }
 function randomCard(){
-  const wild = Math.random() < 0.12;
-  if (wild) return { color:null, label: Math.random()<.5 ? "✦" : "+4" };
-  return { color: pick(COLORS), label: pick(VALUES) };
+  if(Math.random()<0.12) return {color:null,label:Math.random()<.5?"✦":"+4"};
+  return {color:pick(COLORS),label:pick(VALUES)};
 }
 
-const table = document.getElementById("table");
-const handEl = document.getElementById("hand");
-const discardEl = document.getElementById("discard");
-const drawEl = document.getElementById("draw");
+const table=document.getElementById("table");
+const handEl=document.getElementById("hand");
+const discardEl=document.getElementById("discard");
+const drawEl=document.getElementById("draw");
+const deckCountEl=document.getElementById("deckCount");
 
-// колода (рубашка) слева от центра
-const deck = makeCardEl({color:null,label:"УНО"});
-deck.classList.remove("c-wild"); deck.classList.add("c-wild");
-drawEl.appendChild(deck);
+// визуальная стопка-рубашка
+const deckBack=makeCardEl({back:true});
+drawEl.appendChild(deckBack);
+let deckCount=108, pile=0, dealing=false;
+const updateDeck=()=>{ deckCountEl.textContent=deckCount; };
+updateDeck();
 
-let pile = 0; // сколько карт уже на столе
+function deckCenter(){ const r=drawEl.getBoundingClientRect(); return {x:r.left+r.width/2, y:r.top+r.height/2}; }
 
-function landCard(card, fromRect){
-  // целевая точка в центре + случайный «неровный» сдвиг и поворот
-  const tRect = table.getBoundingClientRect();
-  const cx = tRect.left + tRect.width*0.5;
-  const cy = tRect.top + tRect.height*0.46;
-  const jitterX = rand(-16,16), jitterY = rand(-12,12);
-  const rot = rand(-26,26);
-  const tx = cx + jitterX, ty = cy + jitterY;
-
-  // летящий клон
-  const flier = makeCardEl(card);
-  flier.classList.add("flier");
-  flier.style.left = fromRect.left + fromRect.width/2 + "px";
-  flier.style.top  = fromRect.top + fromRect.height/2 + "px";
-  flier.style.transform = "translate(-50%,-50%) rotate(0deg)";
-  document.body.appendChild(flier);
-
-  const dx = tx - (fromRect.left + fromRect.width/2);
-  const dy = ty - (fromRect.top + fromRect.height/2);
-
-  // дуга: приподнимаем в середине пути + спин, мягкое приземление с лёгким overshoot
-  const anim = flier.animate([
-    { transform:`translate(-50%,-50%) translate(0px,0px) rotate(0deg) scale(1)` },
-    { transform:`translate(-50%,-50%) translate(${dx*0.5}px, ${dy*0.5 - 60}px) rotate(${rot*0.6}deg) scale(1.12)`, offset:.55 },
-    { transform:`translate(-50%,-50%) translate(${dx}px, ${dy}px) rotate(${rot*1.12}deg) scale(.98)`, offset:.86 },
-    { transform:`translate(-50%,-50%) translate(${dx}px, ${dy}px) rotate(${rot}deg) scale(1)` }
-  ], { duration: 620, easing: "cubic-bezier(.34,1.2,.5,1)" });
-
-  anim.onfinish = () => {
-    flier.remove();
-    // постоянная карта остаётся в стопке, под своим углом — стол копится «неровно»
-    const landed = makeCardEl(card);
-    landed.style.left = (jitterX) + "px";
-    landed.style.top  = (jitterY) + "px";
-    landed.style.transform = `translate(-50%,-50%) rotate(${rot}deg)`;
-    landed.style.zIndex = String(100 + pile);
-    landed.style.boxShadow = "0 10px 18px rgba(40,25,10,.28)";
-    discardEl.appendChild(landed);
-    // приземление: маленький «толчок»
-    landed.animate([
-      { transform:`translate(-50%,-50%) rotate(${rot}deg) scale(1.06)` },
-      { transform:`translate(-50%,-50%) rotate(${rot}deg) scale(1)` }
-    ], { duration:140, easing:"ease-out" });
-    pile++;
-  };
-}
-
-function playFromHand(cardEl, card){
-  const rect = cardEl.getBoundingClientRect();
-  cardEl.remove();
-  reflowHand();
-  landCard(card, rect);
-}
-
-let hand = [];
-function reflowHand(){
-  const cards = [...handEl.children];
-  const n = cards.length;
-  cards.forEach((el,i)=>{
-    const mid = (n-1)/2;
-    const off = i - mid;
-    el.style.transform = `rotate(${off*4}deg) translateY(${Math.abs(off)*6}px)`;
+/** Летящая карта из точки в точку: дуга + спин + переменная скорость («человек кидает»). */
+function fly(card, from, to, {dur, lift, spin, ease, faceUp=true}={}){
+  return new Promise(resolve=>{
+    dur ??= rand(420,780);
+    lift ??= rand(40,95);
+    spin ??= rand(-22,22);
+    ease ??= pick(THROW_EASE);
+    const flier=makeCardEl(faceUp?card:{back:true});
+    flier.classList.add("flier");
+    flier.style.left=from.x+"px"; flier.style.top=from.y+"px";
+    document.body.appendChild(flier);
+    const dx=to.x-from.x, dy=to.y-from.y;
+    const wob=rand(-18,18); // лёгкое боковое отклонение дуги
+    const a=flier.animate([
+      {transform:`translate(-50%,-50%) rotate(0deg) scale(1)`},
+      {transform:`translate(-50%,-50%) translate(${dx*0.5+wob}px,${dy*0.5-lift}px) rotate(${spin*0.6}deg) scale(1.1)`,offset:.55},
+      {transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) rotate(${spin*1.1}deg) scale(.98)`,offset:.86},
+      {transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) rotate(${spin}deg) scale(1)`}
+    ],{duration:dur,easing:ease,fill:"forwards"});
+    a.onfinish=()=>{ flier.remove(); resolve({spin}); };
   });
 }
-function dealHand(){
-  handEl.innerHTML = ""; hand = [];
-  for(let i=0;i<7;i++){
-    const card = randomCard();
-    const el = makeCardEl(card);
-    el.addEventListener("click", ()=>playFromHand(el, card));
-    handEl.appendChild(el);
-    hand.push(card);
-  }
-  reflowHand();
+
+function reflowHand(){
+  const cards=[...handEl.querySelectorAll(".card:not(.dealing)")];
+  const n=handEl.children.length;
+  [...handEl.children].forEach((el,i)=>{
+    const off=i-(n-1)/2;
+    el.dataset.rot=String(off*4);
+    el.style.transform=`rotate(${off*4}deg) translateY(${Math.abs(off)*6}px)`;
+  });
 }
 
-document.getElementById("deal").addEventListener("click", dealHand);
-document.getElementById("reset").addEventListener("click", ()=>{ discardEl.innerHTML=""; pile=0; });
-// стартовая карта в центре + рука
-landCard(randomCard(), drawEl.getBoundingClientRect());
-dealHand();
+/** Создаёт карту в руке скрытой, прилетает из колоды и проявляется. */
+async function addCardToHand(card,{dur}={}){
+  const el=makeCardEl(card);
+  el.classList.add("dealing");
+  el.addEventListener("click",()=>playFromHand(el,card));
+  handEl.appendChild(el);
+  reflowHand();
+  const r=el.getBoundingClientRect();
+  const to={x:r.left+r.width/2,y:r.top+r.height/2};
+  if(deckCount>0){deckCount--; updateDeck();}
+  await fly(card, deckCenter(), to, {dur:dur??rand(360,560), lift:rand(30,60), spin:rand(-10,10), faceUp:false});
+  el.classList.remove("dealing");
+  el.animate([{transform:el.style.transform+" scale(1.08)"},{transform:el.style.transform}],{duration:130,easing:"ease-out"});
+}
+
+async function dealHand(n=7){
+  if(dealing) return; dealing=true;
+  handEl.innerHTML="";
+  for(let i=0;i<n;i++){
+    await addCardToHand(randomCard());
+    await sleep(rand(90,200)); // ритм раздачи слегка «дышит»
+  }
+  dealing=false;
+}
+
+function playFromHand(cardEl,card){
+  if(dealing) return;
+  const rect=cardEl.getBoundingClientRect();
+  cardEl.remove(); reflowHand();
+  const from={x:rect.left+rect.width/2,y:rect.top+rect.height/2};
+  const tRect=table.getBoundingClientRect();
+  const jx=rand(-16,16), jy=rand(-12,12);
+  const to={x:tRect.left+tRect.width*0.5+jx, y:tRect.top+tRect.height*0.46+jy};
+  const landRot=rand(-26,26);
+  // «бросок человеком»: рандомные скорость/дуга/замах
+  fly(card, from, to, {dur:rand(430,820), lift:rand(45,100), spin:landRot, ease:pick(THROW_EASE)})
+    .then(()=>{
+      const landed=makeCardEl(card);
+      landed.style.left=jx+"px"; landed.style.top=jy+"px";
+      landed.style.transform=`translate(-50%,-50%) rotate(${landRot}deg)`;
+      landed.style.zIndex=String(100+pile);
+      landed.style.boxShadow="0 10px 18px rgba(40,25,10,.28)";
+      discardEl.appendChild(landed);
+      landed.animate([
+        {transform:`translate(-50%,-50%) rotate(${landRot}deg) scale(1.06)`},
+        {transform:`translate(-50%,-50%) rotate(${landRot}deg) scale(1)`}
+      ],{duration:140,easing:"ease-out"});
+      pile++;
+    });
+}
+
+drawEl.addEventListener("click",()=>{ if(!dealing) addCardToHand(randomCard()); });
+document.getElementById("deal").addEventListener("click",()=>dealHand());
+document.getElementById("reset").addEventListener("click",()=>{ discardEl.innerHTML=""; pile=0; });
+
+// старт: карта в центре + раздача по одной
+fly(randomCard(), deckCenter(), (()=>{const t=table.getBoundingClientRect();return{x:t.left+t.width*0.5,y:t.top+t.height*0.46};})(), {dur:560})
+  .then(({spin})=>{ const c=randomCard(); const l=makeCardEl(c); l.style.left="0px"; l.style.top="0px"; l.style.transform=`translate(-50%,-50%) rotate(${rand(-12,12)}deg)`; discardEl.appendChild(l); pile++; });
+setTimeout(()=>dealHand(),300);
 </script>
 </body>
 </html>
