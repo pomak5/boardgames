@@ -2,6 +2,7 @@
 import Fastify from 'fastify';
 import { Server } from 'socket.io';
 import { games } from './games';
+import { attachUser } from './auth/socket';
 import cors from '@fastify/cors';
 
 const PORT = Number(process.env.PORT ?? 3001);
@@ -30,7 +31,9 @@ const io = new Server(app.server, {
 });
 
 for (const game of games) {
-  game.register(io.of(game.namespace));
+  const nsp = io.of(game.namespace);
+  nsp.use(attachUser);
+  game.register(nsp);
 }
 
 await app.listen({ port: PORT, host: '0.0.0.0' });
