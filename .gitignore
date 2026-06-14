@@ -3,3 +3,14 @@ dist/
 .env
 *.log
 .DS_Store
+
+# build artifacts
+*.tsbuildinfo
+.tsbuild/
+
+# working screenshots (root + apps/space)
+/*.png
+apps/space/*.png
+
+# stray npm lockfile (project uses bun)
+package-lock.json
