@@ -539,10 +539,14 @@
   z-index: -1;
 }
 .deck-stack::before {
-  transform: translate(3px, 3px);
+  transform: translate(3px, -3px) rotate(-3.5deg);
 }
 .deck-stack::after {
-  transform: translate(6px, 6px);
+  transform: translate(6px, 5px) rotate(2.5deg);
+}
+.uno-deck.deck-stack {
+  box-shadow: 0 10px 22px #00000050, 2px 3px 0 #efe3cd, 4px 6px 0 #e2d2b2,
+    6px 9px 0 #d4c19c;
 }
 .deck-count {
   position: absolute;
@@ -560,6 +564,22 @@
 }
 .uno-discard-wrap {
   position: relative;
+}
+.uno-discard-pile {
+  position: relative;
+  width: 92px;
+  height: 132px;
+}
+.uno-pile-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+@media (max-width: 760px) {
+  .uno-discard-pile {
+    width: 76px;
+    height: 110px;
+  }
 }
 .uno-discard-wrap .playcard {
   outline-width: 3px;
@@ -622,7 +642,8 @@
     opacity: 1;
   }
   to {
-    transform: translate(-50%, -50%) rotate(0deg) scale(1.04);
+    transform: translate(calc(-50% + var(--ex, 0px)), calc(-50% + var(--ey, 0px)))
+      rotate(var(--erot, 0deg)) scale(1);
     opacity: 1;
   }
 }

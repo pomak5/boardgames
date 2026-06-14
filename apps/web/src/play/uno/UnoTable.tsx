@@ -45,6 +45,12 @@ function seatPos(i: number, n: number): { x: number; y: number } {
   return { x: 50 + 43 * Math.cos(a), y: 45 + 38 * Math.sin(a) };
 }
 
+/** Детерминированный «неровный» сдвиг/поворот карты в стопке сброса по её id. */
+function scatter(id: number): { x: number; y: number; rot: number } {
+  const h = (id * 2654435761) >>> 0;
+  return { x: (h % 25) - 12, y: ((h >> 4) % 21) - 10, rot: ((h >> 9) % 37) - 18 };
+}
+
 export function PlayCard({
   card,
   playable,
@@ -151,6 +157,10 @@ interface FlyCard {
   dx: number;
   dy: number;
   spin: number;
+  ex: number;
+  ey: number;
+  erot: number;
+  dur: number;
 }
 
 export function UnoTable({ api }: { api: UnoRoomApi }) {
@@ -164,6 +174,7 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
   const flyId = useRef(0);
   const prevTurn = useRef<string | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
+  const discardRef = useRef<HTMLDivElement>(null);
   const left = useCountdown(api.turnDeadline);
 
   const nickOf = (id: string) =>
@@ -188,15 +199,21 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
       return seatPos(idx < 0 ? 0 : idx, order.length);
     };
     const launch = (card: UnoCard, pid: string) => {
-      const rect = tableRef.current?.getBoundingClientRect();
-      if (!rect) return;
+      const tr = tableRef.current?.getBoundingClientRect();
+      const dr = discardRef.current?.getBoundingClientRect();
+      if (!tr || !dr) return;
+      const dcx = dr.left + dr.width / 2;
+      const dcy = dr.top + dr.height / 2;
       const pos = srcPos(pid);
-      const dx = ((pos.x - 50) / 100) * rect.width;
-      const dy = ((pos.y - 50) / 100) * rect.height;
+      const dx = tr.left + (pos.x / 100) * tr.width - dcx;
+      const dy = tr.top + (pos.y / 100) * tr.height - dcy;
+      const s = scatter(card.id);
       const id = ++flyId.current;
-      const spin = pid === meId ? -8 : (pos.x - 50) * 0.7;
-      setFlies(f => [...f, { id, card, dx, dy, spin }]);
-      setTimeout(() => setFlies(f => f.filter(c => c.id !== id)), 520);
+      // разная скорость/замах — бросок ощущается «живым»
+      const spin = (pid === meId ? -8 : (pos.x - 50) * 0.7) + (Math.random() * 12 - 6);
+      const dur = 440 + Math.random() * 340;
+      setFlies(f => [...f, { id, card, dx, dy, spin, ex: s.x, ey: s.y, erot: s.rot, dur }]);
+      setTimeout(() => setFlies(f => f.filter(c => c.id !== id)), dur + 80);
     };
 
     for (const e of game.log.slice(prev)) {
@@ -276,6 +293,7 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
       "--rot": `${off * (n > 9 ? 3 : 5)}deg`,
       "--lift": `${Math.abs(off) * (n > 9 ? 3 : 5)}px`,
       zIndex: i + 1,
+      animationDelay: `${Math.min(i, 9) * 55}ms`,
     } as React.CSSProperties;
   };
 
@@ -285,6 +303,16 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
     setTimeout(() => setPressed(false), 500);
     api.act({ type: "uno" });
   };
+
+  // стопка сброса: последние сыгранные карты остаются на столе «неровной» кучкой
+  const recentPile: UnoCard[] = (() => {
+    const cards = game.log
+      .filter(e => e.type === "play" || e.type === "jumpIn")
+      .map(e => (e as { card: UnoCard }).card);
+    if (cards.length === 0 || cards[cards.length - 1].id !== game.topCard.id)
+      cards.push(game.topCard);
+    return cards.slice(-5);
+  })();
 
   return (
     <div className="uno-screen">
@@ -349,8 +377,43 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
                 : `в колоде: ${game.deckCount}`}
             </span>
           </button>
-          <div className="uno-discard-wrap">
-            <PlayCard card={game.topCard} />
+          <div className="uno-discard-wrap" ref={discardRef}>
+            <div className="uno-discard-pile">
+              {recentPile.map((c, idx) => {
+                const s = scatter(c.id);
+                return (
+                  <div
+                    key={c.id}
+                    className="uno-pile-card"
+                    style={{
+                      transform: `translate(-50%,-50%) translate(${s.x}px,${s.y}px) rotate(${s.rot}deg)`,
+                      zIndex: idx,
+                    }}
+                  >
+                    <PlayCard card={c} />
+                  </div>
+                );
+              })}
+              {flies.map(f => (
+                <div
+                  key={f.id}
+                  className="uno-fly"
+                  style={
+                    {
+                      "--dx": `${f.dx}px`,
+                      "--dy": `${f.dy}px`,
+                      "--spin": `${f.spin}deg`,
+                      "--ex": `${f.ex}px`,
+                      "--ey": `${f.ey}px`,
+                      "--erot": `${f.erot}deg`,
+                      animationDuration: `${f.dur}ms`,
+                    } as React.CSSProperties
+                  }
+                >
+                  <PlayCard card={f.card} />
+                </div>
+              ))}
+            </div>
             {game.pendingDraw > 0 && (
               <span className="uno-pending">+{game.pendingDraw}</span>
             )}
@@ -360,22 +423,6 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
             </span>
           </div>
         </div>
-
-        {flies.map(f => (
-          <div
-            key={f.id}
-            className="uno-fly"
-            style={
-              {
-                "--dx": `${f.dx}px`,
-                "--dy": `${f.dy}px`,
-                "--spin": `${f.spin}deg`,
-              } as React.CSSProperties
-            }
-          >
-            <PlayCard card={f.card} />
-          </div>
-        ))}
 
         {me && (
           <div className="uno-hand">
