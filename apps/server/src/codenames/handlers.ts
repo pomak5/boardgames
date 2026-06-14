@@ -20,6 +20,30 @@ type CodenamesNamespace = Namespace<
   SocketData
 >;
 
+/** Берёт ник и аватар из профиля по userId (если задан DATABASE_URL); иначе гость без аватара. */
+async function resolveIdentity(
+  userId: string | undefined,
+): Promise<{ nickname?: string; avatarUrl: string | null }> {
+  if (userId && process.env.DATABASE_URL) {
+    try {
+      const { getUserById } = await import('@boardgames/db');
+      const u = await getUserById(userId);
+      if (u) return { nickname: u.nickname, avatarUrl: u.avatarUrl };
+    } catch (e) {
+      console.error('resolveIdentity failed', e);
+    }
+  }
+  return { avatarUrl: null };
+}
+
+function hasGuesser(room: Room, team: Team): boolean {
+  return [...room.players.values()].some((p) => p.team === team && p.role === 'guesser');
+}
+
+function hasHumanCaptain(room: Room, team: Team): boolean {
+  return [...room.players.values()].some((p) => p.team === team && p.role === 'captain');
+}
+
 export function registerCodenames(nsp: CodenamesNamespace): void {
   const manager = new RoomManager();
 
@@ -149,11 +173,23 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
       return;
     }
     if (game.phase === 'guess') {
+      if (!hasGuesser(room, game.turn)) {
+        clearTimer(room);
+        return;
+      }
+      armGuessTimer(room);
+      return;
+    }
       armGuessTimer(room);
       return;
     }
     // фаза clue
     if (room.settings.botCaptains[game.turn]) {
+      clearTimer(room);
+      return;
+    }
+    if (!hasHumanCaptain(room, game.turn) || !hasGuesser(room, game.turn)) {
+      // ждём, пока сядет живой капитан и хотя бы один отгадывающий
       clearTimer(room);
       return;
     }
@@ -178,6 +214,7 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
   function scheduleBot(room: Room): void {
     if (!room.game || room.game.phase !== 'clue') return;
     if (!room.settings.botCaptains[room.game.turn] || room.botPending) return;
+    if (!hasGuesser(room, room.game.turn)) return;
     room.botPending = true;
     const expectedTurn = room.game.turn;
     setTimeout(() => {
@@ -204,6 +241,26 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
     };
 
     socket.on('room:create', (nickname, settings, ack) => {
+      void (async () => {
+        try {
+          const id = await resolveIdentity(data.userId);
+          const { room, player } = manager.createRoom(
+            id.nickname ?? nickname,
+            settings,
+            id.avatarUrl,
+          );
+          manager.dealNow(room);
+          data.roomCode = room.code;
+          data.playerId = player.id;
+          void socket.join(room.code);
+          ack({ ok: true, room: manager.roomView(room), playerId: player.id, token: player.token });
+          scheduleBot(room);
+          scheduleTurnTimer(room);
+        } catch (e) {
+          ack({ ok: false, error: e instanceof RoomError ? e.message : 'Внутренняя ошибка' });
+        }
+      })();
+    });
       try {
         const { room, player } = manager.createRoom(nickname, settings);
         data.roomCode = room.code;
@@ -216,6 +273,21 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
     });
 
     socket.on('room:join', (code, nickname, ack) => {
+      void (async () => {
+        try {
+          const id = await resolveIdentity(data.userId);
+          const { room, player } = manager.joinRoom(code, id.nickname ?? nickname, id.avatarUrl);
+          data.roomCode = room.code;
+          data.playerId = player.id;
+          void socket.join(room.code);
+          ack({ ok: true, room: manager.roomView(room), playerId: player.id, token: player.token });
+          socket.emit('chat:history', room.chat);
+          broadcast(room);
+        } catch (e) {
+          ack({ ok: false, error: e instanceof RoomError ? e.message : 'Внутренняя ошибка' });
+        }
+      })();
+    });
       try {
         const { room, player } = manager.joinRoom(code, nickname);
         data.roomCode = room.code;
@@ -258,6 +330,26 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
     socket.on('disconnect', leaveCurrent);
 
     socket.on('room:setTeam', (team, role) =>
+      guard(() => {
+        const room = inRoom();
+        if (!room || !data.playerId) return;
+        manager.setTeam(room, data.playerId, team, role);
+        broadcast(room);
+        scheduleBot(room);
+        scheduleTurnTimer(room);
+      }),
+    );
+
+    socket.on('room:setCaptain', (team, who) =>
+      guard(() => {
+        const room = inRoom();
+        if (!room || !data.playerId) return;
+        manager.setCaptainSlot(room, data.playerId, team, who);
+        broadcast(room);
+        scheduleBot(room);
+        scheduleTurnTimer(room);
+      }),
+    );
       guard(() => {
         const room = inRoom();
         if (!room || !data.playerId) return;
@@ -340,8 +432,9 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
         const room = inRoom();
         if (!room || !data.playerId) return;
         manager.newRound(room, data.playerId);
-        clearTimer(room);
         broadcast(room);
+        scheduleBot(room);
+        scheduleTurnTimer(room);
       }),
     );
   });

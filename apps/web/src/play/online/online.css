@@ -52,6 +52,24 @@
   padding: 8px 12px;
   font-size: 0.9rem;
 }
+.on-me {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 4px;
+}
+.on-me__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.on-me__label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.on-me__nick {
+  font-size: 1.05rem;
+}
 
 /* Лобби */
 .on-lobby {

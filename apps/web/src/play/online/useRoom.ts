@@ -22,6 +22,7 @@ export interface RoomApi {
   join: (code: string, nickname: string) => void;
   leave: () => void;
   setTeam: (team: Team, role: PlayerRole) => void;
+  setCaptain: (team: Team, who: "me" | "bot" | "open") => void;
   updateSettings: (settings: RoomSettings) => void;
   start: () => void;
   newRound: () => void;
@@ -134,6 +135,7 @@ export function useRoom(): RoomApi {
       reset();
     },
     setTeam: (team, role) => socket.emit("room:setTeam", team, role),
+    setCaptain: (team, who) => socket.emit("room:setCaptain", team, who),
     updateSettings: (settings) => socket.emit("room:settings", settings),
     start: () => socket.emit("room:start"),
     newRound: () => socket.emit("room:newRound"),

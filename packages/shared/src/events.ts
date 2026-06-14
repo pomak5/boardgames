@@ -8,6 +8,8 @@ export type PlayerRole = 'captain' | 'guesser';
 export interface RoomPlayer {
   id: string;
   nickname: string;
+  /** data:image/* URL аватара из профиля (null у гостей и без аватара). */
+  avatarUrl: string | null;
   team: Team | null;
   role: PlayerRole;
   connected: boolean;
@@ -97,6 +99,8 @@ export interface ClientToServerEvents {
   'room:rejoin': (code: string, token: string, ack: (a: JoinAck) => void) => void;
   'room:leave': () => void;
   'room:setTeam': (team: Team, role: PlayerRole) => void;
+  /** Управление слотом капитана команды: сесть самому / поставить бота / освободить. */
+  'room:setCaptain': (team: Team, who: 'me' | 'bot' | 'open') => void;
   'room:settings': (settings: RoomSettings) => void;
   'room:start': () => void;
   'chat:send': (text: string) => void;
