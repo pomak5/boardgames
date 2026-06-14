@@ -18,6 +18,22 @@ type UnoNamespace = Namespace<
   SocketData
 >;
 
+/** Берёт ник и аватар из профиля по userId (если задан DATABASE_URL); иначе гость без аватара. */
+async function resolveIdentity(
+  userId: string | undefined,
+): Promise<{ nickname?: string; avatarUrl: string | null }> {
+  if (userId && process.env.DATABASE_URL) {
+    try {
+      const { getUserById } = await import('@boardgames/db');
+      const u = await getUserById(userId);
+      if (u) return { nickname: u.nickname, avatarUrl: u.avatarUrl };
+    } catch (e) {
+      console.error('resolveIdentity failed', e);
+    }
+  }
+  return { avatarUrl: null };
+}
+
 export function registerUno(nsp: UnoNamespace): void {
   // broadcast вызывается и менеджером (ходы бота/таймаут), и хендлерами (ходы игрока)
   const manager = new UnoRoomManager((room) => broadcast(room));
@@ -83,29 +99,35 @@ export function registerUno(nsp: UnoNamespace): void {
     };
 
     socket.on('room:create', (nickname, settings, ack) => {
-      try {
-        const { room, player } = manager.createRoom(nickname, settings);
-        data.roomCode = room.code;
-        data.playerId = player.id;
-        void socket.join(room.code);
-        ack({ ok: true, room: manager.roomView(room), playerId: player.id, token: player.token });
-      } catch (e) {
-        ack({ ok: false, error: e instanceof UnoRoomError ? e.message : 'Внутренняя ошибка' });
-      }
+      void (async () => {
+        try {
+          const id = await resolveIdentity(data.userId);
+          const { room, player } = manager.createRoom(id.nickname ?? nickname, settings, id.avatarUrl);
+          data.roomCode = room.code;
+          data.playerId = player.id;
+          void socket.join(room.code);
+          ack({ ok: true, room: manager.roomView(room), playerId: player.id, token: player.token });
+        } catch (e) {
+          ack({ ok: false, error: e instanceof UnoRoomError ? e.message : 'Внутренняя ошибка' });
+        }
+      })();
     });
 
     socket.on('room:join', (code, nickname, ack) => {
-      try {
-        const { room, player } = manager.joinRoom(code, nickname);
-        data.roomCode = room.code;
-        data.playerId = player.id;
-        void socket.join(room.code);
-        ack({ ok: true, room: manager.roomView(room), playerId: player.id, token: player.token });
-        socket.emit('chat:history', room.chat);
-        broadcast(room);
-      } catch (e) {
-        ack({ ok: false, error: e instanceof UnoRoomError ? e.message : 'Внутренняя ошибка' });
-      }
+      void (async () => {
+        try {
+          const id = await resolveIdentity(data.userId);
+          const { room, player } = manager.joinRoom(code, id.nickname ?? nickname, id.avatarUrl);
+          data.roomCode = room.code;
+          data.playerId = player.id;
+          void socket.join(room.code);
+          ack({ ok: true, room: manager.roomView(room), playerId: player.id, token: player.token });
+          socket.emit('chat:history', room.chat);
+          broadcast(room);
+        } catch (e) {
+          ack({ ok: false, error: e instanceof UnoRoomError ? e.message : 'Внутренняя ошибка' });
+        }
+      })();
     });
 
     socket.on('room:rejoin', (code, token, ack) => {

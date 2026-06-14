@@ -115,6 +115,8 @@ export interface ClientToServerEvents {
 export interface UnoRoomPlayerView {
   id: string;
   nickname: string;
+  /** data:image/* URL аватара из профиля (null у гостей/ботов). */
+  avatarUrl: string | null;
   connected: boolean;
   isBot: boolean;
 }

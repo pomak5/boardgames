@@ -34,6 +34,7 @@ interface UnoRoomPlayer {
   id: string;
   token: string;
   nickname: string;
+  avatarUrl: string | null;
   connected: boolean;
   isBot: boolean;
 }
@@ -72,10 +73,10 @@ export const DEFAULT_UNO_SETTINGS: UnoRoomSettings = {
   timer: { enabled: true, turnSec: 30 },
 };
 
-function makePlayer(nickname: string, isBot = false): UnoRoomPlayer {
+function makePlayer(nickname: string, isBot = false, avatarUrl: string | null = null): UnoRoomPlayer {
   const nick = nickname.trim().slice(0, MAX_NICK);
   if (!nick) throw new UnoRoomError('Введите ник');
-  return { id: randomUUID(), token: randomUUID(), nickname: nick, connected: true, isBot };
+  return { id: randomUUID(), token: randomUUID(), nickname: nick, avatarUrl, connected: true, isBot };
 }
 
 function mergeSettings(prev: UnoRoomSettings, patch: UnoSettingsPatch): UnoRoomSettings {
@@ -118,10 +119,14 @@ export class UnoRoomManager {
     return p;
   }
 
-  createRoom(nickname: string, patch: UnoSettingsPatch): { room: UnoRoom; player: UnoRoomPlayer } {
+  createRoom(
+    nickname: string,
+    patch: UnoSettingsPatch,
+    avatarUrl: string | null = null,
+  ): { room: UnoRoom; player: UnoRoomPlayer } {
     let code = generateRoomCode();
     while (this.rooms.has(code)) code = generateRoomCode();
-    const player = makePlayer(nickname);
+    const player = makePlayer(nickname, false, avatarUrl);
     const room: UnoRoom = {
       code,
       hostId: player.id,
@@ -137,12 +142,16 @@ export class UnoRoomManager {
     return { room, player };
   }
 
-  joinRoom(code: string, nickname: string): { room: UnoRoom; player: UnoRoomPlayer } {
+  joinRoom(
+    code: string,
+    nickname: string,
+    avatarUrl: string | null = null,
+  ): { room: UnoRoom; player: UnoRoomPlayer } {
     const room = this.require(code);
     if (room.phase !== 'lobby') throw new UnoRoomError('Игра уже началась');
     if (room.players.length >= room.settings.maxPlayers)
       throw new UnoRoomError('Комната заполнена');
-    const player = makePlayer(nickname);
+    const player = makePlayer(nickname, false, avatarUrl);
     room.players.push(player);
     return { room, player };
   }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { UnoCard, UnoColor } from "@shared/uno/types";
+import { Avatar } from "../components/Avatar";
 import { IconBot } from "../icons";
 import { Chat } from "../online/Chat";
 import { unoSounds } from "./sounds";
@@ -304,7 +305,7 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
                 {rp?.isBot ? (
                   <IconBot />
                 ) : (
-                  <b>{nickOf(p.id).slice(0, 1).toUpperCase()}</b>
+                  <Avatar nickname={nickOf(p.id)} avatarUrl={rp?.avatarUrl} size={44} />
                 )}
                 {p.saidUno && p.handCount === 1 && (
                   <span className="uno-seat__uno">UNO!</span>

@@ -5,6 +5,7 @@ import { SettingsModal } from "../SettingsModal";
 import "../codenames/codenames.css";
 import "../online/online.css";
 import "../theme.css";
+import { useAuth } from "../net/useAuth";
 import { UnoHome } from "./UnoHome";
 import { UnoLobby } from "./UnoLobby";
 import { UnoTable } from "./UnoTable";
@@ -14,6 +15,7 @@ import "./uno.css";
 export function UnoApp() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const api = useUnoRoom();
+  const auth = useAuth();
 
   return (
     <>
@@ -42,7 +44,7 @@ export function UnoApp() {
         </div>
       </header>
 
-      {!api.room && <UnoHome api={api} />}
+      {!api.room && <UnoHome api={api} auth={auth} />}
       {api.room && api.room.phase === "lobby" && <UnoLobby api={api} />}
       {api.room && api.room.phase !== "lobby" && <UnoTable api={api} />}
 

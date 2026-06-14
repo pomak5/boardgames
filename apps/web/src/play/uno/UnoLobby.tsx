@@ -1,4 +1,5 @@
 import type { UnoRules } from "@shared/uno/types";
+import { Avatar } from "../components/Avatar";
 import { IconBot, IconClose } from "../icons";
 import { Chat } from "../online/Chat";
 import type { UnoRoomApi } from "./useUnoRoom";
@@ -75,13 +76,13 @@ export function UnoLobby({ api }: { api: UnoRoomApi }) {
             <ul className="uno-players">
               {room.players.map(p => (
                 <li key={p.id} className={p.connected ? "" : "on-player--away"}>
-                  <span className="uno-players__ava">
-                    {p.isBot ? (
+                  {p.isBot ? (
+                    <span className="uno-players__ava">
                       <IconBot />
-                    ) : (
-                      p.nickname.slice(0, 1).toUpperCase()
-                    )}
-                  </span>
+                    </span>
+                  ) : (
+                    <Avatar nickname={p.nickname} avatarUrl={p.avatarUrl} size={32} />
+                  )}
                   <span className="uno-players__name">{p.nickname}</span>
                   {p.id === room.hostId && (
                     <span className="uno-tag">хост</span>
