@@ -11,7 +11,7 @@
 
 ## Структура репозитория
 
-- `apps/space/` — **актуальная версия** (Convex + React/Vite). Standalone-проект:
+- `apps/web/` — **актуальная версия** (Convex + React/Vite). Standalone-проект:
   свой `package.json`, biome (двойные кавычки), свой tsconfig. Бэкенд — Convex
   (`convex/rooms.ts` и др.), фронт — `src/play/` (`home/` главный экран,
   `codenames/`, `online/`, `shared/` движок, `icons.tsx` SVG-иконки).
@@ -28,8 +28,8 @@
 - **Никаких эмодзи в интерфейсе — только свои SVG-иконки** (`src/play/icons.tsx`).
   Без «AI-слопа»: никаких выдуманных цифр, лишних бейджей и пустых украшательств.
 - UI и тексты на русском.
-- `apps/space` форматируется biome (`bun run check`), остальной монорепозиторий —
-  prettier/eslint. `apps/space` намеренно исключён из root workspaces,
+- `apps/web` форматируется biome (`bun run check`), остальной монорепозиторий —
+  prettier/eslint. `apps/web` намеренно исключён из root workspaces,
   `.prettierignore` и eslint ignores — не включать обратно, иначе падает CI
   (frozen lockfile + format check).
 - CI (root): `bun install --frozen-lockfile`, lint, format:check, typecheck, test.
@@ -39,7 +39,7 @@
 - Прод-версия (Convex) хостится на Viktor Space `boardnight`:
   https://preview-boardnight-f7caeff8.viktor.space (Convex dev deployment).
   Прод-домен/прод-база — по готовности.
-- Деплой: содержимое `apps/space` синкается в Space, `bunx convex dev --once`
+- Деплой: содержимое `apps/web` синкается в Space, `bunx convex dev --once`
   пушит функции, `vite build` собирает фронт.
 
 ## Сделано

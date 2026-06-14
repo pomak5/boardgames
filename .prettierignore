@@ -3,4 +3,4 @@ dist
 bun.lock
 design
 
-apps/space
+apps/web
