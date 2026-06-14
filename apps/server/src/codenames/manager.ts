@@ -9,6 +9,7 @@ import {
   pass,
   pickWords,
   redactCodenames,
+  skipClue,
   suggestClue,
 } from '@boardgames/shared';
 import type {
@@ -42,6 +43,8 @@ export interface Room {
   botPending: boolean;
   /** Счёт серии в этой комнате (red/blue выигрыши). */
   series: Record<Team, number>;
+  /** Когда началась текущая партия (ms) или null в лобби. */
+  startedAt: number | null;
 }
 
 export const MAX_PLAYERS = 8;
@@ -52,6 +55,7 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   game: 'codenames',
   botCaptains: { red: true, blue: true },
   botRisk: 'normal',
+  timer: { enabled: true, turnSec: 60, firstTurnSec: 120, bonusSec: 10 },
 };
 
 export class RoomManager {
@@ -75,6 +79,7 @@ export class RoomManager {
       game: null,
       botPending: false,
       series: { red: 0, blue: 0 },
+      startedAt: null,
     };
     this.rooms.set(code, room);
     return { room, player };
@@ -156,6 +161,7 @@ export class RoomManager {
     }
     room.game = createGame(pickWords(BOARD_SIZE));
     room.phase = 'playing';
+    room.startedAt = Date.now();
   }
 
   giveClue(room: Room, playerId: string, clue: Clue): void {
@@ -194,6 +200,18 @@ export class RoomManager {
     room.game = pass(game);
   }
 
+  /** Тайм-аут фазы отгадывания: ход переходит (сервер, без игрока). */
+  timeoutPass(room: Room): void {
+    if (!room.game || room.phase !== 'playing' || room.game.phase !== 'guess') return;
+    room.game = pass(room.game);
+  }
+
+  /** Тайм-аут капитана: подсказка не дана, ход переходит другой команде. */
+  timeoutSkipClue(room: Room): void {
+    if (!room.game || room.phase !== 'playing' || room.game.phase !== 'clue') return;
+    room.game = skipClue(room.game);
+  }
+
   /** Новый раунд: комната возвращается в лобби, игроки и счёт серии остаются. */
   newRound(room: Room, playerId: string): void {
     if (playerId !== room.hostId) throw new RoomError('Новый раунд начинает хост');
@@ -201,6 +219,7 @@ export class RoomManager {
     room.game = null;
     room.phase = 'lobby';
     room.botPending = false;
+    room.startedAt = null;
   }
 
   viewFor(room: Room, playerId: string): CodenamesView | null {
@@ -218,6 +237,7 @@ export class RoomManager {
       phase: room.phase,
       settings: room.settings,
       series: room.series,
+      startedAt: room.startedAt,
       players: [...room.players.values()].map(({ token: _token, ...p }) => p),
     };
   }

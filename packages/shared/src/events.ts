@@ -39,6 +39,8 @@ export interface RoomView {
   players: RoomPlayer[];
   /** Счёт серии в комнате (опционально). */
   series?: Record<Team, number>;
+  /** Когда началась текущая партия (ms, Date.now()); null в лобби. Для счётчика времени игры. */
+  startedAt?: number | null;
 }
 
 export interface ChatMessage {
@@ -83,6 +85,8 @@ export interface ServerToClientEvents {
   'chat:message': (msg: ChatMessage) => void;
   'chat:history': (msgs: ChatMessage[]) => void;
   'game:state': (view: CodenamesView) => void;
+  /** Дедлайн текущего хода (ms, Date.now()) или null, если таймер выключен. */
+  'game:timer': (deadline: number | null) => void;
   'game:error': (message: string) => void;
 }
 
