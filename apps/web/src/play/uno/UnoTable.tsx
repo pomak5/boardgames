@@ -56,12 +56,18 @@ export function PlayCard({
   playable,
   disabled,
   onClick,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
   style,
 }: {
   card: UnoCard;
   playable?: boolean;
   disabled?: boolean;
   onClick?: () => void;
+  onPointerDown?: (e: React.PointerEvent) => void;
+  onPointerMove?: (e: React.PointerEvent) => void;
+  onPointerUp?: (e: React.PointerEvent) => void;
   style?: React.CSSProperties;
 }) {
   const label = cardLabel(card);
@@ -85,6 +91,9 @@ export function PlayCard({
       className={`playcard ${colorClass(card)} ${playable ? "playable" : ""}`}
       disabled={disabled}
       onClick={onClick}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
       style={style}
       aria-label={`Карта ${card.color ? COLOR_RU[card.color] : "дикая"} ${label}`}
     >
@@ -176,6 +185,15 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
   const tableRef = useRef<HTMLDivElement>(null);
   const discardRef = useRef<HTMLDivElement>(null);
   const left = useCountdown(api.turnDeadline);
+  const [burst, setBurst] = useState<{ id: number; color: string } | null>(null);
+  const prevColor = useRef<string | null>(null);
+  const drag = useRef<{
+    id: number;
+    sx: number;
+    sy: number;
+    el: HTMLElement;
+    moved: boolean;
+  } | null>(null);
 
   const nickOf = (id: string) =>
     room?.players.find(p => p.id === id)?.nickname ?? "—";
@@ -254,6 +272,22 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
     prevTurn.current = cur;
   }, [game, api.playerId]);
 
+  // wild-вспышка: при смене активного цвета дикой картой
+  useEffect(() => {
+    if (!game) return;
+    const top = game.topCard;
+    if (
+      prevColor.current !== null &&
+      prevColor.current !== game.color &&
+      (top.value === "wild" || top.value === "wild4")
+    ) {
+      const id = Date.now();
+      setBurst({ id, color: game.color });
+      setTimeout(() => setBurst(b => (b?.id === id ? null : b)), 640);
+    }
+    prevColor.current = game.color;
+  }, [game]);
+
   if (!room || !game) return null;
 
   const meId = api.playerId;
@@ -314,10 +348,50 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
     return cards.slice(-5);
   })();
 
+  const onCardDown = (e: React.PointerEvent, cardId: number) => {
+    if (!playableSet.has(cardId)) return;
+    const el = e.currentTarget as HTMLElement;
+    el.setPointerCapture(e.pointerId);
+    drag.current = { id: cardId, sx: e.clientX, sy: e.clientY, el, moved: false };
+  };
+  const onCardMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d) return;
+    const dx = e.clientX - d.sx;
+    const dy = e.clientY - d.sy;
+    if (Math.abs(dx) + Math.abs(dy) > 6) d.moved = true;
+    d.el.style.transition = "none";
+    d.el.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx * 0.04}deg) scale(1.06)`;
+    d.el.style.zIndex = "120";
+  };
+  const onCardUp = (e: React.PointerEvent, cardId: number) => {
+    const d = drag.current;
+    if (!d) return;
+    drag.current = null;
+    d.el.style.transition = "";
+    d.el.style.transform = "";
+    d.el.style.zIndex = "";
+    const tr = tableRef.current?.getBoundingClientRect();
+    let drop = !d.moved;
+    if (tr) {
+      const cx = tr.left + tr.width / 2;
+      const cy = tr.top + tr.height * 0.47;
+      if (Math.hypot(e.clientX - cx, e.clientY - cy) < 200) drop = true;
+    }
+    if (drop) api.act({ type: "play", cardId });
+  };
+
   return (
     <div className="uno-screen">
       <div className={`uno-table ${shake ? "shake" : ""}`} ref={tableRef}>
         <DirArrows ccw={game.dir === -1} />
+        {burst && (
+          <div
+            key={burst.id}
+            className="uno-burst"
+            style={{ background: `var(--uno-${burst.color})` }}
+          />
+        )}
 
         {opps.map((p, i) => {
           const pos = seatPos(i, opps.length);
@@ -432,7 +506,10 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
                 card={card}
                 playable={playableSet.has(card.id)}
                 disabled={!playableSet.has(card.id)}
-                onClick={() => api.act({ type: "play", cardId: card.id })}
+                onClick={() => {}}
+                onPointerDown={e => onCardDown(e, card.id)}
+                onPointerMove={onCardMove}
+                onPointerUp={e => onCardUp(e, card.id)}
                 style={fan(i, game.hand.length)}
               />
             ))}
