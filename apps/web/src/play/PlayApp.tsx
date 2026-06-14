@@ -1,110 +1,57 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { CoopScreen } from "./codenames/CoopScreen";
-import { GameScreen } from "./codenames/GameScreen";
-import type { CaptainMode } from "./codenames/useCodenamesGame";
-import { useCodenamesGame } from "./codenames/useCodenamesGame";
 import { IconGear, IconHome } from "./icons";
+import { useAuth } from "./net/useAuth";
 import { HomeScreen } from "./online/HomeScreen";
-import { LobbyScreen } from "./online/LobbyScreen";
 import { OnlineGameScreen } from "./online/OnlineGameScreen";
 import { useRoom } from "./online/useRoom";
 import { SettingsModal } from "./SettingsModal";
-import type { BotRisk } from "@shared";
 import "./theme.css";
 
-type Mode = "classic" | "coop" | "online";
-
 export function App() {
-  const [mode, setMode] = useState<Mode>("classic");
-  const [captainMode, setCaptainMode] = useState<CaptainMode>("bot");
-  const [risk, setRisk] = useState<BotRisk>("normal");
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const game = useCodenamesGame({ captainMode, risk });
+  const auth = useAuth();
   const roomApi = useRoom();
 
-  // если мы в комнате — переключаемся на онлайн-режим автоматически (rejoin после F5)
-  const effectiveMode: Mode = roomApi.room ? "online" : mode;
-  // В онлайн-партии у игрового экрана своя полноценная шапка (лого, код, настройки).
-  const inGame = effectiveMode === "online" && roomApi.room?.phase === "playing";
+  // Комната дилится сразу при входе, поэтому отдельного лобби нет:
+  // либо экран входа (нет комнаты), либо живой стол.
+  const inRoom = roomApi.room !== null;
 
   return (
     <>
-      {!inGame && (
-      <header className="cn-topbar">
-        <h1 className="cn-title">
-          <Link
-            to="/"
-            className="cn-home-link"
-            title="На главную"
-            aria-label="На главную"
-          >
-            <IconHome />
-          </Link>{" "}
-          Коднеймс
-        </h1>
-        <div className="cn-settings">
-          <select
-            value={effectiveMode}
-            onChange={e => setMode(e.target.value as Mode)}
-            disabled={roomApi.room !== null}
-            aria-label="Режим"
-          >
-            <option value="classic">Классика (с ботом)</option>
-            <option value="coop">Кооп: соло/дуо</option>
-            <option value="online">Онлайн: комната</option>
-          </select>
-          {effectiveMode === "classic" && (
-            <select
-              value={captainMode}
-              onChange={e => setCaptainMode(e.target.value as CaptainMode)}
-              aria-label="Кто капитан"
+      {!inRoom && (
+        <header className="cn-topbar">
+          <h1 className="cn-title">
+            <Link
+              to="/"
+              className="cn-home-link"
+              title="На главную"
+              aria-label="На главную"
             >
-              <option value="bot">Капитан: бот</option>
-              <option value="human">Капитан: я</option>
-            </select>
-          )}
-          {effectiveMode !== "online" &&
-            (mode === "coop" || captainMode === "bot") && (
-              <select
-                value={risk}
-                onChange={e => setRisk(e.target.value as BotRisk)}
-                aria-label="Смелость бота"
-              >
-                <option value="cautious">Бот: осторожный</option>
-                <option value="normal">Бот: обычный</option>
-                <option value="bold">Бот: смелый</option>
-              </select>
-            )}
-          {effectiveMode === "classic" && (
-            <button className="cn-btn cn-btn--ghost" onClick={game.restart}>
-              Новая партия
+              <IconHome />
+            </Link>{" "}
+            Коднеймс
+          </h1>
+          <div className="cn-settings">
+            <button
+              className="cn-btn cn-btn--ghost"
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Настройки"
+              title="Настройки"
+            >
+              <IconGear />
             </button>
-          )}
-          <button
-            className="cn-btn cn-btn--ghost"
-            onClick={() => setSettingsOpen(true)}
-            aria-label="Настройки"
-            title="Настройки"
-          >
-            <IconGear />
-          </button>
-        </div>
-      </header>
+          </div>
+        </header>
       )}
-      {effectiveMode === "classic" && <GameScreen game={game} />}
-      {effectiveMode === "coop" && <CoopScreen key={risk} risk={risk} />}
-      {effectiveMode === "online" &&
-        (roomApi.room === null ? (
-          <HomeScreen api={roomApi} />
-        ) : roomApi.room.phase === "lobby" ? (
-          <LobbyScreen api={roomApi} />
-        ) : (
-          <OnlineGameScreen
-            api={roomApi}
-            onOpenSettings={() => setSettingsOpen(true)}
-          />
-        ))}
+      {inRoom ? (
+        <OnlineGameScreen
+          api={roomApi}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
+      ) : (
+        <HomeScreen api={roomApi} auth={auth} />
+      )}
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
     </>
   );

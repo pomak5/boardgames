@@ -69,10 +69,14 @@ export class RoomManager {
     return this.rooms.get(code.toUpperCase());
   }
 
-  createRoom(nickname: string, settings: RoomSettings): { room: Room; player: PlayerRecord } {
+  createRoom(
+    nickname: string,
+    settings: RoomSettings,
+    avatarUrl: string | null = null,
+  ): { room: Room; player: PlayerRecord } {
     let code = generateRoomCode();
     while (this.rooms.has(code)) code = generateRoomCode();
-    const player = makePlayer(nickname);
+    const player = makePlayer(nickname, avatarUrl);
     const room: Room = {
       code,
       hostId: player.id,
@@ -91,12 +95,16 @@ export class RoomManager {
     return { room, player };
   }
 
-  joinRoom(code: string, nickname: string): { room: Room; player: PlayerRecord } {
+  joinRoom(
+    code: string,
+    nickname: string,
+    avatarUrl: string | null = null,
+  ): { room: Room; player: PlayerRecord } {
     const room = this.get(code);
     if (!room) throw new RoomError('Комната не найдена');
-    if (room.phase !== 'lobby') throw new RoomError('Игра уже началась');
+    if (room.phase === 'finished') throw new RoomError('Партия завершена, дождитесь нового раунда');
     if (room.players.size >= MAX_PLAYERS) throw new RoomError('Комната заполнена');
-    const player = makePlayer(nickname);
+    const player = makePlayer(nickname, avatarUrl);
     room.players.set(player.id, player);
     return { room, player };
   }
@@ -129,7 +137,7 @@ export class RoomManager {
   }
 
   setTeam(room: Room, playerId: string, team: Team, role: PlayerRole): void {
-    if (room.phase !== 'lobby') throw new RoomError('Состав можно менять только в лобби');
+    if (room.phase === 'finished') throw new RoomError('Состав можно менять до конца партии');
     const player = room.players.get(playerId);
     if (!player) throw new RoomError('Игрок не найден');
     if (role === 'captain') {
@@ -218,15 +226,52 @@ export class RoomManager {
     room.game = skipClue(room.game);
   }
 
-  /** Новый раунд: комната возвращается в лобби, игроки и счёт серии остаются. */
+  /** Слот капитана команды: сесть самому ('me'), поставить бота ('bot') или освободить ('open'). */
+  setCaptainSlot(
+    room: Room,
+    playerId: string,
+    team: Team,
+    who: 'me' | 'bot' | 'open',
+  ): void {
+    if (room.phase === 'finished') throw new RoomError('Состав можно менять до конца партии');
+    const player = room.players.get(playerId);
+    if (!player) throw new RoomError('Игрок не найден');
+    const demoteHumanCaptain = (): void => {
+      for (const p of room.players.values()) {
+        if (p.team === team && p.role === 'captain') p.role = 'guesser';
+      }
+    };
+    if (who === 'bot') {
+      demoteHumanCaptain();
+      room.settings.botCaptains[team] = true;
+    } else if (who === 'open') {
+      demoteHumanCaptain();
+      room.settings.botCaptains[team] = false;
+    } else {
+      const taken = [...room.players.values()].some(
+        (p) => p.id !== playerId && p.team === team && p.role === 'captain',
+      );
+      if (taken) throw new RoomError('Капитан этой команды уже выбран');
+      room.settings.botCaptains[team] = false;
+      player.team = team;
+      player.role = 'captain';
+    }
+  }
+
+  /** Раздаёт поле и сразу переводит комнату в игру (без проверок состава). */
+  dealNow(room: Room): void {
+    room.game = createGame(pickWords(BOARD_SIZE));
+    room.phase = 'playing';
+    room.startedAt = Date.now();
+    room.botPending = false;
+    room.turnDeadline = null;
+  }
+
+  /** Новый раунд: пересдаём поле; состав команд и счёт серии остаются. */
   newRound(room: Room, playerId: string): void {
     if (playerId !== room.hostId) throw new RoomError('Новый раунд начинает хост');
     if (room.phase !== 'finished') throw new RoomError('Игра ещё не закончена');
-    room.game = null;
-    room.phase = 'lobby';
-    room.botPending = false;
-    room.startedAt = null;
-    room.turnDeadline = null;
+    this.dealNow(room);
   }
 
   viewFor(room: Room, playerId: string): CodenamesView | null {
@@ -277,13 +322,14 @@ export class RoomManager {
   }
 }
 
-function makePlayer(nickname: string): PlayerRecord {
+function makePlayer(nickname: string, avatarUrl: string | null = null): PlayerRecord {
   const nick = nickname.trim().slice(0, MAX_NICK);
   if (!nick) throw new RoomError('Введите ник');
   return {
     id: randomUUID(),
     token: randomUUID(),
     nickname: nick,
+    avatarUrl,
     team: null,
     role: 'guesser',
     connected: true,

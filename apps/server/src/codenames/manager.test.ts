@@ -136,4 +136,43 @@ describe('комнаты', () => {
     expect(m.leave(room, b.id)).toBe(true);
     expect(m.get(room.code)).toBeUndefined();
   });
+
+  test('живой стол: dealNow раздаёт поле и пускает к местам в идущей игре', () => {
+    const m = mk();
+    const { room, player } = m.createRoom('Хост', {
+      ...DEFAULT_SETTINGS,
+      botCaptains: { red: false, blue: false },
+    });
+    m.dealNow(room);
+    expect(room.phase).toBe('playing');
+    expect(room.game?.cards.length).toBe(25);
+    m.setTeam(room, player.id, 'red', 'guesser');
+    expect(room.players.get(player.id)?.team).toBe('red');
+  });
+
+  test('слот капитана: сесть самому, поставить бота, освободить', () => {
+    const m = mk();
+    const { room, player } = m.createRoom('Хост', {
+      ...DEFAULT_SETTINGS,
+      botCaptains: { red: false, blue: false },
+    });
+    m.dealNow(room);
+    m.setCaptainSlot(room, player.id, 'red', 'me');
+    expect(room.players.get(player.id)?.role).toBe('captain');
+    expect(room.settings.botCaptains.red).toBe(false);
+    m.setCaptainSlot(room, player.id, 'red', 'bot');
+    expect(room.settings.botCaptains.red).toBe(true);
+    expect(room.players.get(player.id)?.role).toBe('guesser');
+    m.setCaptainSlot(room, player.id, 'red', 'open');
+    expect(room.settings.botCaptains.red).toBe(false);
+  });
+
+  test('вход по коду в идущую партию разрешён (садится зрителем без команды)', () => {
+    const m = mk();
+    const { room } = m.createRoom('Хост', DEFAULT_SETTINGS);
+    m.dealNow(room);
+    const { player } = m.joinRoom(room.code, 'Гость');
+    expect(player.team).toBeNull();
+    expect(room.players.size).toBe(2);
+  });
 });
