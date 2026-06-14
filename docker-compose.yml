@@ -19,6 +19,7 @@ services:
       PORT: 3001
       DATABASE_URL: postgres://boardgames:boardgames@postgres:5432/boardgames
       WEB_ORIGIN: http://localhost:5173
+      JWT_SECRET: dev-secret-change-me
     ports:
       - '3001:3001'
     volumes:
