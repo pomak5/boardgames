@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { DEFAULT_SETTINGS, RoomManager } from './rooms';
-import type { Room } from './rooms';
+import { DEFAULT_SETTINGS, RoomManager } from './manager';
+import type { Room } from './manager';
 
 const mk = () => new RoomManager();
 
