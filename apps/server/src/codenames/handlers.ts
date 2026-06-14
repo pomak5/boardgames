@@ -180,9 +180,6 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
       armGuessTimer(room);
       return;
     }
-      armGuessTimer(room);
-      return;
-    }
     // фаза clue
     if (room.settings.botCaptains[game.turn]) {
       clearTimer(room);
@@ -261,16 +258,6 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
         }
       })();
     });
-      try {
-        const { room, player } = manager.createRoom(nickname, settings);
-        data.roomCode = room.code;
-        data.playerId = player.id;
-        void socket.join(room.code);
-        ack({ ok: true, room: manager.roomView(room), playerId: player.id, token: player.token });
-      } catch (e) {
-        ack({ ok: false, error: e instanceof RoomError ? e.message : 'Внутренняя ошибка' });
-      }
-    });
 
     socket.on('room:join', (code, nickname, ack) => {
       void (async () => {
@@ -287,18 +274,6 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
           ack({ ok: false, error: e instanceof RoomError ? e.message : 'Внутренняя ошибка' });
         }
       })();
-    });
-      try {
-        const { room, player } = manager.joinRoom(code, nickname);
-        data.roomCode = room.code;
-        data.playerId = player.id;
-        void socket.join(room.code);
-        ack({ ok: true, room: manager.roomView(room), playerId: player.id, token: player.token });
-        socket.emit('chat:history', room.chat);
-        broadcast(room);
-      } catch (e) {
-        ack({ ok: false, error: e instanceof RoomError ? e.message : 'Внутренняя ошибка' });
-      }
     });
 
     socket.on('room:rejoin', (code, token, ack) => {
@@ -348,13 +323,6 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
         broadcast(room);
         scheduleBot(room);
         scheduleTurnTimer(room);
-      }),
-    );
-      guard(() => {
-        const room = inRoom();
-        if (!room || !data.playerId) return;
-        manager.setTeam(room, data.playerId, team, role);
-        broadcast(room);
       }),
     );
 
