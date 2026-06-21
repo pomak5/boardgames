@@ -1,6 +1,12 @@
 import type { Clue, LogEntry, Team } from './codenames';
 import type { AliasLogEntry, AliasPhase, Difficulty, AliasRound } from './alias';
 import type { UnoColor, UnoRules, UnoView } from './uno';
+import type {
+  CardId,
+  ImaginariumLogEntry,
+  ImaginariumPhase,
+  ImaginariumRoundPhase,
+} from './imaginarium';
 
 export type GameId = 'codenames' | 'uno' | 'alias';
 
@@ -283,4 +289,40 @@ export interface UnoClientToServerEvents {
   'room:newGame': () => void;
   'game:act': (action: UnoAction) => void;
   'chat:send': (text: string) => void;
+}
+
+// ============================ Imaginarium ============================
+
+/** Раунд глазами конкретного зрителя: submittedCount публичен, slots/votes
+ *  редуцированы до scoring-фазы, hasSubmitted/hasVoted — про зрителя. */
+export interface ImaginariumRoundView {
+  leader: string;
+  association: string | null;
+  /** Сколько карт сдано на стол (публично). */
+  submittedCount: number;
+  /** Сдал ли ЗРИТЕЛЬ свою карту в этом раунде. */
+  hasSubmitted: boolean;
+  /** slotIndex -> playerId (чей оригинал). null до scoring (на voting скрыто). */
+  slots: string[] | null;
+  /** Голоса. На voting — только свой (одна запись); на scoring — все. */
+  votes: Record<string, number>;
+  /** Проголосовал ли ЗРИТЕЛЬ. */
+  hasVoted: boolean;
+  phase: ImaginariumRoundPhase;
+}
+
+/** Состояние партии глазами конкретного зрителя: рука только своя, раунд
+ *  редуцирован (см. ImaginariumRoundView), log редуцирован на voting. */
+export interface ImaginariumView {
+  players: string[];
+  scores: Record<string, number>;
+  /** Только моя рука (копия); [] для не-игрока. */
+  hand: CardId[];
+  handSize: number;
+  leaderIndex: number;
+  round: ImaginariumRoundView | null;
+  roundNumber: number;
+  phase: ImaginariumPhase;
+  winner: string[] | null;
+  log: ImaginariumLogEntry[];
 }
