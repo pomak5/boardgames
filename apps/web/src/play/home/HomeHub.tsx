@@ -741,6 +741,110 @@ export function HomeHub() {
               </span>
             </div>
           </Link>
+
+          {/* Imaginarium — игра готова */}
+          <Link
+            className="tile rise d4"
+            to="/imaginarium"
+            aria-label="Имаджинариум — играть"
+          >
+            <span className="status ok">Играбельно</span>
+            <div className="art-wrap">
+              <svg
+                width="104"
+                height="84"
+                viewBox="0 0 104 84"
+                fill="none"
+                aria-hidden="true"
+              >
+                <rect
+                  x="16"
+                  y="10"
+                  width="58"
+                  height="44"
+                  rx="6"
+                  fill="var(--surface-2)"
+                  stroke="var(--accent)"
+                  strokeWidth="2.4"
+                  transform="rotate(-9 45 32)"
+                />
+                <g transform="rotate(-9 45 32)">
+                  <circle
+                    cx="45"
+                    cy="32"
+                    r="8"
+                    fill="var(--gold)"
+                    opacity="0.9"
+                  />
+                  <circle cx="42" cy="30" r="2" fill="var(--felt)" />
+                  <circle cx="48" cy="30" r="2" fill="var(--felt)" />
+                </g>
+                <rect
+                  x="42"
+                  y="28"
+                  width="58"
+                  height="44"
+                  rx="6"
+                  fill="var(--felt)"
+                  stroke="var(--accent)"
+                  strokeWidth="2.4"
+                  transform="rotate(11 71 50)"
+                />
+                <g transform="rotate(11 71 50)">
+                  <path
+                    d="M62 60c5-9 13-9 18 0"
+                    stroke="var(--accent)"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                  <path
+                    d="M71 42a3.5 3.5 0 1 0-7 0 3.5 3.5 0 0 0 7 0z"
+                    fill="var(--accent)"
+                  />
+                </g>
+              </svg>
+            </div>
+            <h3>Имаджинариум</h3>
+            <p className="desc">
+              Ведущий загадывает ассоциацию по сюрреалистичной картине —
+              остальные выбирают из своих карт ту, что подходит. Угадай карту
+              ведущего и запутай других.
+            </p>
+            <div className="tags">
+              <span className="tag">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="8" r="3.4" />
+                  <path d="M20 8.5a4 4 0 0 1 0 7" />
+                </svg>
+                3–6 игроков
+              </span>
+              <span className="tag">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3.5 2" />
+                </svg>
+                20–40 мин
+              </span>
+            </div>
+          </Link>
         </div>
       </section>
 

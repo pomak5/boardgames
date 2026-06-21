@@ -1,0 +1,690 @@
+/* Imaginarium — паттерны под .im-app + своя игровая сцена.
+   Токены — из play/theme.css («Уютный вечер»). Скоуп .im-app изолирует от
+   других игр. Повторяет базовые topbar/entry/btn/lobby паттерны alias.css,
+   переименованные в im-классы для лобби/стола. */
+
+.im-app {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 2.4vw, 40px) 24px;
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ============ topbar ============ */
+.im-app .topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 0 4px;
+  flex-wrap: wrap;
+}
+.im-app .logo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  text-decoration: none;
+}
+.im-app .logo .mark {
+  width: 34px;
+  height: 34px;
+  color: var(--accent);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.im-app .logo:hover .mark {
+  transform: rotate(120deg);
+}
+.im-app .logo b {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 30px;
+  color: var(--accent);
+}
+.im-app .room-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 900 17px 'Nunito', sans-serif;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 9px 13px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: 0.15s;
+}
+.im-app .room-code:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-soft);
+}
+.im-app .room-code__code {
+  line-height: 1;
+}
+.im-app .room-code .copy-ic {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+}
+.im-app .room-code.copied {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 50%, var(--border));
+}
+.im-app .room-copied {
+  font: 800 12px 'Nunito', sans-serif;
+  color: var(--ok);
+}
+.im-app .leave-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 800 14px 'Nunito', sans-serif;
+  color: var(--muted);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: 0.15s;
+}
+.im-app .leave-btn .leave-ic {
+  width: 16px;
+  height: 16px;
+}
+.im-app .leave-btn:hover {
+  color: var(--team-red);
+  border-color: color-mix(in srgb, var(--team-red) 40%, var(--border));
+  transform: translateY(-1px);
+}
+.im-app .spacer {
+  flex: 1;
+}
+.im-app .turn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 800 13px 'Nunito', sans-serif;
+  color: var(--text);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 8px 14px;
+  box-shadow: var(--shadow);
+}
+.im-app .turn-pill .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.im-app .nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.im-app .theme-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.im-app .theme-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-pill);
+  display: grid;
+  place-items: center;
+  transition: 0.18s;
+}
+.im-app .theme-toggle button svg {
+  width: 18px;
+  height: 18px;
+}
+.im-app .theme-toggle button.on {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.im-app .icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+  color: var(--accent);
+  cursor: pointer;
+  transition: 0.18s;
+}
+.im-app .icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+.im-app .icon-btn:hover {
+  border-color: var(--accent-soft);
+  transform: translateY(-2px);
+}
+.im-app .me-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.im-app .me-pill .me-name {
+  font: 800 13px 'Nunito', sans-serif;
+  color: var(--text);
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============ entry (главная_imaginarium) ============ */
+.im-app .entry-hero {
+  position: relative;
+  text-align: center;
+  padding: 54px 0 30px;
+}
+.im-app .entry-art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+.im-app .art {
+  position: absolute;
+  filter: drop-shadow(0 14px 22px #8a5a2b33);
+  will-change: transform;
+}
+[data-theme='dark'] .im-app .art {
+  filter: drop-shadow(0 14px 26px #00000099);
+}
+.im-app .im-art-card {
+  width: 118px;
+  height: 88px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.im-app .im-art-card svg {
+  width: 100%;
+  height: 100%;
+}
+.im-app .im-art-card--blue {
+  background: color-mix(in srgb, var(--uno-blue) 18%, var(--surface));
+}
+.im-app .im-art-card--gold {
+  background: color-mix(in srgb, var(--gold) 22%, var(--surface));
+}
+.im-app .art-1 { top: 8%; left: 12%; --r: -12deg; }
+.im-app .art-2 { top: 14%; right: 14%; --r: 9deg; }
+.im-app .art-3 { bottom: 12%; left: 50%; margin-left: -59px; --r: -5deg; }
+@keyframes im-floaty {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-10px) rotate(var(--r, 0deg)); }
+}
+.im-app .art { animation: im-floaty 6s ease-in-out infinite; }
+.im-app .art-2 { animation-duration: 7.5s; animation-delay: 0.5s; }
+.im-app .art-3 { animation-duration: 6.8s; animation-delay: 0.3s; }
+@media (prefers-reduced-motion: reduce) {
+  .im-app .art { animation: none; }
+}
+
+.im-app .kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 800 12px 'Nunito', sans-serif;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.im-app .kicker .spark {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+  opacity: 0.8;
+}
+.im-app .entry-hero h1 {
+  font-size: clamp(34px, 6.4vw, 60px);
+  font-weight: 900;
+  color: var(--text-strong);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.im-app .entry-hero h1 .script {
+  position: relative;
+  display: inline-block;
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 1.16em;
+  padding: 0 0.06em;
+  white-space: nowrap;
+}
+.im-app .entry-hero h1 .script .underline {
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  bottom: -12px;
+  width: 108%;
+  height: 16px;
+  color: var(--accent);
+  opacity: 0.85;
+}
+.im-app .entry-hero .lead {
+  font-size: 17px;
+  color: var(--muted);
+  max-width: 540px;
+  margin: 26px auto 30px;
+}
+.im-app .entry-card {
+  width: min(420px, 100%);
+  margin: 0 auto;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-big);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+.im-app .entry-me {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--r);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 14%, var(--surface-2)) 0%, var(--surface-2) 100%);
+  border: 1.5px solid color-mix(in srgb, var(--gold) 45%, transparent);
+}
+.im-app .entry-me__text { display: flex; flex-direction: column; line-height: 1.25; }
+.im-app .entry-me__label {
+  font: 700 11px 'Nunito', sans-serif;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.im-app .entry-me__nick { font: 800 17px 'Nunito', sans-serif; color: var(--text-strong); }
+.im-app .entry-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font: 700 12px 'Nunito', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.im-app .entry-field input {
+  font: 800 16px 'Nunito', sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 13px 16px;
+  border-radius: var(--r-sm);
+  border: 2px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-strong);
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.im-app .entry-field input::placeholder { color: var(--muted); opacity: 0.6; }
+.im-app .entry-field input:focus { border-color: var(--accent-soft); background: var(--surface); }
+.im-app .entry-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: color-mix(in srgb, var(--team-red) 14%, transparent);
+  color: var(--team-red);
+  border: 1.5px solid color-mix(in srgb, var(--team-red) 35%, transparent);
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  font: 800 13px 'Nunito', sans-serif;
+}
+.im-app .im-error-dismiss {
+  border: none;
+  background: transparent;
+  color: var(--team-red);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0.7;
+}
+.im-app .im-error-dismiss:hover { opacity: 1; }
+.im-app .entry-divider {
+  text-align: center;
+  font: 700 12px 'Nunito', sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  position: relative;
+}
+.im-app .entry-divider::before,
+.im-app .entry-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: calc(50% - 22px);
+  height: 1px;
+  background: var(--border);
+}
+.im-app .entry-divider::before { left: 0; }
+.im-app .entry-divider::after { right: 0; }
+
+/* ============ кнопки ============ */
+.im-app .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 13px 22px;
+  font: 800 15px 'Nunito', sans-serif;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--r);
+  transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.16s, border-color 0.16s, filter 0.16s, opacity 0.16s;
+  text-decoration: none;
+  width: 100%;
+}
+.im-app .btn svg { width: 17px; height: 17px; flex: none; }
+.im-app .btn:active { transform: translateY(2px); }
+.im-app .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.im-app .btn-pri {
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow: 0 5px 0 var(--accent-shadow);
+}
+.im-app .btn-pri:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 var(--accent-shadow);
+}
+.im-app .btn-sec {
+  background: var(--surface);
+  color: var(--accent);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.im-app .btn-sec:hover:not(:disabled) {
+  border-color: var(--accent-soft);
+  transform: translateY(-2px);
+}
+
+/* ============ лобби ============ */
+.im-lobby {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-areas: 'main chat';
+  gap: 18px;
+  align-items: start;
+}
+.im-lobby__main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.im-lobby > .on-chat {
+  grid-area: chat;
+  position: sticky;
+  top: 16px;
+}
+
+/* игроки — единый список без команд */
+.im-players {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.im-players__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.im-players__title {
+  font: 800 18px 'Nunito', sans-serif;
+  color: var(--text-strong);
+  margin-right: auto;
+}
+.im-players__count {
+  font: 900 14px 'Nunito', sans-serif;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-radius: var(--r-pill);
+  padding: 3px 12px;
+}
+.im-players__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.im-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  transition: background 0.15s;
+}
+.im-player:hover { background: color-mix(in srgb, var(--accent) 6%, var(--surface-2)); }
+.im-player--away { opacity: 0.5; }
+.im-player__nick {
+  font: 800 15px 'Nunito', sans-serif;
+  color: var(--text);
+  margin-right: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.im-players__empty {
+  font: 700 14px 'Nunito', sans-serif;
+  color: var(--muted);
+  text-align: center;
+  padding: 14px;
+}
+
+.im-tag {
+  font: 800 11px 'Nunito', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 2px 9px;
+  white-space: nowrap;
+}
+.im-tag--me {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+/* настройки */
+.im-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.im-card__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 800 15px 'Nunito', sans-serif;
+  color: var(--text-strong);
+}
+.im-card__title svg { width: 19px; height: 19px; color: var(--accent); flex: none; }
+.im-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.im-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font: 700 12px 'Nunito', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.im-field__label { line-height: 1.2; }
+.im-field select {
+  font: 800 15px 'Nunito', sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 11px 14px;
+  border-radius: var(--r-sm);
+  border: 2px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-strong);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.im-field select:focus { border-color: var(--accent-soft); }
+.im-field--wide { grid-column: 1 / span 2; }
+
+.im-hint {
+  font: 600 13px 'Nunito', sans-serif;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.im-hint--center { text-align: center; }
+
+.im-lobby__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+.im-lobby__start { width: auto; min-width: 240px; }
+
+/* ============ стол (STUB) ============ */
+.im-table {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-areas: 'main chat';
+  gap: 18px;
+  align-items: start;
+}
+.im-table > .on-chat {
+  grid-area: chat;
+  position: sticky;
+  top: 16px;
+}
+.im-table__stub {
+  grid-area: main;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+}
+.im-table__stub h2 {
+  font: 900 26px 'Nunito', sans-serif;
+  color: var(--text-strong);
+  margin: 0;
+}
+.im-table__stub .btn { width: auto; }
+.im-table__state {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+  font: 700 14px 'Nunito', sans-serif;
+  color: var(--text);
+}
+.im-state__row {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.im-state__k {
+  color: var(--muted);
+  min-width: 110px;
+  flex: none;
+}
+.im-state__row b { color: var(--text-strong); font-weight: 800; }
+.im-state__row--win {
+  color: var(--gold);
+  border-top: 1.5px solid var(--border);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+.im-state__row--win .im-state__k { color: var(--gold); }
+.im-state__row--win b { color: var(--gold-ink, var(--gold)); }
+
+/* ============ адаптив ============ */
+@media (max-width: 880px) {
+  .im-lobby,
+  .im-table {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'main' 'chat';
+  }
+  .im-lobby > .on-chat,
+  .im-table > .on-chat {
+    position: static;
+  }
+  .im-fields { grid-template-columns: 1fr; }
+  .im-field--wide { grid-column: auto; }
+}
