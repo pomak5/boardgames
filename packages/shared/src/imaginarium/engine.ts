@@ -313,3 +313,91 @@ export function tallyRound(state: ImaginariumState): ImaginariumState {
     log: [...state.log, entry],
   };
 }
+
+/**
+ * Завершает игру: вычисляет победителей (игроки с максимальным счётом),
+ * выставляет phase 'finished', обнуляет раунд, пишет в лог 'gameover'.
+ * players, scores, hands, deck, handSize, leaderIndex, roundNumber не меняются.
+ */
+export function finishGame(state: ImaginariumState): ImaginariumState {
+  if (state.phase === 'finished') {
+    throw new ImaginariumError('GAME_FINISHED', 'Игра уже завершена');
+  }
+
+  const max = Math.max(...state.players.map((p) => state.scores[p]!));
+  const winner = state.players.filter((p) => state.scores[p] === max);
+  const entry: ImaginariumLogEntry = { type: 'gameover', winners: winner };
+
+  return {
+    ...state,
+    phase: 'finished',
+    winner,
+    round: null,
+    log: [...state.log, entry],
+  };
+}
+
+/**
+ * Добор карт после подсчёта раунда (round.phase 'scoring'): раздаёт по 1 карте
+ * каждому игроку из начала колоды. Если колоды не хватает на всех — игра
+ * завершается через finishGame (частичный добор не делается).
+ * Без лога: 'round-start' добавит advanceLeader. round остаётся 'scoring'.
+ */
+export function refillHands(state: ImaginariumState): ImaginariumState {
+  if (state.phase === 'finished') {
+    throw new ImaginariumError('GAME_FINISHED', 'Игра завершена');
+  }
+  if (state.phase !== 'association' || state.round == null || state.round.phase !== 'scoring') {
+    throw new ImaginariumError('WRONG_PHASE', 'Сейчас нельзя добирать карты');
+  }
+
+  if (state.deck.length < state.players.length) {
+    return finishGame(state);
+  }
+
+  const hands: Record<string, CardId[]> = {};
+  state.players.forEach((p, i) => {
+    hands[p] = [...state.hands[p]!, state.deck[i]!];
+  });
+
+  return {
+    ...state,
+    hands,
+    deck: state.deck.slice(state.players.length),
+  };
+}
+
+/**
+ * Начинает следующий раунд: циклически сдвигает leaderIndex, создаёт свежий
+ * round в 'association', увеличивает roundNumber, пишет в лог 'round-start'.
+ * Внешний state.phase остаётся 'association'. Вызывается менеджером только если
+ * refillHands не завершил игру.
+ */
+export function advanceLeader(state: ImaginariumState): ImaginariumState {
+  if (state.phase === 'finished') {
+    throw new ImaginariumError('GAME_FINISHED', 'Игра завершена');
+  }
+  if (state.phase !== 'association' || state.round == null || state.round.phase !== 'scoring') {
+    throw new ImaginariumError('WRONG_PHASE', 'Сейчас нельзя начать следующий раунд');
+  }
+
+  const newLeaderIndex = (state.leaderIndex + 1) % state.players.length;
+  const newRoundNumber = state.roundNumber + 1;
+  const leader = state.players[newLeaderIndex]!;
+  const entry: ImaginariumLogEntry = { type: 'round-start', leader, roundNumber: newRoundNumber };
+
+  return {
+    ...state,
+    leaderIndex: newLeaderIndex,
+    roundNumber: newRoundNumber,
+    round: {
+      leader,
+      association: null,
+      submissions: {},
+      slots: null,
+      votes: {},
+      phase: 'association',
+    },
+    log: [...state.log, entry],
+  };
+}

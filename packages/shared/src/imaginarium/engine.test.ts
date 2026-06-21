@@ -2,8 +2,11 @@ import { describe, expect, test } from 'bun:test';
 import { DEFAULT_HAND_SIZE, ImaginariumError } from './types';
 import type { ImaginariumErrorCode, ImaginariumState } from './types';
 import {
+  advanceLeader,
   castVote,
   createImaginariumGame,
+  finishGame,
+  refillHands,
   revealTable,
   submitCard,
   submitLeader,
@@ -518,5 +521,132 @@ describe('tallyRound', () => {
 
   test('игра завершена → GAME_FINISHED', () => {
     expectErrorCode(() => tallyRound(finished()), 'GAME_FINISHED');
+  });
+});
+
+// --- Хелперы для refillHands / advanceLeader / finishGame ---
+
+/** Состояние в round.phase 'scoring' (после tallyRound) — финальная фаза раунда.
+ *  Меняем только то, что нужно тестам (round.phase, deck, scores, players, leaderIndex). */
+const inScoring = (overrides?: Partial<ImaginariumState>): ImaginariumState => {
+  const base = newGame();
+  return {
+    ...base,
+    round: { ...base.round!, phase: 'scoring' },
+    ...overrides,
+  };
+};
+
+describe('finishGame', () => {
+  test('один победитель → phase=finished, winner, round=null, лог gameover', () => {
+    const state = inScoring({ scores: { a: 5, b: 3, c: 3, d: 0 } });
+    const next = finishGame(state);
+    expect(next.phase).toBe('finished');
+    expect(next.winner).toEqual(['a']);
+    expect(next.round).toBeNull();
+    expect(next.log[next.log.length - 1]).toEqual({ type: 'gameover', winners: ['a'] });
+  });
+
+  test('ничья → winner содержит всех с максимальным счётом в порядке players', () => {
+    const state = inScoring({ scores: { a: 5, b: 5, c: 3, d: 0 } });
+    const next = finishGame(state);
+    expect(next.winner).toEqual(['a', 'b']);
+  });
+
+  test('игра уже завершена → GAME_FINISHED', () => {
+    expectErrorCode(() => finishGame(finished()), 'GAME_FINISHED');
+  });
+});
+
+describe('refillHands', () => {
+  test('колоды достаточно: каждому +1 карта спереди, deck обрезан, round.phase=scoring', () => {
+    const d = deck(10);
+    const state = inScoring({ deck: d });
+    const handLensBefore = state.players.map((p) => state.hands[p]!.length);
+    const handsBefore = JSON.parse(JSON.stringify(state.hands)) as Record<string, string[]>;
+    const deckBefore = [...state.deck];
+    const next = refillHands(state);
+
+    // каждый получил ровно 1 карту
+    state.players.forEach((p, i) => {
+      expect(next.hands[p]).toHaveLength(handLensBefore[i]! + 1);
+      // конкретная карта = deck[i] (присваивается по индексу игрока)
+      expect(next.hands[p]![next.hands[p]!.length - 1]).toBe(d[i]);
+      // прежние карты сохранены
+      expect(next.hands[p]!.slice(0, -1)).toEqual(handsBefore[p]!);
+    });
+    expect(next.deck).toEqual(d.slice(state.players.length));
+    expect(next.deck).toHaveLength(6);
+    expect(next.round!.phase).toBe('scoring');
+    expect(next.phase).toBe('association');
+
+    // иммутабельность: вход не мутируется
+    expect(state.deck).toEqual(deckBefore);
+    expect(state.hands).toEqual(handsBefore);
+  });
+
+  test('колоды недостаточно (deck<players) → finishGame: phase=finished, winner=max, round=null', () => {
+    const state = inScoring({ deck: deck(2), scores: { a: 5, b: 3, c: 3, d: 0 } });
+    const next = refillHands(state);
+    expect(next.phase).toBe('finished');
+    expect(next.winner).toEqual(['a']);
+    expect(next.round).toBeNull();
+    expect(next.log[next.log.length - 1]).toEqual({ type: 'gameover', winners: ['a'] });
+  });
+
+  test('игра завершена → GAME_FINISHED', () => {
+    expectErrorCode(() => refillHands(finished()), 'GAME_FINISHED');
+  });
+
+  test('неправильная фаза (round.phase=voting) → WRONG_PHASE', () => {
+    const state = inScoring({ round: { ...newGame().round!, phase: 'voting' } });
+    expectErrorCode(() => refillHands(state), 'WRONG_PHASE');
+  });
+});
+
+describe('advanceLeader', () => {
+  test('валид (index 0→1): leaderIndex=1, roundNumber+1, fresh round association, лог round-start', () => {
+    const state = inScoring({ leaderIndex: 0 });
+    const beforeLog = state.log.length;
+    const beforeRoundNumber = state.roundNumber;
+    const beforeLeaderIndex = state.leaderIndex;
+    const next = advanceLeader(state);
+
+    expect(next.leaderIndex).toBe(1);
+    expect(next.roundNumber).toBe(beforeRoundNumber + 1);
+    expect(next.round!.leader).toBe('b');
+    expect(next.round!.phase).toBe('association');
+    expect(next.round!.association).toBeNull();
+    expect(next.round!.submissions).toEqual({});
+    expect(next.round!.slots).toBeNull();
+    expect(next.round!.votes).toEqual({});
+    expect(next.phase).toBe('association');
+    expect(next.log[next.log.length - 1]).toEqual({
+      type: 'round-start',
+      leader: 'b',
+      roundNumber: beforeRoundNumber + 1,
+    });
+    expect(next.log).toHaveLength(beforeLog + 1);
+
+    // иммутабельность
+    expect(state.leaderIndex).toBe(beforeLeaderIndex);
+    expect(state.roundNumber).toBe(beforeRoundNumber);
+    expect(state.log).toHaveLength(beforeLog);
+  });
+
+  test('обратный переход (index 3→0 для 4 игроков): leaderIndex=0, round.leader=a', () => {
+    const state = inScoring({ leaderIndex: 3 });
+    const next = advanceLeader(state);
+    expect(next.leaderIndex).toBe(0);
+    expect(next.round!.leader).toBe('a');
+  });
+
+  test('игра завершена → GAME_FINISHED', () => {
+    expectErrorCode(() => advanceLeader(finished()), 'GAME_FINISHED');
+  });
+
+  test('неправильная фаза (round.phase=voting) → WRONG_PHASE', () => {
+    const state = inScoring({ round: { ...newGame().round!, phase: 'voting' } });
+    expectErrorCode(() => advanceLeader(state), 'WRONG_PHASE');
   });
 });
