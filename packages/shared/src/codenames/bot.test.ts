@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { beforeAll, describe, expect, test } from 'bun:test';
 import { pickWords } from './dictionary';
 import { createGame, giveClue, guess, pass as passTurn, validateClue } from './engine';
 import { suggestClue } from './bot';
@@ -16,6 +16,12 @@ const newGame = (seed: number): CodenamesState =>
   createGame(pickWords(25, seeded(seed)), { startingTeam: 'red', random: seeded(seed) });
 
 describe('бот-капитан', () => {
+  // Разогрев эмбеддингов: первый suggestClue декодирует 1.2 МБ base64 (atob +
+  // Int8Array) — на холодную >5с, что рвало таймаут тестов с дефолтным лимитом.
+  // Прогоняем один вызов до замеряемых тестов, чтобы load() заполнил кеш.
+  beforeAll(() => {
+    suggestClue(newGame(1), 'red');
+  });
   test('всегда находит валидную подсказку (50 случайных партий)', () => {
     for (let seed = 1; seed <= 50; seed++) {
       const g = newGame(seed);
@@ -43,7 +49,8 @@ describe('бот-капитан', () => {
       // dangerSim уже включает убийцу с весом 1 — цели должны быть заметно ближе
       expect(t.targetSim).toBeGreaterThan(t.dangerSim);
     }
-  });
+  }, 20000); // 50 итераций suggestClue (поиск по 25 словам × словарь × cosine) —
+  // объективно >5с дефолтного лимита; соседний «50 случайных партий» тоже 20с
 
   test('осторожный режим даёт не более рискованные подсказки, чем смелый', () => {
     const g = newGame(7);

@@ -1,4 +1,5 @@
 import type { Clue, LogEntry, Team } from './codenames';
+import type { AliasLogEntry, AliasPhase, Difficulty, AliasRound } from './alias';
 import type { UnoColor, UnoRules, UnoView } from './uno';
 
 export type GameId = 'codenames' | 'uno' | 'alias';
@@ -108,6 +109,98 @@ export interface ClientToServerEvents {
   'game:guess': (cardIndex: number) => void;
   'game:pass': () => void;
   'room:newRound': () => void;
+}
+
+// ============================ Alias ============================
+
+export interface AliasRoomPlayerView {
+  id: string;
+  nickname: string;
+  /** data:image/* URL аватара из профиля (null у гостей). */
+  avatarUrl: string | null;
+  team: Team | null;
+  role: PlayerRole;
+  connected: boolean;
+}
+
+export interface AliasRoomSettings {
+  game: 'alias';
+  difficulty: Difficulty;
+  /** Длительность раунда в секундах: 30 / 60 / 90. */
+  roundDuration: number;
+  /** Победный счёт. */
+  targetScore: number;
+  /** Показывать слово ведущего соперникам (контроль честности). */
+  showOpponents: boolean;
+}
+
+export interface AliasRoomView {
+  code: string;
+  hostId: string;
+  phase: RoomPhase;
+  settings: AliasRoomSettings;
+  players: AliasRoomPlayerView[];
+  startedAt?: number | null;
+}
+
+export interface AliasView {
+  teams: Team[];
+  scores: Record<Team, number>;
+  currentTeam: Team;
+  explainer: string | null;
+  round: (Omit<AliasRound, 'word'> & { word: string | null }) | null;
+  usedWords: string[];
+  targetScore: number;
+  difficulty: Difficulty;
+  roundDuration: number;
+  phase: AliasPhase;
+  winner: Team | null;
+  log: AliasLogEntry[];
+}
+
+export interface AliasJoinAck {
+  ok: boolean;
+  error?: string;
+  room?: AliasRoomView;
+  playerId?: string;
+  token?: string;
+}
+
+/** Настройки комнаты, которые хост может менять (все поля опциональны). */
+export interface AliasSettingsPatch {
+  difficulty?: Difficulty;
+  roundDuration?: number;
+  targetScore?: number;
+  showOpponents?: boolean;
+}
+
+export interface AliasServerToClientEvents {
+  'room:state': (room: AliasRoomView) => void;
+  'room:closed': (reason: string) => void;
+  'chat:message': (msg: ChatMessage) => void;
+  'chat:history': (msgs: ChatMessage[]) => void;
+  'game:state': (view: AliasView) => void;
+  /** Дедлайн текущего раунда (ms, Date.now()) или null. */
+  'game:timer': (deadline: number | null) => void;
+  'game:error': (message: string) => void;
+}
+
+export interface AliasClientToServerEvents {
+  'room:create': (
+    nickname: string,
+    settings: AliasSettingsPatch,
+    ack: (a: AliasJoinAck) => void,
+  ) => void;
+  'room:join': (code: string, nickname: string, ack: (a: AliasJoinAck) => void) => void;
+  'room:rejoin': (code: string, token: string, ack: (a: AliasJoinAck) => void) => void;
+  'room:leave': () => void;
+  'room:setTeam': (team: Team, role: PlayerRole) => void;
+  'room:settings': (settings: AliasSettingsPatch) => void;
+  'room:start': () => void;
+  'room:newRound': () => void;
+  'chat:send': (text: string) => void;
+  'game:guessed': () => void;
+  'game:skipped': () => void;
 }
 
 // ============================ Uno ============================

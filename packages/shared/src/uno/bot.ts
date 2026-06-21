@@ -33,7 +33,8 @@ export function botAction(state: UnoState): UnoState {
   if (state.phase === 'challenge') {
     // оспариваем изредка, чаще когда у нас мало карт и терять нечего
     const p = me.hand.length <= 3 ? 0.35 : 0.15;
-    return resolveChallenge(state, me.id, Math.random() < p);
+    const rnd = state.random ?? Math.random;
+    return resolveChallenge(state, me.id, rnd() < p);
   }
   if (state.phase === 'chooseColor') return chooseColor(state, me.id, majorityColor(me.hand));
   if (state.phase === 'choosePlayer') {

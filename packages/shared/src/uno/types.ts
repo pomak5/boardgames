@@ -126,4 +126,13 @@ export interface UnoState {
   roundWinner: string | null;
   winner: string | null;
   log: UnoLogEntry[];
+  /**
+   * Источник случайности для движка: reshuffle колоды при доборе и решение бота
+   * в челлендже +4. undefined → Math.random (прод). В тестах/реплеях — seeded LCG,
+   * который прокидывается через createUnoRound(..., { random }) и хранится в state.
+   * В отличие от Codenames (random нужен только при createGame), в Uno случайность
+   * нужна во время партии, поэтому хранится в state, а не прокидывается параметром
+   * через каждую функцию хода.
+   */
+  random?: () => number;
 }

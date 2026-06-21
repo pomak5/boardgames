@@ -1,0 +1,1023 @@
+/* Alias — перенос базовых паттернов под .al-app + своя игровая сцена.
+   Токены — из play/theme.css («Уютный вечер»). Скоуп .al-app изолирует от других игр. */
+
+.al-app {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 2.4vw, 40px) 24px;
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ============ topbar ============ */
+.al-app .topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 0 4px;
+  flex-wrap: wrap;
+}
+.al-app .logo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  text-decoration: none;
+}
+.al-app .logo .mark {
+  width: 34px;
+  height: 34px;
+  color: var(--accent);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.al-app .logo:hover .mark {
+  transform: rotate(120deg);
+}
+.al-app .logo b {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 30px;
+  color: var(--accent);
+}
+.al-app .room-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 900 17px 'Nunito', sans-serif;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 9px 13px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: 0.15s;
+}
+.al-app .room-code:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-soft);
+}
+.al-app .room-code__code {
+  line-height: 1;
+}
+.al-app .room-code .copy-ic {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+}
+.al-app .room-code.copied {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 50%, var(--border));
+}
+.al-app .room-copied {
+  font: 800 12px 'Nunito', sans-serif;
+  color: var(--ok);
+}
+.al-app .leave-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 800 14px 'Nunito', sans-serif;
+  color: var(--muted);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: 0.15s;
+}
+.al-app .leave-btn .leave-ic {
+  width: 16px;
+  height: 16px;
+}
+.al-app .leave-btn:hover {
+  color: var(--team-red);
+  border-color: color-mix(in srgb, var(--team-red) 40%, var(--border));
+  transform: translateY(-1px);
+}
+.al-app .spacer {
+  flex: 1;
+}
+.al-app .turn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 800 13px 'Nunito', sans-serif;
+  color: var(--text);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 8px 14px;
+  box-shadow: var(--shadow);
+}
+.al-app .turn-pill .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.al-app .nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.al-app .theme-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.al-app .theme-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-pill);
+  display: grid;
+  place-items: center;
+  transition: 0.18s;
+}
+.al-app .theme-toggle button svg {
+  width: 18px;
+  height: 18px;
+}
+.al-app .theme-toggle button.on {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.al-app .icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+  color: var(--accent);
+  cursor: pointer;
+  transition: 0.18s;
+}
+.al-app .icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+.al-app .icon-btn:hover {
+  border-color: var(--accent-soft);
+  transform: translateY(-2px);
+}
+.al-app .me-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.al-app .me-pill .me-name {
+  font: 800 13px 'Nunito', sans-serif;
+  color: var(--text);
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============ entry (главная_alias) ============ */
+.al-app .entry-hero {
+  position: relative;
+  text-align: center;
+  padding: 54px 0 30px;
+}
+.al-app .entry-art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+.al-app .art {
+  position: absolute;
+  filter: drop-shadow(0 14px 22px #8a5a2b33);
+  will-change: transform;
+}
+[data-theme='dark'] .al-app .art {
+  filter: drop-shadow(0 14px 26px #00000099);
+}
+.al-app .art-alias {
+  width: 110px;
+  height: 70px;
+  border-radius: 12px;
+  background: var(--card-face);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+  display: grid;
+  place-items: center;
+  color: var(--card-ink);
+}
+.al-app .art-alias--blue {
+  background: linear-gradient(135deg, var(--uno-blue), color-mix(in srgb, var(--uno-blue), #000 25%));
+  color: #fff;
+  border-color: #ffffff26;
+}
+.al-app .art-alias--yellow {
+  background: linear-gradient(135deg, var(--uno-yellow), color-mix(in srgb, var(--uno-yellow), #000 25%));
+  color: #fff;
+  border-color: #ffffff26;
+}
+.al-app .art-alias__word {
+  font: 800 16px 'Spectral SC', 'Nunito', serif;
+  letter-spacing: 0.05em;
+}
+.al-app .art-1 { top: 8%; left: 12%; --r: -12deg; }
+.al-app .art-2 { top: 14%; right: 14%; --r: 9deg; }
+.al-app .art-3 { bottom: 12%; left: 50%; margin-left: -55px; --r: -5deg; }
+@keyframes al-floaty {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-10px) rotate(var(--r, 0deg)); }
+}
+.al-app .art { animation: al-floaty 6s ease-in-out infinite; }
+.al-app .art-2 { animation-duration: 7.5s; animation-delay: 0.5s; }
+.al-app .art-3 { animation-duration: 6.8s; animation-delay: 0.3s; }
+@media (prefers-reduced-motion: reduce) {
+  .al-app .art { animation: none; }
+}
+
+.al-app .kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 800 12px 'Nunito', sans-serif;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.al-app .kicker .spark {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+  opacity: 0.8;
+}
+.al-app .entry-hero h1 {
+  font-size: clamp(34px, 6.4vw, 60px);
+  font-weight: 900;
+  color: var(--text-strong);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.al-app .entry-hero h1 .script {
+  position: relative;
+  display: inline-block;
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 1.16em;
+  padding: 0 0.06em;
+  white-space: nowrap;
+}
+.al-app .entry-hero h1 .script .underline {
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  bottom: -12px;
+  width: 108%;
+  height: 16px;
+  color: var(--accent);
+  opacity: 0.85;
+}
+.al-app .entry-hero .lead {
+  font-size: 17px;
+  color: var(--muted);
+  max-width: 540px;
+  margin: 26px auto 30px;
+}
+.al-app .entry-card {
+  width: min(420px, 100%);
+  margin: 0 auto;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-big);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+.al-app .entry-me {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--r);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 14%, var(--surface-2)) 0%, var(--surface-2) 100%);
+  border: 1.5px solid color-mix(in srgb, var(--gold) 45%, transparent);
+}
+.al-app .entry-me__text { display: flex; flex-direction: column; line-height: 1.25; }
+.al-app .entry-me__label {
+  font: 700 11px 'Nunito', sans-serif;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.al-app .entry-me__nick { font: 800 17px 'Nunito', sans-serif; color: var(--text-strong); }
+.al-app .entry-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font: 700 12px 'Nunito', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.al-app .entry-field input {
+  font: 800 16px 'Nunito', sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 13px 16px;
+  border-radius: var(--r-sm);
+  border: 2px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-strong);
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.al-app .entry-field input::placeholder { color: var(--muted); opacity: 0.6; }
+.al-app .entry-field input:focus { border-color: var(--accent-soft); background: var(--surface); }
+.al-app .entry-error {
+  background: color-mix(in srgb, var(--team-red) 14%, transparent);
+  color: var(--team-red);
+  border: 1.5px solid color-mix(in srgb, var(--team-red) 35%, transparent);
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  font: 800 13px 'Nunito', sans-serif;
+}
+.al-app .entry-divider {
+  text-align: center;
+  font: 700 12px 'Nunito', sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  position: relative;
+}
+.al-app .entry-divider::before,
+.al-app .entry-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: calc(50% - 22px);
+  height: 1px;
+  background: var(--border);
+}
+.al-app .entry-divider::before { left: 0; }
+.al-app .entry-divider::after { right: 0; }
+
+/* ============ кнопки ============ */
+.al-app .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 13px 22px;
+  font: 800 15px 'Nunito', sans-serif;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--r);
+  transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.16s, border-color 0.16s, filter 0.16s, opacity 0.16s;
+  text-decoration: none;
+  width: 100%;
+}
+.al-app .btn svg { width: 17px; height: 17px; flex: none; }
+.al-app .btn:active { transform: translateY(2px); }
+.al-app .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.al-app .btn-pri {
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow: 0 5px 0 var(--accent-shadow);
+}
+.al-app .btn-pri:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 var(--accent-shadow);
+}
+.al-app .btn-sec {
+  background: var(--surface);
+  color: var(--accent);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.al-app .btn-sec:hover:not(:disabled) {
+  border-color: var(--accent-soft);
+  transform: translateY(-2px);
+}
+
+/* ============ лобби ============ */
+.al-lobby {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-areas: 'main chat';
+  gap: 18px;
+  align-items: start;
+}
+.al-lobby__main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.al-lobby > .on-chat {
+  grid-area: chat;
+  position: sticky;
+  top: 16px;
+}
+
+.al-teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.al-team {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.al-team--red { border-color: color-mix(in srgb, var(--team-red) 40%, var(--border)); }
+.al-team--blue { border-color: color-mix(in srgb, var(--team-blue) 40%, var(--border)); }
+.al-team__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.al-team__mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  flex: none;
+  box-shadow: inset 0 1px 0 #ffffff55;
+}
+.al-team__mark--red { background: var(--team-red); }
+.al-team__mark--blue { background: var(--team-blue); }
+.al-team__name {
+  font: 800 18px 'Nunito', sans-serif;
+  color: var(--text-strong);
+  margin-right: auto;
+}
+.al-team__count {
+  font: 900 14px 'Nunito', sans-serif;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-radius: var(--r-pill);
+  padding: 2px 10px;
+}
+.al-team__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 40px;
+}
+.al-team__list li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font: 800 14px 'Nunito', sans-serif;
+  color: var(--text-strong);
+}
+.al-player--away { opacity: 0.5; }
+.al-team__nick { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.al-team__empty {
+  color: var(--muted) !important;
+  font-style: italic;
+  font-weight: 700 !important;
+  background: transparent !important;
+  border: 1px dashed var(--border) !important;
+}
+.al-tag {
+  font: 800 10px 'Nunito', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 2px 8px;
+  margin-left: auto;
+}
+.al-tag--me { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+.al-tag--cap { color: var(--gold-ink); background: color-mix(in srgb, var(--gold) 30%, var(--surface)); border-color: var(--gold); }
+.al-team__join { width: 100%; }
+.al-team__leave { width: 100%; }
+.al-team__join--red:hover { border-color: var(--team-red); color: var(--team-red); }
+.al-team__join--blue:hover { border-color: var(--team-blue); color: var(--team-blue); }
+
+.al-unassigned {
+  background: var(--surface);
+  border: 2px dashed var(--border);
+  border-radius: var(--r);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.al-unassigned__title {
+  font: 800 13px 'Nunito', sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.al-unassigned__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.al-unassigned__list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 800 13px 'Nunito', sans-serif;
+  color: var(--text);
+}
+
+.al-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.al-card__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 800 15px 'Nunito', sans-serif;
+  color: var(--text-strong);
+}
+.al-card__title svg { width: 19px; height: 19px; color: var(--accent); flex: none; }
+.al-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.al-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font: 700 12px 'Nunito', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.al-field__label { line-height: 1.2; }
+.al-field select {
+  font: 800 15px 'Nunito', sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 11px 14px;
+  border-radius: var(--r-sm);
+  border: 2px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-strong);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.al-field select:focus { border-color: var(--accent-soft); }
+.al-field--check {
+  grid-column: 1 / span 2;
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+}
+.al-field--check input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+.al-hint {
+  font: 600 13px 'Nunito', sans-serif;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.al-hint--center { text-align: center; }
+.al-lobby__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+.al-lobby__start { width: auto; min-width: 240px; }
+
+/* ============ стол ============ */
+.al-table {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-areas: 'main chat';
+  gap: 18px;
+  align-items: start;
+}
+.al-table__main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.al-table > .on-chat {
+  grid-area: chat;
+  position: sticky;
+  top: 16px;
+}
+
+/* табло */
+.al-scoreboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.al-score {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  grid-template-areas:
+    'mark name value'
+    'bar bar bar'
+    'target target target';
+  align-items: center;
+  gap: 4px 10px;
+  padding: 16px 18px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.al-score--red { border-color: color-mix(in srgb, var(--team-red) 35%, var(--border)); }
+.al-score--blue { border-color: color-mix(in srgb, var(--team-blue) 35%, var(--border)); }
+.al-score--turn {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 40%, transparent) inset, var(--shadow);
+}
+.al-score__mark { grid-area: mark; width: 16px; height: 16px; border-radius: 5px; }
+.al-score__mark--red { background: var(--team-red); }
+.al-score__mark--blue { background: var(--team-blue); }
+.al-score__name {
+  grid-area: name;
+  font: 800 17px 'Nunito', sans-serif;
+  color: var(--text-strong);
+}
+.al-score__value {
+  grid-area: value;
+  justify-self: end;
+  font: 900 34px 'Nunito', sans-serif;
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.al-score__bar {
+  grid-area: bar;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  overflow: hidden;
+  margin-top: 4px;
+}
+.al-score__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.al-score--red .al-score__fill { background: linear-gradient(90deg, var(--team-red), color-mix(in srgb, var(--team-red), #fff 20%)); }
+.al-score--blue .al-score__fill { background: linear-gradient(90deg, var(--team-blue), color-mix(in srgb, var(--team-blue), #fff 20%)); }
+.al-score__target {
+  grid-area: target;
+  font: 700 11px 'Nunito', sans-serif;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* сцена */
+.al-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+  padding: 30px 24px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--felt) 14%, var(--surface)) 0%, var(--surface) 75%);
+  border: 2px solid var(--border);
+  box-shadow: 0 1px 0 #ffffff66 inset, var(--shadow-big);
+  min-height: 320px;
+  justify-content: center;
+}
+.al-error { margin-top: 4px; }
+
+.al-timer {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  font: 900 28px 'Nunito', sans-serif;
+  color: var(--text-strong);
+  line-height: 1;
+}
+.al-timer svg { width: 20px; height: 20px; color: var(--accent); align-self: center; }
+.al-timer small { font: 700 12px 'Nunito', sans-serif; color: var(--muted); letter-spacing: 0.06em; }
+.al-timer--low {
+  color: var(--team-red);
+  border-color: color-mix(in srgb, var(--team-red) 50%, var(--border));
+  animation: al-pulse 1s ease-in-out infinite;
+}
+@keyframes al-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.al-explainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px 8px 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.al-explainer__text { display: flex; flex-direction: column; line-height: 1.2; text-align: left; }
+.al-explainer__label {
+  font: 700 10px 'Nunito', sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.al-explainer__name { font: 800 16px 'Nunito', sans-serif; color: var(--text-strong); }
+.al-explainer__team {
+  font: 800 11px 'Nunito', sans-serif;
+  letter-spacing: 0.04em;
+}
+.al-explainer__team--red { color: var(--team-red); }
+.al-explainer__team--blue { color: var(--team-blue); }
+
+/* карточка слова */
+.al-word-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 36px;
+  border-radius: var(--r-lg);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
+    linear-gradient(174deg, var(--card-face) 0%, color-mix(in srgb, var(--card-face) 90%, #c9a877) 100%);
+  border: 1px solid color-mix(in srgb, var(--card-ink) 22%, transparent);
+  box-shadow: 0 3px 8px #00000038, 0 1px 2px #00000030;
+  position: relative;
+}
+.al-word-card::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid color-mix(in srgb, var(--card-ink) 25%, transparent);
+  border-radius: calc(var(--r-lg) - 7px);
+  pointer-events: none;
+}
+.al-word-card__hint {
+  font: 700 12px 'Nunito', sans-serif;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.al-word {
+  font: 800 clamp(36px, 6vw, 56px) 'Spectral SC', 'Nunito', serif;
+  letter-spacing: 0.04em;
+  color: var(--card-ink);
+  line-height: 1.05;
+  text-shadow: 0 1px 0 #ffffff85;
+}
+.al-word--small { font-size: clamp(22px, 3.5vw, 30px); }
+
+.al-actions {
+  display: flex;
+  gap: 14px;
+  width: 100%;
+}
+.al-btn {
+  flex: 1;
+  width: auto;
+  font-size: 16px;
+  padding: 14px 20px;
+}
+.al-btn svg { width: 22px; height: 22px; }
+.al-btn__score {
+  margin-left: 4px;
+  font: 900 13px 'Nunito', sans-serif;
+  opacity: 0.85;
+}
+.al-btn--ok {
+  background: var(--ok);
+  color: #fff;
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--ok) 60%, #000 25%);
+}
+.al-btn--ok:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 color-mix(in srgb, var(--ok) 60%, #000 25%);
+}
+.al-btn--skip {
+  background: var(--team-red);
+  color: #fff;
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--team-red) 60%, #000 25%);
+}
+.al-btn--skip:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 color-mix(in srgb, var(--team-red) 60%, #000 25%);
+}
+
+/* отгадывающие */
+.al-guessing { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.al-guessing__big {
+  font: 900 clamp(28px, 4.5vw, 40px) 'Caveat', cursive;
+  color: var(--text-strong);
+  line-height: 1;
+}
+.al-guessing__sub {
+  font: 600 14px 'Nunito', sans-serif;
+  color: var(--muted);
+  max-width: 40ch;
+}
+.al-round-stat {
+  display: flex;
+  gap: 20px;
+  font: 700 14px 'Nunito', sans-serif;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.al-round-stat b { color: var(--text-strong); font-weight: 900; font-size: 18px; margin-right: 4px; }
+
+/* соперники */
+.al-opponent { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.al-opponent__label {
+  font: 700 14px 'Nunito', sans-serif;
+  color: var(--muted);
+}
+
+/* между раундами */
+.al-between { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.al-between__label {
+  font: 700 12px 'Nunito', sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.al-between__team {
+  font: 800 clamp(26px, 4vw, 36px) 'Caveat', cursive;
+  line-height: 1;
+}
+.al-between__team--red { color: var(--team-red); }
+.al-between__team--blue { color: var(--team-blue); }
+.al-between__sub { font: 600 13px 'Nunito', sans-serif; color: var(--muted); }
+
+/* финал */
+.al-finished { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.al-finished__label {
+  font: 700 12px 'Nunito', sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.al-finished__winner {
+  font: 900 clamp(30px, 5vw, 44px) 'Caveat', cursive;
+  line-height: 1;
+}
+.al-finished__winner--red { color: var(--team-red); }
+.al-finished__winner--blue { color: var(--team-blue); }
+.al-finished__score { font: 700 14px 'Nunito', sans-serif; color: var(--muted); }
+.al-finished__again { width: auto; min-width: 220px; margin-top: 8px; }
+
+/* слова раунда */
+.al-recent {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding: 14px 18px;
+}
+.al-recent__title {
+  font: 800 12px 'Nunito', sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.al-recent__list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.al-recent__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 8px;
+  border-radius: var(--r-pill);
+  font: 800 14px 'Nunito', sans-serif;
+  border: 1px solid var(--border);
+}
+.al-recent__item--ok {
+  background: color-mix(in srgb, var(--ok) 14%, var(--surface));
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 35%, var(--border));
+}
+.al-recent__item--skip {
+  background: color-mix(in srgb, var(--team-red) 12%, var(--surface));
+  color: var(--team-red);
+  border-color: color-mix(in srgb, var(--team-red) 32%, var(--border));
+}
+.al-recent__mark svg { width: 14px; height: 14px; display: block; }
+.al-recent__word { color: var(--text-strong); }
+
+/* ============ анимация появления ============ */
+@keyframes al-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+.al-app .rise { animation: al-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.al-app .d1 { animation-delay: 0.08s; }
+.al-app .d2 { animation-delay: 0.16s; }
+.al-app .d3 { animation-delay: 0.24s; }
+@media (prefers-reduced-motion: reduce) {
+  .al-app .rise { animation: none; }
+}
+
+/* focus */
+.al-app a:focus-visible,
+.al-app button:focus-visible,
+.al-app select:focus-visible,
+.al-app input:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ============ адаптив ============ */
+@media (max-width: 880px) {
+  .al-lobby,
+  .al-table {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'main' 'chat';
+  }
+  .al-lobby > .on-chat,
+  .al-table > .on-chat {
+    position: static;
+  }
+}
+@media (max-width: 560px) {
+  .al-teams { grid-template-columns: 1fr; }
+  .al-fields { grid-template-columns: 1fr; }
+  .al-field--check { grid-column: auto; }
+  .al-actions { flex-direction: column; }
+  .al-scoreboard { grid-template-columns: 1fr; }
+}

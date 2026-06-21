@@ -31,7 +31,7 @@ export function drawCards(state: UnoState, idx: number, n: number): UnoCard[] {
     if (state.deck.length === 0) {
       if (state.discard.length <= 1) break; // карт физически нет
       const top = state.discard.pop() as UnoCard;
-      state.deck = shuffle(state.discard);
+      state.deck = shuffle(state.discard, state.random ?? Math.random);
       state.discard = [top];
     }
     const card = state.deck.pop();
@@ -44,7 +44,11 @@ export function drawCards(state: UnoState, idx: number, n: number): UnoCard[] {
 }
 
 export function clone(state: UnoState): UnoState {
-  return structuredClone(state);
+  // structuredClone не переносит функции — state.random (seeded LCG или Math.random)
+  // выносим и возвращаем в клон по ссылке, остальное клонируем глубоко.
+  const { random, ...rest } = state;
+  const copy = structuredClone(rest) as Omit<UnoState, 'random'>;
+  return { ...copy, random };
 }
 
 export function playerIdx(state: UnoState, playerId: string): number {

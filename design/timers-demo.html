@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Таймеры — выбор</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6ecdd; --surface:#fff7ec; --surface-2:#f3e3ca; --border:#FBF1E4;
+  --text:#4a3526; --text-strong:#332417; --muted:#6f5d49;
+  --accent:#c2622e; --accent-soft:#e8a063; --accent-text:#fff7ec; --accent-shadow:#94481e;
+  --felt:#9c6b3c; --felt-dark:#7d5430;
+  --card-face:#fffdf7; --card-ink:#332417;
+  --team-red:#d94a32; --team-blue:#3a6ea5;
+  --r-sm:12px; --r:18px; --r-pill:999px;
+}
+[data-theme="dark"]{
+  --bg:#16171b; --surface:#1e1f25; --surface-2:#282931; --border:#ffffff16;
+  --text:#e8e4da; --text-strong:#f5f1e6; --muted:#9b948a;
+  --accent:#c4a265; --accent-soft:#8a7344; --accent-text:#17181c; --accent-shadow:#776033;
+  --felt:#23252c; --felt-dark:#1b1d22;
+  --card-face:#f2eee2; --card-ink:#2b2417;
+  --team-red:#c4543e; --team-blue:#4a7aa8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;line-height:1.5;padding:32px clamp(16px,3vw,48px)}
+h1{font-size:clamp(24px,3vw,34px);font-weight:900;color:var(--text-strong);margin-bottom:6px;letter-spacing:-.01em}
+h1 .script{font-family:'Caveat',cursive;color:var(--accent);font-size:1.15em}
+.sub{color:var(--muted);font-size:15px;font-weight:700;margin-bottom:28px;max-width:60ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:20px}
+.card{background:var(--surface);border:2px solid var(--border);border-radius:20px;padding:20px;box-shadow:0 8px 24px #c79b6b40}
+.card h3{font-size:18px;font-weight:900;color:var(--text-strong);margin-bottom:4px}
+.card .desc{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:16px}
+/* felt-полоса как в clue-strip — на ней живут все варианты */
+.strip{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:linear-gradient(150deg,var(--felt),var(--felt-dark));border-radius:var(--r);padding:14px 20px;min-height:72px}
+.strip .label{font:800 13px 'Nunito',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#fff7ec;opacity:.85;white-space:nowrap}
+.strip .spacer{flex:1;min-width:8px}
+.statenote{margin-top:14px;font-size:12px;color:var(--muted);font-weight:700;display:flex;gap:16px;flex-wrap:wrap}
+.statenote b{font-weight:800}
+.statenote .ok{color:var(--accent)}.statenote .red{color:var(--team-red)}
+
+/* ============ ВАРИАНТ A: классическое кольцо (текущий вид, улучшенный) ============ */
+.t-ring{position:relative;width:48px;height:48px;flex:none;background:var(--card-face);border-radius:50%;box-shadow:0 0 0 2px #ffffff33,0 4px 10px #00000033}
+.t-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.t-ring .bg{fill:none;stroke:var(--surface-2);stroke-width:5}
+.t-ring .fg{fill:none;stroke:var(--accent);stroke-width:5;stroke-linecap:round;stroke-dasharray:138;stroke-dashoffset:41;transition:stroke .3s}
+.t-ring b{position:absolute;inset:0;display:grid;place-items:center;font:900 15px 'Nunito',sans-serif;color:var(--text-strong);transition:color .3s}
+.t-ring.urgent .fg{stroke:var(--team-red);animation:pulseA 1s ease-in-out infinite}
+.t-ring.urgent b{color:var(--team-red)}
+@keyframes pulseA{50%{filter:drop-shadow(0 0 4px color-mix(in srgb,var(--team-red) 60%,transparent))}}
+
+/* ============ ВАРИАНТ B: толстое кольцо + цифра снаружи ============ */
+.t-ringB{position:relative;width:52px;height:52px;flex:none}
+.t-ringB svg{width:100%;height:100%;transform:rotate(-90deg)}
+.t-ringB .bg{fill:none;stroke:#ffffff33;stroke-width:8}
+.t-ringB .fg{fill:none;stroke:#fff7ec;stroke-width:8;stroke-linecap:round;stroke-dasharray:138;stroke-dashoffset:41;transition:stroke .3s}
+.t-ringB b{position:absolute;inset:0;display:grid;place-items:center;font:900 17px 'Nunito',sans-serif;color:#fff7ec;transition:color .3s}
+.t-ringB.urgent .fg{stroke:var(--team-red);animation:pulseB 1s ease-in-out infinite}
+.t-ringB.urgent b{color:var(--team-red)}
+@keyframes pulseB{50%{filter:drop-shadow(0 0 5px color-mix(in srgb,var(--team-red) 70%,transparent))}}
+
+/* ============ ВАРИАНТ C: горизонтальная полоса-прогресс + цифра ============ */
+.t-bar{display:flex;flex-direction:column;gap:5px;min-width:96px;flex:none}
+.t-bar .num{font:900 18px 'Nunito',sans-serif;color:#fff7ec;line-height:1;transition:color .3s}
+.t-bar .track{height:7px;border-radius:var(--r-pill);background:#ffffff33;overflow:hidden}
+.t-bar .fill{height:100%;width:70%;background:var(--accent);border-radius:var(--r-pill);transition:background .3s}
+.t-bar.urgent .num{color:var(--team-red);animation:pulseC 1s ease-in-out infinite}
+.t-bar.urgent .fill{background:var(--team-red)}
+@keyframes pulseC{50%{opacity:.55}}
+
+/* ============ ВАРИАНТ D: пилюля-чип «мин:сек» (как status) ============ */
+.t-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:var(--r-pill);background:#ffffff22;border:1.5px solid #ffffff55;font:900 18px 'Nunito',sans-serif;color:#fff7ec;transition:all .3s}
+.t-pill svg{width:16px;height:16px;flex:none}
+.t-pill.urgent{background:var(--team-red);border-color:var(--team-red);color:#fff;animation:pulseD 1s ease-in-out infinite}
+@keyframes pulseD{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--team-red) 35%,transparent)}}
+
+/* ============ ВАРИАНТ E: песочные часы (вертикальные) + цифра сбоку ============ */
+.t-hour{display:flex;align-items:center;gap:10px;flex:none}
+.t-hour .glass{width:30px;height:46px;flex:none;position:relative}
+.t-hour .glass svg{width:100%;height:100%}
+.t-hour .glass .frame{stroke:#fff7ec;stroke-width:2;fill:none;transition:stroke .3s}
+.t-hour .glass .sand{fill:var(--accent);transition:fill .3s}
+.t-hour .num{font:900 18px 'Nunito',sans-serif;color:#fff7ec;transition:color .3s}
+.t-hour.urgent .glass .frame{stroke:var(--team-red)}
+.t-hour.urgent .glass .sand{fill:var(--team-red)}
+.t-hour.urgent .num{color:var(--team-red);animation:pulseE 1s ease-in-out infinite}
+@keyframes pulseE{50%{opacity:.6}}
+
+/* ============ ВАРИАНТ F: циферблат-часы (круг с метками) + цифра ============ */
+.t-clock{position:relative;width:50px;height:50px;flex:none;background:var(--card-face);border-radius:50%;box-shadow:0 0 0 2px #ffffff33,0 4px 10px #00000033}
+.t-clock svg{width:100%;height:100%}
+.t-clock .face{fill:none;stroke:var(--surface-2);stroke-width:1.5}
+.t-clock .tick{stroke:var(--muted);stroke-width:1.5;stroke-linecap:round}
+.t-clock .hand{stroke:var(--accent);stroke-width:3;stroke-linecap:round;transform-origin:25px 25px;transform:rotate(252deg);transition:stroke .3s}
+.t-clock b{position:absolute;inset:0;display:grid;place-items:center;font:900 14px 'Nunito',sans-serif;color:var(--text-strong);transition:color .3s}
+.t-clock.urgent .hand{stroke:var(--team-red);animation:pulseF 1s ease-in-out infinite}
+.t-clock.urgent b{color:var(--team-red)}
+@keyframes pulseF{50%{filter:drop-shadow(0 0 4px color-mix(in srgb,var(--team-red) 60%,transparent))}}
+
+.note{margin-top:24px;padding:16px 20px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:var(--r);font-size:14px;color:var(--muted);font-weight:700;line-height:1.6}
+.note b{color:var(--text-strong)}
+</style>
+</head>
+<body>
+<h1>Таймер хода — <span class="script">выбери вид</span></h1>
+<p class="sub">Шесть вариантов. Каждый показан в двух состояниях: обычное (42с, accent) и критическое ≤10с (8с — краснеет кольцо/индикатор и цифра). Все на felt-полосе, как в clue-strip рядом с кнопкой Пас.</p>
+
+<div class="grid">
+
+  <!-- A -->
+  <div class="card">
+    <h3>A · Классическое кольцо</h3>
+    <p class="desc">Круг с прогрессом, цифра в центре. Кремовая подложка — красное читается в обе темы.</p>
+    <div class="strip">
+      <span class="label">42с</span><span class="spacer"></span>
+      <div class="t-ring"><svg viewBox="0 0 56 56"><circle class="bg" cx="28" cy="28" r="22"/><circle class="fg" cx="28" cy="28" r="22"/></svg><b>0:42</b></div>
+      <span class="label">≤10с</span><span class="spacer"></span>
+      <div class="t-ring urgent"><svg viewBox="0 0 56 56"><circle class="bg" cx="28" cy="28" r="22"/><circle class="fg" cx="28" cy="28" r="22" style="stroke-dashoffset:18"/></svg><b>0:08</b></div>
+    </div>
+    <div class="statenote"><span class="ok">● обычное</span><span class="red">● ≤10с краснеет</span></div>
+  </div>
+
+  <!-- B -->
+  <div class="card">
+    <h3>B · Толстое кольцо без подложки</h3>
+    <p class="desc">Кольцо прямо на felt, cream-белое. Меньше визуального шума, чем A. Краснеет целиком.</p>
+    <div class="strip">
+      <span class="label">42с</span><span class="spacer"></span>
+      <div class="t-ringB"><svg viewBox="0 0 56 56"><circle class="bg" cx="28" cy="28" r="22"/><circle class="fg" cx="28" cy="28" r="22"/></svg><b>0:42</b></div>
+      <span class="label">≤10с</span><span class="spacer"></span>
+      <div class="t-ringB urgent"><svg viewBox="0 0 56 56"><circle class="bg" cx="28" cy="28" r="22"/><circle class="fg" cx="28" cy="28" r="22" style="stroke-dashoffset:18"/></svg><b>0:08</b></div>
+    </div>
+    <div class="statenote"><span class="ok">● обычное</span><span class="red">● ≤10с краснеет</span></div>
+  </div>
+
+  <!-- C -->
+  <div class="card">
+    <h3>C · Горизонтальная полоса</h3>
+    <p class="desc">Прогресс-бар + цифра сверху. Самый компактный по высоте, читается мгновенно.</p>
+    <div class="strip">
+      <span class="label">42с</span><span class="spacer"></span>
+      <div class="t-bar"><span class="num">0:42</span><div class="track"><div class="fill" style="width:70%"></div></div></div>
+      <span class="label">≤10с</span><span class="spacer"></span>
+      <div class="t-bar urgent"><span class="num">0:08</span><div class="track"><div class="fill" style="width:13%"></div></div></div>
+    </div>
+    <div class="statenote"><span class="ok">● обычное</span><span class="red">● ≤10с краснеет</span></div>
+  </div>
+
+  <!-- D -->
+  <div class="card">
+    <h3>D · Пилюля-чип</h3>
+    <p class="desc">Чип «мин:сек» как status-пилюля. При ≤10с заливается красным + пульс-кольцо.</p>
+    <div class="strip">
+      <span class="label">42с</span><span class="spacer"></span>
+      <span class="t-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 8v5l3.2 2M9 2h6M12 5V2"/></svg>0:42</span>
+      <span class="label">≤10с</span><span class="spacer"></span>
+      <span class="t-pill urgent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 8v5l3.2 2M9 2h6M12 5V2"/></svg>0:08</span>
+    </div>
+    <div class="statenote"><span class="ok">● обычное</span><span class="red">● ≤10с краснеет</span></div>
+  </div>
+
+  <!-- E -->
+  <div class="card">
+    <h3>E · Песочные часы</h3>
+    <p class="desc">Вертикальные песочные часы + цифра сбоку. Самый «настольный» вид, ties с темой игры.</p>
+    <div class="strip">
+      <span class="label">42с</span><span class="spacer"></span>
+      <div class="t-hour"><div class="glass"><svg viewBox="0 0 30 46"><path class="frame" d="M3 2h24M3 44h24M4 2c0 9 22 9 22 18s-22 9-22 18M26 2c0 9-22 9-22 18s22 9 22 18"/><path class="sand" d="M6 5h18l-9 11zM9 41h12l-6-7z"/></svg></div><span class="num">0:42</span></div>
+      <span class="label">≤10с</span><span class="spacer"></span>
+      <div class="t-hour urgent"><div class="glass"><svg viewBox="0 0 30 46"><path class="frame" d="M3 2h24M3 44h24M4 2c0 9 22 9 22 18s-22 9-22 18M26 2c0 9-22 9-22 18s22 9 22 18"/><path class="sand" d="M6 5h18l-9 11zM9 41h12l-6-7z"/></svg></div><span class="num">0:08</span></div>
+    </div>
+    <div class="statenote"><span class="ok">● обычное</span><span class="red">● ≤10с краснеет</span></div>
+  </div>
+
+  <!-- F -->
+  <div class="card">
+    <h3>F · Часовой циферблат</h3>
+    <p class="desc">Круг с метками + стрелка. Цифра в центре. Чувство «ход идёт», ties с таймером партии.</p>
+    <div class="strip">
+      <span class="label">42с</span><span class="spacer"></span>
+      <div class="t-clock"><svg viewBox="0 0 50 50"><circle class="face" cx="25" cy="25" r="22"/><line class="tick" x1="25" y1="5" x2="25" y2="9"/><line class="tick" x1="25" y1="41" x2="25" y2="45"/><line class="tick" x1="5" y1="25" x2="9" y2="25"/><line class="tick" x1="41" y1="25" x2="45" y2="25"/><line class="hand" x1="25" y1="25" x2="25" y2="10"/></svg><b>0:42</b></div>
+      <span class="label">≤10с</span><span class="spacer"></span>
+      <div class="t-clock urgent"><svg viewBox="0 0 50 50"><circle class="face" cx="25" cy="25" r="22"/><line class="tick" x1="25" y1="5" x2="25" y2="9"/><line class="tick" x1="25" y1="41" x2="25" y2="45"/><line class="tick" x1="5" y1="25" x2="9" y2="25"/><line class="tick" x1="41" y1="25" x2="45" y2="25"/><line class="hand" x1="25" y1="25" x2="25" y2="10" style="transform:rotate(288deg);transform-origin:25px 25px"/></svg><b>0:08</b></div>
+    </div>
+    <div class="statenote"><span class="ok">● обычное</span><span class="red">● ≤10с краснеет</span></div>
+  </div>
+
+</div>
+
+<div class="note">
+  <b>Как выбрать:</b> назови букву (A–F) — я вставлю этот вид в <code>codenames-teams.html</code> справа от кнопки Пас. Все варианты: при ≤10с краснеет <b>индикатор</b> (кольцо/полоса/стрелка/фон) <b>и цифра</b> + мягкий пульс. Можно попросить комбинацию («B, но цифру крупнее» / «C, но вертикально» / «E без цифры»).
+</div>
+</body>
+</html>

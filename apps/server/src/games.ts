@@ -7,6 +7,8 @@
  * Больше менять ничего не нужно — `index.ts` поднимет неймспейс автоматически.
  */
 import type { Namespace } from 'socket.io';
+import type { Janitable } from './janitor';
+import { registerAlias } from './alias/handlers';
 import { registerCodenames } from './codenames/handlers';
 import { registerUno } from './uno/handlers';
 
@@ -18,8 +20,9 @@ export interface GameModule {
   /**
    * Навешивает хендлеры на неймспейс. Каждый register типизирован своим
    * набором событий, поэтому здесь приводим к общему `Namespace`.
+   * Возвращает `Janitable`-хендл для фоновой чистки зомби-комнат (см. janitor.ts).
    */
-  readonly register: (nsp: Namespace) => void;
+  readonly register: (nsp: Namespace) => Janitable | void;
 }
 
 export const games: readonly GameModule[] = [
@@ -32,5 +35,10 @@ export const games: readonly GameModule[] = [
     namespace: '/uno',
     name: 'Uno',
     register: (nsp) => registerUno(nsp as never),
+  },
+  {
+    namespace: '/alias',
+    name: 'Alias',
+    register: (nsp) => registerAlias(nsp as never),
   },
 ];

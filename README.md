@@ -6,16 +6,13 @@
 
 ## Документация
 
-| Документ                                           | Описание                                            |
-| -------------------------------------------------- | --------------------------------------------------- |
-| [CLAUDE.md](CLAUDE.md)                             | Память проекта: обзор, структура, как добавить игру |
-| [docs/architecture.md](docs/architecture.md)       | Архитектура, стек, структура монорепо               |
-| [docs/database.md](docs/database.md)               | БД: Prisma-схема, аккаунты, статистика              |
-| [docs/mvp-plan.md](docs/mvp-plan.md)               | План MVP по этапам                                  |
-| [docs/games/codenames.md](docs/games/codenames.md) | Спецификация Codenames                              |
-| [docs/games/uno.md](docs/games/uno.md)             | Спецификация Uno                                    |
-| [docs/games/alias.md](docs/games/alias.md)         | Спецификация Alias                                  |
-| [design/final.html](design/final.html)             | Утверждённый дизайн-референс (в браузере)           |
+| Документ                                           | Описание                                             |
+| -------------------------------------------------- | ---------------------------------------------------- |
+| [CLAUDE.md](CLAUDE.md)                             | Память проекта: обзор, структура, как добавить игру  |
+| [docs/database.md](docs/database.md)               | БД: Prisma-схема, аккаунты, статистика               |
+| [docs/review.html](docs/review.html)               | Глубокий аудит кода + трекер статусов фиксов         |
+| [docs/smoke-checklist.md](docs/smoke-checklist.md) | Ручной smoke-чеклист перед деплоем (socket-флоу, UI) |
+| [design/final.html](design/final.html)             | Утверждённый дизайн-референс (в браузере)            |
 
 ## Принципы
 

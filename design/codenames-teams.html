@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codenames — Вечерний штаб</title>
+<script>
+(function(){try{var s=localStorage.getItem('pi-theme');var t=s||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<style>
+/* ============ токены ============ (палитра бренда сохранена, audit-правки контраста) */
+:root{
+  --bg:#f6ecdd; --surface:#fff7ec; --surface-2:#f3e3ca; --border:#FBF1E4;
+  --text:#4a3526; --text-strong:#332417; --muted:#6f5d49;
+  --accent:#c2622e; --accent-soft:#e8a063; --accent-text:#fff7ec; --accent-shadow:#94481e;
+  --gold:#b8884a; --gold-ink:#6a4a20;
+  --felt:#9c6b3c; --felt-dark:#7d5430;
+  --card-face:#fffdf7; --card-ink:#332417;
+  --team-red:#d94a32; --team-blue:#3a6ea5; --neutral:#8a7560; --assassin:#2b2417;
+  --shadow:0 8px 24px #c79b6b40; --shadow-big:0 20px 48px #8a5a2b3d; --ring:#c2622e55;
+  --r-sm:12px; --r:18px; --r-lg:24px; --r-pill:999px;
+  /* аватары игроков — пересчитаны под белый 14px (large, AA) */
+  --av-1:#a8501e; --av-2:#5f7240; --av-3:#5b7a8f; --av-4:#8a6529; --av-5:#94481e; --av-6:#6a7a5a;
+}
+[data-theme="dark"]{
+  --bg:#16171b; --surface:#1e1f25; --surface-2:#282931; --border:#ffffff16;
+  --text:#e8e4da; --text-strong:#f5f1e6; --muted:#9b948a;
+  --accent:#c4a265; --accent-soft:#8a7344; --accent-text:#17181c; --accent-shadow:#776033;
+  --gold:#c4a265; --gold-ink:#17181c;
+  --felt:#23252c; --felt-dark:#1b1d22;
+  --card-face:#f2eee2; --card-ink:#2b2417;
+  --team-red:#c4543e; --team-blue:#4a7aa8; --neutral:#9b948a; --assassin:#0c0c0f;
+  --shadow:0 10px 30px #00000066; --shadow-big:0 24px 60px #00000099; --ring:#c4a26555;
+  --av-1:#9c7a3a; --av-2:#6f8a5a; --av-3:#4a6a82; --av-4:#9a7a44; --av-5:#7a5a33; --av-6:#7a8a76;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;line-height:1.5;-webkit-font-smoothing:antialiased;transition:background .35s,color .35s;overflow-x:hidden;display:flex;flex-direction:column}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.42 0 0 0 0 0.28 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+[data-theme="dark"] body::before{opacity:.4;background-image:radial-gradient(ellipse 120% 65% at 50% -8%,#2a2c35 0%,transparent 60%)}
+
+/* ============ layout ============ */
+.wrap{position:relative;z-index:1;width:100%;margin:0 auto;padding:0 clamp(16px,2.4vw,40px) 24px;display:flex;flex-direction:column;gap:16px}
+
+/* хедер: логотип | на главную | название+код | статус хода | тема (выбор карточек убран) */
+.topbar{display:flex;align-items:center;gap:14px;padding:18px 0 4px;flex-wrap:wrap}
+.logo{display:flex;gap:12px;align-items:center;text-decoration:none}
+.logo .mark{width:34px;height:34px;color:var(--accent);transition:transform .5s cubic-bezier(.22,1,.36,1)}
+.logo:hover .mark{transform:rotate(120deg)}
+.logo b{font-family:'Caveat',cursive;font-weight:700;font-size:30px;color:var(--accent)}
+.home-link{display:inline-flex;align-items:center;gap:7px;font:800 14px 'Nunito',sans-serif;color:var(--accent);text-decoration:none;padding:11px 15px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--surface);box-shadow:var(--shadow);transition:.15s}
+.home-link:hover{transform:translateY(-1px);border-color:var(--accent-soft)}
+.home-link svg{width:16px;height:16px}
+.divider{width:1px;height:28px;background:var(--border);flex:none}
+/* название игры (комнаты) + код — перенесены в хедер */
+.room-title{display:flex;align-items:center;gap:12px;min-width:0}
+.room-title h1{font:900 20px 'Nunito',sans-serif;color:var(--text-strong);letter-spacing:-.01em;line-height:1;white-space:nowrap}
+.room-title h1 .script{font-family:'Caveat',cursive;font-weight:700;color:var(--accent);font-size:1.18em}
+.room-code{font:800 13px 'Nunito',sans-serif;color:var(--muted);padding:6px 12px;border-radius:var(--r-sm);background:var(--surface-2);border:1.5px solid var(--border);letter-spacing:.14em;white-space:nowrap}
+.spacer{flex:1;min-width:8px}
+.turn-pill{display:inline-flex;align-items:center;gap:11px;font:800 15px 'Nunito',sans-serif;padding:10px 18px;border-radius:var(--r-pill);color:#fff;box-shadow:var(--shadow);white-space:nowrap}
+.turn-pill.blue{background:linear-gradient(135deg,var(--team-blue),color-mix(in srgb,var(--team-blue),#000 25%))}
+.turn-pill.red{background:linear-gradient(135deg,var(--team-red),color-mix(in srgb,var(--team-red),#000 25%))}
+.turn-pill .dot{width:9px;height:9px;border-radius:50%;background:#fff;animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{50%{opacity:.35}}
+.theme-toggle{display:flex;gap:5px;padding:5px;border-radius:var(--r-pill);background:var(--surface);border:1.5px solid var(--border);box-shadow:var(--shadow)}
+.theme-toggle button{border:none;background:transparent;color:var(--muted);cursor:pointer;width:36px;height:36px;border-radius:var(--r-pill);display:grid;place-items:center;transition:.18s}
+.theme-toggle button svg{width:18px;height:18px}
+.theme-toggle button.on{background:var(--accent);color:var(--accent-text)}
+
+/* ============ СЦЕНА: Красные+Лог | поле | Синие+Таймер ============ */
+/* шире: side 260px, кап центра снят (1fr) */
+.stage{display:grid;grid-template-columns:minmax(240px,280px) 1fr minmax(240px,280px);grid-template-areas:"left center right";gap:18px;justify-content:center;align-items:stretch;min-height:0}
+.col-left{grid-area:left}.col-center{grid-area:center}.col-right{grid-area:right}
+.col-side{display:flex;flex-direction:column;gap:16px;min-width:0}
+/* утилита (лог/таймер) прижимается к низу колонки —balanced stretch */
+/* утилиты (лог/таймер) убраны — панели команд просто вверху колонок */
+.panel{background:var(--surface);border:2px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.panel h3{font-size:14px;font-weight:800;color:var(--muted);letter-spacing:.09em;text-transform:uppercase;margin-bottom:14px}
+/* активная команда (её ход): чистая цветная обводка (вместо серой) + «дышащий»
+   radial-градиент в цвет команды. Дрейф центра → заметная пульсация энергии. */
+.panel.team.active{border:2.5px solid var(--team-color);background:radial-gradient(120% 140% at 30% 20%,color-mix(in srgb,var(--team-color) 20%,var(--surface)) 0%,var(--surface) 60%);background-size:180% 180%;background-position:30% 20%;animation:team-active-drift 5s ease-in-out infinite}
+.panel.team.red.active{--team-color:var(--team-red)}
+.panel.team.blue.active{--team-color:var(--team-blue)}
+@keyframes team-active-drift{0%,100%{background-position:30% 20%}50%{background-position:70% 80%}}
+@media (prefers-reduced-motion: reduce){.panel.team.active{animation:none;background-position:30% 20%}}
+
+/* ============ команда (одна панель = одна команда) ============ */
+.team-head{display:flex;align-items:center;gap:13px;margin-bottom:14px}
+.team-head .badge{width:42px;height:42px;border-radius:var(--r-sm);display:grid;place-items:center;color:#fff;flex:none;box-shadow:var(--shadow)}
+.team-head .badge svg{width:24px;height:24px}
+.team-head.red .badge{background:var(--team-red)}.team-head.blue .badge{background:var(--team-blue)}
+.team-head .tname{font:900 19px 'Nunito',sans-serif;color:var(--text-strong);line-height:1.1}
+.team-head .left-w{margin-left:auto;white-space:nowrap;text-align:right}
+.team-head .left-w b{font:900 40px 'Nunito',sans-serif;line-height:.85;color:var(--muted)}
+.team-head.red .left-w b{color:var(--team-red)}.team-head.blue .left-w b{color:var(--team-blue)}
+/* капитан — выделяется: золотистый блок + корона */
+.captain{display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:var(--r-sm);background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 18%,var(--surface-2)) 0%,var(--surface-2) 100%);border:1.5px solid color-mix(in srgb,var(--gold) 50%,transparent);margin-bottom:12px}
+.captain .crown{width:36px;height:36px;border-radius:10px;background:var(--accent);color:var(--accent-text);display:grid;place-items:center;flex:none;box-shadow:var(--shadow)}
+.captain .crown svg{width:21px;height:21px}
+.captain .c-meta{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.captain .c-meta .role{font:700 11px 'Nunito',sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--text)}
+.captain .c-meta .name{font:800 16px 'Nunito',sans-serif;color:var(--text-strong)}
+.captain .you{margin-left:auto;font:800 14px 'Nunito',sans-serif;padding:4px 10px;border-radius:var(--r-pill);background:var(--accent);color:var(--accent-text);white-space:nowrap}
+/* игроки — чёткий список: аватар + имя в читаемом цвете */
+.players-label{font:700 11px 'Nunito',sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.players{display:flex;flex-direction:column;gap:8px}
+.player{display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:var(--r-sm);background:var(--surface-2);border:1.5px solid var(--border)}
+.player .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font:800 14px 'Nunito',sans-serif;flex:none}
+.player .pname{font:800 15px 'Nunito',sans-serif;color:var(--text)}
+
+/* ============ центр: поле → подсказка под полем ============ */
+.board-wrap{background:radial-gradient(120% 90% at 50% 0%,color-mix(in srgb,var(--felt) 18%,var(--surface)) 0%,var(--surface) 70%);border:2px solid var(--border);border-radius:var(--r-lg);padding:clamp(14px,2vw,24px);box-shadow:var(--shadow-big);display:flex;flex-direction:column;min-height:0}
+.clue-strip{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:linear-gradient(150deg,var(--felt),var(--felt-dark));color:#fff7ec;border-radius:var(--r);padding:14px 20px;margin-top:clamp(12px,1.4vw,18px);box-shadow:var(--shadow)}
+.clue-strip .cw{display:flex;align-items:baseline;gap:12px}
+.clue-strip .phase{font:800 13px 'Nunito',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#fff7ec}
+.clue-strip .word{font-family:'Caveat',cursive;font-weight:700;font-size:clamp(30px,2.8vw,42px);line-height:1;color:#fff}
+.clue-strip .count{display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:40px;padding:0 12px;border-radius:var(--r-sm);background:#ffffff22;font:900 22px 'Nunito',sans-serif;color:#fff7ec}
+/* таймер-пилюля в clue-strip (справа от Паса). normal: cream на white22%/felt;
+   ≤10с: red фон + white цифра + пульс-кольцо. Контраст AA large в обе темы. */
+.clue-strip .timer-pill{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:var(--r-pill);background:#ffffff22;border:1.5px solid #ffffff55;font:900 18px 'Nunito',sans-serif;color:#fff7ec;transition:background .3s,border-color .3s,color .3s,box-shadow .3s;white-space:nowrap}
+.clue-strip .timer-pill svg{width:16px;height:16px;flex:none}
+.clue-strip .timer-pill.urgent{background:var(--team-red);border-color:var(--team-red);color:#fff;animation:timer-urgent 1s ease-in-out infinite}
+@keyframes timer-urgent{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--team-red) 0%,transparent)}50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--team-red) 35%,transparent)}}
+/* Пас — relocated ghost-кнопка на felt-полосе (вместо удалённого .actions) */
+.btn-pass{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;font:800 14px 'Nunito',sans-serif;color:#fff7ec;background:transparent;border:1.5px solid #ffffff55;border-radius:var(--r-sm);cursor:pointer;transition:background .15s,border-color .15s,transform .15s cubic-bezier(.22,1,.36,1)}
+.btn-pass svg{width:17px;height:17px;flex:none}
+.btn-pass:hover{background:#ffffff22;border-color:#fff7ec}
+.btn-pass:active{transform:translateY(1px)}
+.btn-pass:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
+
+.board{container-type:inline-size;display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:min-height:12cqw;column-gap:clamp(4px,.4vw,6px);row-gap:clamp(4px,.4vw,6px);min-height:0}
+.cell{position:relative;min-height:12cqw;border-radius:var(--r);background:var(--card-face);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;text-align:center;padding:6px 8px;font-family:'Nunito',sans-serif;font-weight:800;font-size:clamp(15px,4cqw,32px);line-height:1.15;letter-spacing:.02em;color:var(--card-ink);box-shadow:0 6px 16px #8a5a2b26;transition:transform .18s cubic-bezier(.22,1,.36,1),border-color .18s,box-shadow .18s;user-select:none;cursor:pointer;overflow:hidden}
+.cell:hover{transform:translateY(-3px);border-color:var(--accent-soft);box-shadow:0 10px 22px #8a5a2b40}
+.cell:active{transform:translateY(-1px) scale(.99)}
+.cell .mk{position:absolute;top:9px;left:9px;width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 2px var(--card-face)}
+.cell.mk-red .mk{background:var(--team-red)}.cell.mk-blue .mk{background:var(--team-blue)}.cell.mk-neutral .mk{background:var(--neutral)}.cell.mk-assassin .mk{background:var(--assassin);border:2px solid #fff;box-shadow:0 0 0 2px var(--card-face)}
+.cell.open-red{background:var(--team-red);color:#fff;border-color:var(--team-red)}
+.cell.open-blue{background:var(--team-blue);color:#fff;border-color:var(--team-blue)}
+.cell.open-neutral{background:var(--neutral);color:#fff;border-color:var(--neutral)}
+.cell.open-assassin{background:var(--assassin);color:#fff;border-color:var(--assassin)}
+.cell.open-red .mk,.cell.open-blue .mk,.cell.open-neutral .mk,.cell.open-assassin .mk{display:none}
+.cell.open{transform:none;cursor:default}.cell.open:hover{transform:none}.cell.open:active{transform:none}
+.cell.target{box-shadow:0 0 0 4px var(--ring),0 10px 22px #8a5a2b40;animation:target-pulse 2.2s ease-in-out infinite}
+@keyframes target-pulse{0%,100%{box-shadow:0 0 0 4px var(--ring),0 10px 22px #8a5a2b40}50%{box-shadow:0 0 0 7px var(--ring),0 10px 22px #8a5a2b40}}
+@keyframes flip{0%{transform:rotateY(0)}50%{transform:rotateY(90deg)}100%{transform:rotateY(0)}}
+.cell.open{animation:flip .5s ease}
+
+/* история подсказок капитана — под составом команды */
+.clue-history{margin-top:14px;padding-top:14px;border-top:1.5px solid var(--border)}
+.ch-label{display:block;font:700 11px 'Nunito',sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--text);margin-bottom:8px}
+.ch-list{display:flex;flex-wrap:wrap;gap:7px}
+.ch-item{display:inline-flex;align-items:baseline;gap:5px;padding:6px 11px;border-radius:var(--r-pill);background:var(--surface-2);border:1.5px solid var(--border);font:800 15px 'Nunito',sans-serif;color:var(--text)}
+.ch-item b{font:900 16px 'Nunito',sans-serif}
+.team.red .ch-item b{color:var(--team-red)}.team.blue .ch-item b{color:var(--team-blue)}
+.ch-item.current{background:color-mix(in srgb,var(--accent) 14%,var(--surface));border-color:color-mix(in srgb,var(--accent) 45%,transparent);color:var(--text-strong)}
+.ch-item.current b{color:var(--accent-shadow)}
+.ch-empty{font:700 13px 'Nunito',sans-serif;color:var(--muted)}
+
+/* (панель таймера и лог хода убраны — кружок таймера в clue-strip) */
+
+/* (лог хода убран — отдельной панели нет) */
+
+/* a11y */
+a:focus-visible,button:focus-visible,.cell:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
+
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.rise{opacity:1;animation:rise .5s cubic-bezier(.22,1,.36,1) both}
+.d0{animation-delay:.04s}.d1{animation-delay:.1s}.d2{animation-delay:.18s}.d3{animation-delay:.26s}
+@media (prefers-reduced-motion: reduce){.rise{animation:none;opacity:1}.turn-pill .dot,.cell.open,.cell.target{animation:none}html{scroll-behavior:auto}}
+
+/* адаптив */
+@media (max-width:1180px){.stage{grid-template-columns:1fr;grid-template-areas:none}.col-left,.col-right{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}.col-left .panel:last-child,.col-right .panel:last-child{margin-top:0}.col-center{order:-1}}
+@media (max-width:760px){.col-left,.col-right{grid-template-columns:1fr}.wrap{padding:0 14px 50px}.board{column-gap:5px;row-gap:5px}.cell{padding:6px 4px}.clue-strip .word{font-size:28px}.topbar{gap:10px}.room-title h1{font-size:18px}.divider{display:none}}
+@media (max-width:480px){.board{column-gap:4px;row-gap:6px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <!-- ХЕДЕР: выбор карточек убран, название+код и статус хода перенесены сюда -->
+  <nav class="topbar rise d0" aria-label="Верхняя панель">
+    <a class="logo" href="#" aria-label="Настолки, на главную"><svg class="mark" viewBox="0 0 33 33" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="1" width="31" height="31" rx="6"/><circle cx="8.25" cy="8.25" r="2.6" fill="currentColor" stroke="none"/><circle cx="24.75" cy="8.25" r="2.6" fill="currentColor" stroke="none"/><circle cx="24.75" cy="24.75" r="2.6" fill="currentColor" stroke="none"/><circle cx="8.25" cy="24.75" r="2.6" fill="currentColor" stroke="none"/><circle cx="16.5" cy="16.5" r="2.6" fill="currentColor" stroke="none"/></svg><b>Настолки</b></a>
+    <a class="home-link" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>На главную</a>
+    <span class="divider" aria-hidden="true"></span>
+    <div class="room-title">
+      <h1>Вечерний <span class="script">штаб</span></h1>
+      <span class="room-code">КОД · AB7K</span>
+    </div>
+    <span class="spacer"></span>
+    <span class="turn-pill blue"><span class="dot" aria-hidden="true"></span>Ход синих · отгадывают</span>
+    <div class="theme-toggle" role="group" aria-label="Тема">
+      <button type="button" data-set="light" aria-label="Светлая тема"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg></button>
+      <button type="button" data-set="dark" aria-label="Тёмная тема"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    </div>
+  </nav>
+
+  <!-- СЦЕНА: Красные+Лог | поле | Синие+Таймер -->
+  <div class="stage">
+
+    <!-- ЛЕВО: Красные (команда) + Лог -->
+    <aside class="col-side col-left" aria-label="Красные">
+      <section class="panel team red rise d2" aria-label="Красные">
+        <div class="team-head red">
+          <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 19c-4-3-7-6-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4-3 7-7 10z"/></svg></span>
+          <h2 class="tname">Красные</h2>
+          <span class="left-w"><b>6</b></span>
+        </div>
+        <div class="captain">
+          <span class="crown"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M5.5 12C5.5 6.8 7.6 4.3 12 4.3s6.5 2.5 6.5 7.7"/><path d="M8 15.4a4 4 0 0 0 8 0"/><circle cx="10.4" cy="14" r="0.7" fill="currentColor" stroke="none"/><circle cx="13.6" cy="14" r="0.7" fill="currentColor" stroke="none"/></svg></span>
+          <span class="c-meta"><span class="role">Капитан</span><span class="name">Маша</span></span>
+        </div>
+        <div class="players-label">Игроки</div>
+        <div class="players">
+          <div class="player"><span class="av" style="background:var(--av-2)">С</span><span class="pname">Сергей</span></div>
+          <div class="player"><span class="av" style="background:var(--av-4)">К</span><span class="pname">Катя</span></div>
+        </div>
+        <div class="clue-history">
+          <span class="ch-label">Подсказки капитана</span>
+          <div class="ch-list">
+            <span class="ch-item">небо <b>3</b></span>
+            <span class="ch-item">факел <b>1</b></span>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- ЦЕНТР: поле → подсказка под полем (+ Пас relocated сюда) -->
+    <div class="board-wrap col-center rise d2">
+      <div class="board">
+        <div class="cell open-red" tabindex="-1">звезда</div><div class="cell mk-blue" tabindex="0">космос</div><div class="cell open-neutral" tabindex="-1">кошка</div><div class="cell mk-red" tabindex="0">луна</div><div class="cell mk-neutral" tabindex="0">игла</div>
+        <div class="cell mk-red" tabindex="0">свет</div><div class="cell open-blue" tabindex="-1">море</div><div class="cell mk-assassin" tabindex="0">туман</div><div class="cell mk-blue" tabindex="0">кит</div><div class="cell mk-neutral" tabindex="0">шар</div>
+        <div class="cell mk-red" tabindex="0">лампа</div><div class="cell open-red" tabindex="-1">фонарь</div><div class="cell mk-neutral" tabindex="0">рот</div><div class="cell mk-blue target" tabindex="0">волна</div><div class="cell mk-red" tabindex="0">окно</div>
+        <div class="cell open-blue" tabindex="-1">парус</div><div class="cell mk-neutral" tabindex="0">карандаш</div><div class="cell mk-blue" tabindex="0">берег</div><div class="cell mk-red" tabindex="0">искра</div><div class="cell mk-neutral" tabindex="0">градус</div>
+        <div class="cell mk-neutral" tabindex="0">тень</div><div class="cell mk-blue" tabindex="0">рыба</div><div class="cell mk-red" tabindex="0">заря</div><div class="cell mk-neutral" tabindex="0">палец</div><div class="cell open-neutral" tabindex="-1">лыжи</div>
+      </div>
+      <div class="clue-strip" aria-label="Подсказка капитана">
+        <div class="cw">
+          <span class="phase">Синие · ход</span>
+          <span class="word">океан</span>
+          <span class="count">2</span>
+        </div>
+        <span class="spacer"></span>
+        <button class="btn-pass" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M5 12l5-5M5 12l5 5"/></svg>Пас</button>
+        <div class="timer-pill urgent" role="timer" aria-label="Осталось 8 секунд" aria-live="off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 8v5l3.2 2M9 2h6M12 5V2"/></svg>0:08</div>
+      </div>
+    </div>
+
+    <!-- ПРАВО: Синие (команда) + Таймер -->
+    <aside class="col-side col-right" aria-label="Синие">
+      <section class="panel team blue active rise d2" aria-label="Синие">
+        <div class="team-head blue">
+          <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 19c-4-3-7-6-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4-3 7-7 10z"/></svg></span>
+          <h2 class="tname">Синие</h2>
+          <span class="left-w"><b>5</b></span>
+        </div>
+        <div class="captain">
+          <span class="crown"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M5.5 12C5.5 6.8 7.6 4.3 12 4.3s6.5 2.5 6.5 7.7"/><path d="M8 15.4a4 4 0 0 0 8 0"/><circle cx="10.4" cy="14" r="0.7" fill="currentColor" stroke="none"/><circle cx="13.6" cy="14" r="0.7" fill="currentColor" stroke="none"/></svg></span>
+          <span class="c-meta"><span class="role">Капитан</span><span class="name">Лёва</span></span>
+          <span class="you">вы</span>
+        </div>
+        <div class="players-label">Игроки</div>
+        <div class="players">
+          <div class="player"><span class="av" style="background:var(--av-5)">И</span><span class="pname">Ира</span></div>
+          <div class="player"><span class="av" style="background:var(--av-6)">Н</span><span class="pname">Ник</span></div>
+        </div>
+        <div class="clue-history">
+          <span class="ch-label">Подсказки капитана</span>
+          <div class="ch-list">
+            <span class="ch-item">корабль <b>2</b></span>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+  </div>
+</main>
+<script>
+const root=document.documentElement,btns=document.querySelectorAll('.theme-toggle button');
+function syncToggle(){const t=root.getAttribute('data-theme');btns.forEach(b=>b.classList.toggle('on',b.dataset.set===t));}
+function setTheme(t){root.setAttribute('data-theme',t);syncToggle();try{localStorage.setItem('pi-theme',t)}catch(e){}}
+syncToggle();
+btns.forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.set)));
+</script>
+</body>
+</html>

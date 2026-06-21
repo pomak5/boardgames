@@ -5,9 +5,13 @@
  */
 import { PrismaClient } from '@prisma/client';
 
-export const prisma = new PrismaClient();
+// log: предупреждения/ошибки Prisma (напр. исчерпание connection pool) попадают в
+// консоль сервера. Connection limit/pool timeout настраиваются через DATABASE_URL
+// (см. docs/database.md «Connection pool / PgBouncer»), не через конструктор —
+// таково API Prisma 6.
+export const prisma = new PrismaClient({ log: ['warn', 'error'] });
 
-export type GameId = 'codenames' | 'uno';
+export type GameId = 'codenames' | 'uno' | 'alias';
 
 export interface UserPublic {
   id: string;
@@ -126,6 +130,7 @@ export async function getUserStats(userId: string): Promise<UserStats> {
   const byGame: Record<GameId, GameStats> = {
     codenames: emptyStats(),
     uno: emptyStats(),
+    alias: emptyStats(),
   };
   const overall = emptyStats();
   for (const r of rows) {

@@ -20,7 +20,7 @@ model User {
 
 model GameResult {
   id       String   @id @default(cuid())
-  game     String // "codenames" | "uno"
+  game     Game
   userId   String
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   won      Boolean
@@ -29,7 +29,15 @@ model GameResult {
   playedAt DateTime @default(now())
 
   @@index([userId])
+  @@index([userId, won]) // лидерборд: groupBy по userId с where won
+  @@index([userId, playedAt]) // история партий игрока: where userId order by playedAt desc
   @@index([game])
+}
+
+enum Game {
+  codenames
+  uno
+  alias
 }
 
 model AliasWord {

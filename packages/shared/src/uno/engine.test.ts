@@ -14,6 +14,7 @@ import {
   resolveChallenge,
   timeoutAction,
 } from './engine';
+import { botAction } from './bot';
 import {
   DEFAULT_UNO_RULES,
   type UnoCard,
@@ -62,6 +63,14 @@ function fixture(opts: {
     log: [],
   };
 }
+
+const seeded = (seed: number) => {
+  let s = seed >>> 0;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+};
 
 describe('колода', () => {
   test('108 карт, состав по правилам', () => {
@@ -183,6 +192,40 @@ describe('штрафные карты', () => {
     const s3 = chooseColor(s2, 'p0', 'green');
     expect(s3.color).toBe('green');
     expect(s3.turn).toBe(1);
+  });
+
+  test('wild/wild4: один play-лог (без дубля после chooseColor)', () => {
+    // Регрессия §3 аудита: раньше playCard логировал play, а chooseColor — ещё раз.
+    const w = c(null, 'wild');
+    const s = fixture({ hands: [[w, c('blue', 1)], [c('green', 1)]] });
+    const s2 = playCard(s, 'p0', w.id);
+    // до выбора цвета play ещё не логирован — залогится в chooseColor с цветом
+    expect(s2.log.filter((e) => e.type === 'play').length).toBe(0);
+    const s3 = chooseColor(s2, 'p0', 'green');
+    const plays = s3.log.filter((e) => e.type === 'play');
+    expect(plays.length).toBe(1);
+    expect((plays[0] as { color?: UnoColor }).color).toBe('green');
+
+    // то же для wild4
+    const w4 = c(null, 'wild4');
+    const s4 = fixture({ hands: [[w4, c('red', 3)], [c('green', 1)]] });
+    const s5 = playCard(s4, 'p0', w4.id);
+    expect(s5.log.filter((e) => e.type === 'play').length).toBe(0);
+    const s6 = chooseColor(s5, 'p0', 'blue');
+    expect(s6.log.filter((e) => e.type === 'play').length).toBe(1);
+  });
+
+  test('wild4 последней картой: play-лог пишется в playCard (chooseColor не зовётся)', () => {
+    // Выигрышная wild-карта: chooseColor не вызывается, поэтому play логируется
+    // в playCard — иначе финальный ход вообще не попадёт в историю.
+    const w4 = c(null, 'wild4');
+    const s = fixture({
+      hands: [[w4], [c('green', 1)], [c('green', 2)]],
+      deck: [c('blue', 1), c('green', 2), c('yellow', 3), c('red', 4), c('blue', 9), c('blue', 8)],
+    });
+    const s2 = playCard(s, 'p0', w4.id);
+    expect(s2.phase).toBe('finished');
+    expect(s2.log.filter((e) => e.type === 'play').length).toBe(1);
   });
 
   test('+4 челлендж: блеф доказан — сыгравший берёт 4, жертва ходит', () => {
@@ -381,5 +424,54 @@ describe('UNO! и финал', () => {
     expect(cardPoints(c('red', 9))).toBe(9);
     expect(cardPoints(c('red', 'skip'))).toBe(20);
     expect(cardPoints(c(null, 'wild4'))).toBe(50);
+  });
+});
+
+/** Состояние в фазе challenge: p0 сыграл +4 (блеф — есть red), p1 решает (hand=1 → p=0.35). */
+function challengeState(): UnoState {
+  const w4 = c(null, 'wild4');
+  const s = fixture({
+    rules: { challengeDraw4: true },
+    hands: [[w4, c('red', 3)], [c('green', 1)]],
+    deck: [c('blue', 1), c('green', 2), c('yellow', 3), c('red', 4), c('blue', 9), c('blue', 8)],
+  });
+  return chooseColor(playCard(s, 'p0', w4.id), 'p0', 'blue');
+}
+
+describe('детерминизм (random injection)', () => {
+  test('createUnoRound детерминирован при передаче random (seeded)', () => {
+    const r1 = createUnoRound(['a', 'b', 'c'], DEFAULT_UNO_RULES, {}, 0, { random: seeded(42) });
+    const r2 = createUnoRound(['a', 'b', 'c'], DEFAULT_UNO_RULES, {}, 0, { random: seeded(42) });
+    expect(r1.deck).toEqual(r2.deck);
+    expect(r1.discard).toEqual(r2.discard);
+    expect(r1.color).toBe(r2.color);
+    expect(r1.players.map((p) => p.hand)).toEqual(r2.players.map((p) => p.hand));
+    expect(r1.turn).toBe(r2.turn);
+  });
+
+  test('createUnoRound без random работает по умолчанию (Math.random)', () => {
+    const r = createUnoRound(['a', 'b'], DEFAULT_UNO_RULES);
+    expect(r.players).toHaveLength(2);
+    const total =
+      r.deck.length + r.discard.length + r.players.reduce((n, p) => n + p.hand.length, 0);
+    expect(total).toBe(108);
+  });
+
+  test('botAction решает челлендж по state.random, не Math.random', () => {
+    const orig = Math.random;
+    Math.random = () => 0.999; // если бы бот использовал Math.random — не оспорил бы
+    try {
+      const s1 = challengeState();
+      s1.random = () => 0.0; // < 0.35 → оспорить
+      const out1 = botAction(s1);
+      expect(out1.log.some((e) => e.type === 'challenge')).toBe(true);
+
+      const s2 = challengeState();
+      s2.random = () => 0.999; // > 0.35 → не оспорить
+      const out2 = botAction(s2);
+      expect(out2.log.some((e) => e.type === 'challenge')).toBe(false);
+    } finally {
+      Math.random = orig;
+    }
   });
 });

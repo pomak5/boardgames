@@ -5,16 +5,47 @@ on:
   push:
     branches: [main]
 
+# Bun-версия зафиксирована под packageManager в корневом package.json (bun@1.2.0),
+# чтобы будущий релиз bun не сломал CI за ночь.
 jobs:
   check:
     runs-on: ubuntu-latest
+    env:
+      # БД нужна для прогона миграций (ловит schema-vs-code drift) и будущих DB-тестов.
+      DATABASE_URL: postgres://boardgames:boardgames@localhost:5432/boardgames
+      JWT_SECRET: ci-not-a-real-secret-only-for-mounting-auth
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: boardgames
+          POSTGRES_USER: boardgames
+          POSTGRES_PASSWORD: boardgames
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U boardgames -d boardgames"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.0
+      - name: Cache bun + prisma
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            ~/.cache/prisma
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
       - name: Install
         run: bun install --frozen-lockfile
+      - name: Prisma migrate deploy
+        # Применяем закоммиченные миграции к эфемерному postgres — ловим дрейф схемы.
+        run: bun run --filter @boardgames/db migrate:deploy
       - name: Lint
         run: bun run lint
       - name: Format check
@@ -23,6 +54,12 @@ jobs:
         run: bun run typecheck
       - name: Tests
         run: bun test
+      - name: Audit (advisory)
+        # bun audit выходит 0 даже при уязвимостях — шаг informational, выводит
+        # отчёт в лог CI (не блокирует PR). Для блокировки по severity можно
+        # добавить фильтр позже.
+        run: bun audit
+
   web:
     runs-on: ubuntu-latest
     defaults:
@@ -32,12 +69,56 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.0
+      - name: Cache bun
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-web-${{ hashFiles('apps/web/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-web-
       - name: Install (web)
-        run: bun install
+        # frozen-lockfile: CI не должен тихо подтягивать резолв, не совпадающий с apps/web/bun.lock.
+        run: bun install --frozen-lockfile
       - name: Biome check
         run: bun run check
       - name: Typecheck (web)
         run: bun run typecheck
       - name: Build (web)
         run: bun run build
+      - name: Audit (advisory)
+        run: bun audit
+
+  e2e:
+    # Playwright UI-smoke (аудит §8). Отдельная джоба — установка chromium (~120 МБ)
+    # не замедляет check/web. Realtime-логика покрыта socket-e2e в `check` (bun test).
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.0
+      - name: Cache bun
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-web-${{ hashFiles('apps/web/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-web-
+      - name: Install (web)
+        run: bun install --frozen-lockfile
+      - name: Install Playwright chromium
+        run: bunx playwright install --with-deps chromium
+      - name: Build (web)
+        run: bun run build
+      - name: Run Playwright smoke
+        # webServer в playwright.config.ts поднимает `bun run preview` сам
+        run: bun run test:e2e
+      - name: Upload trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: apps/web/test-results/
+          retention-days: 7

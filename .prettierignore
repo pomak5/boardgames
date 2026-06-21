@@ -4,3 +4,12 @@ bun.lock
 design
 
 apps/web
+
+# Prisma-схему форматирует сам Prisma; у prettier нет парсера для .prisma
+**/*.prisma
+
+# Hand-crafted HTML-отчёты (не исходный код, prettier не форматирует)
+docs/review.html
+
+# Локальный dev-override docker compose (не для коммита, environment-specific)
+docker-compose.override.yml

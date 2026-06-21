@@ -114,7 +114,14 @@ export function playCard(
   state.discard.push(card);
   if (card.color !== null) state.color = card.color;
   if (card.value === 'wild4') state.challengeCtx = { byIdx: idx, prevColor: state0.color };
-  if (!isJumpIn) log(state, { type: 'play', player: player.id, card });
+  // Дикие карты (wild/wild4) логируются в chooseColor — туда добавится выбранный
+  // цвет. Исключение — выигрышная карта: chooseColor не вызывается (ранний return
+  // в ветке победы ниже), поэтому логируем здесь, иначе финальный ход не попадёт
+  // в историю. Раньше wild логировался и здесь, и в chooseColor — был дубль.
+  const isWild = card.value === 'wild' || card.value === 'wild4';
+  const wildDeferredToChooseColor = isWild && player.hand.length > 0;
+  if (!isJumpIn && !wildDeferredToChooseColor)
+    log(state, { type: 'play', player: player.id, card });
   resetTurnFlags(state);
 
   // «UNO!» (заранее прожатый или вместе с ходом)

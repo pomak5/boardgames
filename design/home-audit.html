@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Настолки — прототип главной (audit pass)</title>
+<!-- FOUC-страж: ставит тему до первого paint. Без JS остаётся data-theme="dark" из <html>. -->
+<script>
+(function(){try{var s=localStorage.getItem('pi-theme');var t=s||((window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<style>
+/* ============ токены (из play/theme.css) ============
+   Audit pass: затемнён --muted / --ok / --soon в светлом для WCAG AA,
+   добавлен --neutral (синхрон с codenames.html), аватары пересчитаны под
+   белый текст 14px (large). Палитру бренда НЕ трогаем — felt/терракота/cream
+   диктованы материалом настолки (identity-preservation). */
+:root{
+  --bg:#f6ecdd; --surface:#fff7ec; --surface-2:#f3e3ca; --border:#FBF1E4;
+  --text:#4a3526; --text-strong:#332417; --muted:#6f5d49;       /* было #8a7560 → AA 5.4:1 */
+  --accent:#c2622e; --accent-soft:#e8a063; --accent-text:#fff7ec; --accent-shadow:#94481e;
+  --gold:#b8884a; --felt:#9c6b3c; --felt-dark:#7d5430;
+  --card-face:#fffdf7; --card-ink:#332417;
+  --uno-red:#d94a32; --uno-blue:#3a6ea5; --uno-green:#5c8a3a; --uno-yellow:#d9982f;
+  --team-red:#d94a32; --team-blue:#3a6ea5;
+  --neutral:#8a7560;                                            /*新增, синхрон с codenames */
+  --ok:#3f6a2a; --soon:#6a4520;                                 /* darkened для solid-chip контраста */
+  --shadow:0 8px 24px #c79b6b40; --shadow-big:0 20px 48px #8a5a2b3d;
+  --ring:#c2622e55;
+  /* землистая палитра аватарок — пересчитана под белый 14px (large, 3:1) */
+  --av-1:#a8501e; --av-2:#5f7240; --av-3:#5b7a8f; --av-4:#8a6529; --av-5:#94481e; --av-6:#6a7a5a;
+}
+[data-theme="dark"]{
+  --bg:#16171b; --surface:#1e1f25; --surface-2:#282931; --border:#ffffff16;
+  --text:#e8e4da; --text-strong:#f5f1e6; --muted:#9b948a;
+  --accent:#c4a265; --accent-soft:#8a7344; --accent-text:#17181c; --accent-shadow:#776033;
+  --gold:#c4a265; --felt:#23252c; --felt-dark:#1b1d22;
+  --card-face:#f2eee2; --card-ink:#2b2417;
+  --uno-red:#c4543e; --uno-blue:#4a7aa8; --uno-green:#5f8a52; --uno-yellow:#c49a3f;
+  --team-red:#c4543e; --team-blue:#4a7aa8;
+  --neutral:#9b948a;
+  --ok:#4d7842; --soon:#c4a265;                                 /* ok затемнён под белый 5.15:1 */
+  --shadow:0 10px 30px #00000066; --shadow-big:0 24px 60px #00000099;
+  --ring:#c4a26555;
+  --av-1:#9c7a3a; --av-2:#6f8a5a; --av-3:#4a6a82; --av-4:#9a7a44; --av-5:#7a5a33; --av-6:#7a8a76;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Nunito',sans-serif; background:var(--bg); color:var(--text);
+  min-height:100vh; line-height:1.55; -webkit-font-smoothing:antialiased;
+  transition:background .35s ease, color .35s ease; overflow-x:hidden;
+}
+/* бумажное зерно (светлое) / мягкий виньет (тёмное) */
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.42 0 0 0 0 0.28 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+[data-theme="dark"] body::before{
+  opacity:.4;
+  background-image:radial-gradient(ellipse 120% 65% at 50% -8%,#2a2c35 0%,transparent 60%);
+}
+/* wrap: широко, но с cap против растяжки на ultrawide (мера контента сохранена) */
+.wrap{position:relative; z-index:1; width:100%; max-width:1400px; margin:0 auto; padding:0 clamp(16px,2.4vw,40px) 80px}
+
+/* a11y-утилита для скрытого заголовка футтера */
+.visually-hidden{position:absolute!important; clip:rect(0 0 0 0)!important; clip-path:inset(50%)!important; width:1px!important; height:1px!important; overflow:hidden!important; white-space:nowrap!important; border:0!important; padding:0!important; margin:-1px!important}
+
+/* ============ nav ============ */
+.nav{display:flex; align-items:center; justify-content:space-between; gap:18px; padding:22px 0 6px; flex-wrap:wrap}
+.logo{display:flex; gap:11px; align-items:center; text-decoration:none}
+.logo .mark{width:34px; height:34px; color:var(--accent); transition:transform .5s cubic-bezier(.22,1,.36,1)}
+.logo:hover .mark{transform:rotate(120deg)}
+.logo b{font-family:'Caveat',cursive; font-weight:700; font-size:30px; color:var(--accent); letter-spacing:.01em}
+.nav-links{display:flex; gap:4px; font-size:14px; font-weight:800}
+.nav-links a{color:var(--text); text-decoration:none; padding:12px 14px; border-radius:12px; opacity:.78; transition:.15s}  /* hit ≥44px */
+.nav-links a:hover{opacity:1; background:var(--surface)}
+.nav-actions{display:flex; align-items:center; gap:10px}
+.theme-toggle{
+  display:flex; gap:4px; padding:5px; border-radius:99px; background:var(--surface);
+  border:2px solid var(--border); box-shadow:var(--shadow);
+}
+.theme-toggle button{
+  border:none; background:transparent; color:var(--muted); cursor:pointer; width:38px; height:38px;
+  border-radius:99px; display:grid; place-items:center; transition:.18s;
+}
+.theme-toggle button svg{width:18px; height:18px}
+.theme-toggle button.on{background:var(--accent); color:var(--accent-text)}
+.signin{
+  font:800 14px 'Nunito',sans-serif; color:var(--accent); text-decoration:none;
+  background:var(--surface); border:2px solid var(--border); padding:12px 18px; border-radius:14px;
+  box-shadow:var(--shadow); transition:.18s;
+}
+.signin:hover{border-color:var(--accent-soft); transform:translateY(-2px)}
+/* бургер: только <520px, заменяет display:none навигации */
+.nav-burger{
+  display:none; align-items:center; justify-content:center; width:44px; height:44px; flex:none;
+  background:var(--surface); border:2px solid var(--border); border-radius:12px; box-shadow:var(--shadow);
+  color:var(--accent); cursor:pointer; transition:.18s;
+}
+.nav-burger:hover{border-color:var(--accent-soft)}
+.nav-burger svg{width:22px; height:22px}
+.nav-burger .x{display:none}
+.nav-burger.open .bars{display:none}
+.nav-burger.open .x{display:block}
+
+/* ============ кнопки ============ */
+.btn{display:inline-flex; align-items:center; gap:9px; padding:14px 26px; font:800 15px 'Nunito',sans-serif; cursor:pointer; border:none; border-radius:16px; transition:transform .16s cubic-bezier(.22,1,.36,1), box-shadow .16s, border-color .16s, filter .16s; text-decoration:none}
+.btn svg{width:17px; height:17px; flex:none}
+.btn:active{transform:translateY(2px)}
+.btn-pri{background:var(--accent); color:var(--accent-text); box-shadow:0 5px 0 var(--accent-shadow)}
+.btn-pri:hover{filter:brightness(1.06); transform:translateY(-2px); box-shadow:0 7px 0 var(--accent-shadow)}
+.btn-sec{background:var(--surface); color:var(--accent); border:2px solid var(--border); box-shadow:var(--shadow)}
+.btn-sec:hover{border-color:var(--accent-soft); transform:translateY(-2px)}
+
+/* ============ hero ============ */
+.hero{position:relative; text-align:center; padding:54px 0 40px}
+.kicker{
+  display:inline-flex; align-items:center; gap:10px; font:800 12px 'Nunito',sans-serif;
+  letter-spacing:.14em; color:var(--muted); text-transform:uppercase; margin-bottom:18px;
+}
+.kicker .spark{width:14px; height:14px; color:var(--accent); opacity:.8}
+.hero h1{
+  font-size:clamp(34px,6.4vw,60px); font-weight:900; color:var(--text-strong);
+  line-height:1.08; letter-spacing:-.01em; text-wrap:balance;
+}
+.hero h1 .script{
+  position:relative; display:inline-block; font-family:'Caveat',cursive; font-weight:700;
+  color:var(--accent); font-size:1.16em; padding:0 .06em; white-space:nowrap;
+}
+.hero h1 .script .underline{
+  position:absolute; left:-4%; right:-4%; bottom:-12px; width:108%; height:16px; color:var(--accent); opacity:.85;
+}
+.hero p.lead{font-size:17px; color:var(--muted); max-width:540px; margin:26px auto 30px}
+.cta-row{display:flex; gap:14px; justify-content:center; flex-wrap:wrap}
+.hero-meta{display:flex; gap:10px; justify-content:center; align-items:center; margin-top:28px; font-size:13px; font-weight:700; color:var(--muted); flex-wrap:wrap}
+.hero-meta .dot{width:4px; height:4px; border-radius:50%; background:var(--muted); opacity:.5}
+.hero-meta b{color:var(--text); font-weight:800}
+.hero-meta .pill-soon{color:var(--soon); font-weight:800}
+
+/* плавающие артефакты стола */
+.hero-art{position:absolute; inset:0; pointer-events:none; z-index:-1}
+.art{position:absolute; filter:drop-shadow(0 14px 22px #8a5a2b33); will-change:transform}
+[data-theme="dark"] .art{filter:drop-shadow(0 14px 26px #00000099)}
+.art-card{width:118px; height:74px; border-radius:10px; background:var(--card-face); border:2px solid var(--border); box-shadow:var(--shadow); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:4px}
+.art-card .word{font:800 15px 'Nunito',sans-serif; color:var(--card-ink); letter-spacing:.04em}
+.art-card .pip{width:10px; height:10px; border-radius:50%; background:var(--team-red); align-self:flex-end; margin:6px 8px 0 0; box-shadow:0 0 0 2px var(--card-face)}
+.art-uno{width:78px; height:114px; border-radius:12px; background:var(--uno-red); display:grid; place-items:center; box-shadow:var(--shadow); border:2px solid #ffffff26}
+.art-uno .oval{width:48px; height:60px; border-radius:50%; background:var(--bg); transform:rotate(18deg); display:grid; place-items:center}
+.art-uno .oval b{font:900 22px 'Nunito',sans-serif; color:var(--uno-red); transform:rotate(-18deg)}
+.art-die{width:52px; height:52px; border-radius:11px; background:linear-gradient(135deg,#fffbf5,#e8e0d6); display:grid; grid-template:repeat(3,1fr)/repeat(3,1fr); padding:8px; gap:2px; box-shadow:var(--shadow)}
+[data-theme="dark"] .art-die{background:linear-gradient(135deg,#e8e2d4,#cfc8b8)}
+.art-die i{width:6px; height:6px; border-radius:50%; background:var(--card-ink); align-self:center; justify-self:center}
+.art-die i.hide{visibility:hidden}
+.art-1{top:8%; left:6%; --r:-7deg}
+.art-2{top:16%; right:7%; --r:8deg}
+.art-3{bottom:14%; left:11%; --r:-11deg}
+.art-4{bottom:8%; right:10%; --r:5deg}
+@keyframes floaty{0%,100%{transform:translateY(0) rotate(var(--r,0deg))}50%{transform:translateY(-10px) rotate(var(--r,0deg))}}
+.art{animation:floaty 6s ease-in-out infinite}
+.art-2{animation-duration:7.5s; animation-delay:.6s}
+.art-3{animation-duration:6.8s; animation-delay:.3s}
+.art-4{animation-duration:7.2s; animation-delay:.9s}
+
+/* ============ секции ============ */
+section{scroll-margin-top:90px}
+/* sec-head: вертикальный стек (split-header ban), мера lead 60ch */
+.sec-head{display:flex; flex-direction:column; align-items:flex-start; gap:8px; margin:34px 0 20px}
+.sec-head h2{font-size:clamp(22px,3.4vw,30px); font-weight:900; color:var(--text-strong); letter-spacing:-.01em; text-wrap:balance}
+.sec-head h2 .script{font-family:'Caveat',cursive; font-weight:700; color:var(--accent); font-size:1.12em}
+.sec-head .lead-r{font-size:14px; font-weight:700; color:var(--muted); max-width:60ch; text-align:left}
+.sec-rule{height:2px; background:repeating-linear-gradient(90deg,var(--border) 0 8px,transparent 8px 16px); margin:0; border:none}
+
+/* ============ игровые тайлы ============ */
+/* auto-fit: плавно 3→2→1 вместо прыжка 3→1 */
+.tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px; margin-top:20px}
+.tile{
+  position:relative; display:flex; flex-direction:column; gap:16px; padding:22px; border-radius:22px;
+  background:var(--surface); border:2px solid var(--border); box-shadow:var(--shadow);
+  text-decoration:none; color:inherit; transition:transform .22s cubic-bezier(.22,1,.36,1), border-color .22s, box-shadow .22s; overflow:hidden;
+}
+.tile::after{content:""; position:absolute; inset:0; background:radial-gradient(120% 80% at 80% 0%,#c2622e0d 0%,transparent 55%); opacity:0; transition:.22s}
+.tile:hover{transform:translateY(-5px); border-color:var(--accent-soft); box-shadow:var(--shadow-big)}
+.tile:hover::after{opacity:1}
+.tile .art-wrap{height:104px; display:grid; place-items:center}
+.tile .art-wrap svg{transition:transform .35s cubic-bezier(.22,1,.36,1); transform-origin:center}
+.tile:hover .art-wrap svg{transform:translateY(-4px) rotate(-3deg)}
+.tile h3{font-size:21px; font-weight:800; color:var(--text-strong); letter-spacing:.02em; display:flex; align-items:center; gap:10px}
+.tile p.desc{font-size:13.5px; color:var(--muted); line-height:1.5; min-height:42px}
+.tile .tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:auto}
+.tag{display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:99px; background:var(--surface-2); border:2px solid var(--border); font-size:12px; font-weight:700; color:var(--muted)}
+.tag svg{width:13px; height:13px; color:var(--accent)}
+/* status: solid chip + белый/ink текст (контраст гарантирован, tying с codenames) */
+.status{position:absolute; top:16px; right:16px; font:800 11px 'Nunito',sans-serif; letter-spacing:.05em; text-transform:uppercase; padding:6px 11px; border-radius:99px; color:#fff}
+.status.ok{background:var(--ok)}
+.status.soon{background:var(--soon); color:#fff}
+[data-theme="dark"] .status.soon{color:var(--accent-text)}   /* ink на gold в тёмном */
+/* locked-тайл: неинтерактивный figure, без ховера */
+.tile.is-locked{cursor:not-allowed}
+.tile.is-locked:hover{transform:none; border-color:var(--border); box-shadow:var(--shadow)}
+.tile.is-locked:hover::after{opacity:0}
+.tile.is-locked:hover .art-wrap svg{transform:none}
+
+/* ============ «как устроено» — bento, не 4 одинаковые карточки ============ */
+.how{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px}
+.how-card{position:relative; padding:24px 22px 22px; border-radius:20px; background:var(--surface); border:2px solid var(--border); box-shadow:var(--shadow); display:flex; flex-direction:column; gap:12px}
+.how-card:nth-child(1){grid-column:span 2; background:linear-gradient(150deg, color-mix(in srgb,var(--felt) 16%, var(--surface)) 0%, var(--surface) 75%)}
+.how-card:nth-child(4){grid-column:span 2}
+/* крупный рукописный ординал в углу — визуальный якорь вместо rounded-иконки */
+.how-card .num{position:absolute; top:14px; right:20px; font-family:'Caveat',cursive; font-weight:700; color:var(--accent); opacity:.9; line-height:1}
+.how-card:nth-child(1) .num,.how-card:nth-child(4) .num{font-size:44px}
+.how-card:nth-child(2) .num,.how-card:nth-child(3) .num{font-size:28px}
+/* иконка инлайн с заголовком, без контейнера-бокса (ban: rounded ico above heading) */
+.how-card h4{font-size:16px; font-weight:800; color:var(--text-strong); letter-spacing:.02em; display:flex; align-items:center; gap:9px; padding-right:52px}
+.how-card:nth-child(1) h4{font-size:19px}
+.how-card h4 svg{width:19px; height:19px; color:var(--accent); flex:none}
+.how-card p{font-size:13px; color:var(--muted); line-height:1.55; max-width:54ch}
+
+/* ============ открытые столы ============ */
+.rooms{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-top:20px}
+.room{
+  padding:20px; border-radius:20px; background:var(--surface); border:2px solid var(--border);
+  box-shadow:var(--shadow); display:flex; flex-direction:column; gap:14px; transition:transform .2s cubic-bezier(.22,1,.36,1), border-color .2s, box-shadow .2s;
+}
+.room:hover{transform:translateY(-3px); border-color:var(--accent-soft); box-shadow:var(--shadow-big)}
+.room-top{display:flex; align-items:center; gap:13px}
+.room-badge{width:46px; height:46px; border-radius:13px; display:grid; place-items:center; color:#fff; flex:none; box-shadow:var(--shadow)}
+.room-badge svg{width:26px; height:26px}
+.room-badge.cn{background:linear-gradient(135deg,var(--felt),var(--felt-dark))}
+.room-badge.un{background:linear-gradient(135deg,var(--uno-red),color-mix(in srgb,var(--uno-red),#000 25%))}
+.room h4{font-size:17px; font-weight:800; color:var(--text-strong); line-height:1.25}
+.room .who{font-size:12.5px; color:var(--muted); font-weight:700; margin-top:2px}
+.room-foot{display:flex; align-items:center; justify-content:space-between; margin-top:auto}
+.avatars{display:flex}
+.av{width:30px; height:30px; border-radius:50%; border:2px solid var(--surface); margin-left:-8px; display:grid; place-items:center; color:#fff; font:800 14px 'Nunito',sans-serif}
+.av:first-child{margin-left:0}
+.room-meta{font-size:12px; font-weight:700; color:var(--muted); display:flex; align-items:center; gap:6px}
+.room-meta svg{width:14px; height:14px; color:var(--accent)}
+.join{font:800 14px 'Nunito',sans-serif; color:var(--accent); text-decoration:none; padding:12px 18px; border-radius:12px; border:2px solid var(--border); background:transparent; transition:.18s; align-self:flex-start}
+.join:hover{background:var(--accent); color:var(--accent-text); border-color:var(--accent)}
+.room-create{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center;
+  padding:24px; border-radius:20px; border:2px dashed var(--border); background:transparent;
+  color:var(--muted); text-decoration:none; transition:transform .2s cubic-bezier(.22,1,.36,1), border-color .2s, color .2s, background .2s; min-height:100%;
+}
+.room-create:hover{border-color:var(--accent); color:var(--accent); background:var(--surface); transform:translateY(-3px)}
+.room-create .plus{width:46px; height:46px; border-radius:14px; background:var(--surface-2); border:2px solid var(--border); display:grid; place-items:center; color:var(--accent)}
+.room-create .plus svg{width:22px; height:22px}
+.room-create b{font-size:15px; font-weight:800; color:var(--text-strong)}
+.room-create span{font-size:12.5px}
+
+/* ============ footer ============ */
+footer{margin-top:64px; padding-top:30px; border-top:2px dashed var(--border); display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center}
+footer .logo b{font-size:28px}
+footer p{font-size:13px; color:var(--muted); max-width:440px}
+footer .sig{font-family:'Caveat',cursive; font-weight:700; font-size:22px; color:var(--accent)}
+footer .flinks{display:flex; gap:20px; font:800 14px 'Nunito',sans-serif}
+footer .flinks a{color:var(--muted); text-decoration:none; transition:.15s}
+footer .flinks a:hover{color:var(--accent)}
+
+/* ============ появление (safe: base opacity:1, fill backwards) ============ */
+@keyframes rise{from{opacity:0; transform:translateY(18px)}to{opacity:1; transform:none}}
+.rise{opacity:1; animation:rise .6s cubic-bezier(.22,1,.36,1) both}
+.d0{animation-delay:.05s}.d1{animation-delay:.15s}.d2{animation-delay:.25s}.d3{animation-delay:.35s}.d4{animation-delay:.45s}
+@media (prefers-reduced-motion: reduce){
+  .art{animation:none} .rise{animation:none; opacity:1} html{scroll-behavior:auto} .tile,.room,.room-create,.how-card{transition:none}
+}
+
+/* ============ focus-visible (был отсутствует) ============ */
+a:focus-visible,button:focus-visible,.tile:focus-visible,.room-create:focus-visible,.join:focus-visible,.nav-burger:focus-visible{
+  outline:3px solid var(--ring); outline-offset:2px;
+}
+.tile:focus-visible,.room-create:focus-visible{transform:translateY(-3px); border-color:var(--accent-soft)}
+
+/* ============ адаптив ============ */
+@media (max-width:880px){
+  .how{grid-template-columns:repeat(2,1fr)}     /* span2 → полная строка, 2+3 в ряд, 4 полная */
+  .hero-art{display:none}
+  .nav-links{order:3; width:100%; justify-content:center}
+}
+@media (max-width:520px){
+  .wrap{padding:0 16px 60px}
+  .how{grid-template-columns:1fr}
+  .how-card:nth-child(1),.how-card:nth-child(4){grid-column:auto}  /* 1-кол: spans не нужны */
+  /* бургер вместо исчезающей навигации */
+  .nav-burger{display:inline-flex}
+  .nav-links{display:none; flex-direction:column; align-items:stretch; width:100%; order:3; gap:2px}
+  .nav-links a{padding:14px 16px; border-radius:12px}
+  .nav-links.open{display:flex; background:var(--surface); border:2px solid var(--border); border-radius:16px; box-shadow:var(--shadow); padding:6px; margin-top:8px}
+  .hero{padding:38px 0 28px}
+  .hero h1 .script{white-space:normal}         /* фикс overflow «на вечер с друзьями» на 320px */
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ NAV ============ -->
+  <nav class="nav rise d0" aria-label="Основная навигация">
+    <a class="logo" href="#" aria-label="Настолки — на главную">
+      <svg class="mark" viewBox="0 0 33 33" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="1" y="1" width="31" height="31" rx="6"/>
+        <circle cx="8.25" cy="8.25" r="2.6" fill="currentColor" stroke="none"/>
+        <circle cx="24.75" cy="8.25" r="2.6" fill="currentColor" stroke="none"/>
+        <circle cx="24.75" cy="24.75" r="2.6" fill="currentColor" stroke="none"/>
+        <circle cx="8.25" cy="24.75" r="2.6" fill="currentColor" stroke="none"/>
+        <circle cx="16.5" cy="16.5" r="2.6" fill="currentColor" stroke="none"/>
+      </svg>
+      <b>Настолки</b>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="#games">Игры</a>
+      <a href="#how">Как играть</a>
+      <a href="#rooms">Столы</a>
+      <a href="#about">О проекте</a>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-burger" id="navBurger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="navLinks">
+        <svg class="bars" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        <svg class="x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <div class="theme-toggle" role="group" aria-label="Тема">
+        <button type="button" data-set="light" aria-label="Светлая тема">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+        </button>
+        <button type="button" data-set="dark" aria-label="Тёмная тема">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+      </div>
+      <a class="signin" href="#">Войти</a>
+    </div>
+  </nav>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero-art" aria-hidden="true">
+      <div class="art art-1 art-card"><span class="word">ЗВЕЗДА</span><span class="pip"></span></div>
+      <div class="art art-2 art-uno"><div class="oval"><b>7</b></div></div>
+      <div class="art art-3 art-die">
+        <i></i><i class="hide"></i><i></i>
+        <i class="hide"></i><i></i><i class="hide"></i>
+        <i></i><i class="hide"></i><i></i>
+      </div>
+      <div class="art art-4 art-card"><span class="word">КОШКА</span><span class="pip" style="background:var(--team-blue)"></span></div>
+    </div>
+
+    <div class="kicker rise d0">
+      <svg class="spark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.5 4.5 2.5 6.5 7 7-4.5.5-6.5 2.5-7 7-.5-4.5-2.5-6.5-7-7 4.5-.5 6.5-2.5 7-7z"/></svg>
+      Вечерние настолки онлайн
+      <svg class="spark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.5 4.5 2.5 6.5 7 7-4.5.5-6.5 2.5-7 7-.5-4.5-2.5-6.5-7-7 4.5-.5 6.5-2.5 7-7z"/></svg>
+    </div>
+
+    <h1 class="rise d1">
+      Уютные настолки<br>
+      <span class="script">на вечер с друзьями
+        <svg class="underline" viewBox="0 0 200 16" fill="none" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M3 11 C40 4, 80 4, 118 8 S170 13, 197 6" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
+        </svg>
+      </span>
+    </h1>
+
+    <p class="lead rise d2">Создай комнату по короткому коду, позови своих и играй прямо в браузере. Боты дополнят стол, таймеры не дадут затянуть, а сервер честно считает каждое слово и карту.</p>
+
+    <div class="cta-row rise d3">
+      <a class="btn btn-pri" href="#games">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        Создать комнату
+      </a>
+      <a class="btn btn-sec" href="#rooms">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14a4 4 0 0 1 0-8 4 4 0 0 1 0 8zM7 14v6M7 14h3"/><path d="M3 7h4M3 11h4M3 9.5h4M3 12.5h4"/></svg>
+        Войти по коду
+      </a>
+    </div>
+
+    <div class="hero-meta rise d4">
+      <span><b>Codenames</b> и <b>Uno</b> уже играются</span>
+      <span class="dot"></span>
+      <span class="pill-soon">Alias — в планах</span>
+    </div>
+  </section>
+
+  <hr class="sec-rule rise d2">
+
+  <!-- ============ ИГРЫ ============ -->
+  <section id="games">
+    <div class="sec-head">
+      <h2 class="rise d2">Игры <span class="script">за столом</span></h2>
+      <p class="lead-r rise d2">Две уже живые, третья на подходе. Каждая — со своим настроением и правилами.</p>
+    </div>
+
+    <div class="tiles">
+      <!-- Codenames -->
+      <a class="tile rise d2" href="#">
+        <span class="status ok">Играбельно</span>
+        <div class="art-wrap">
+          <svg width="96" height="84" viewBox="0 0 96 84" fill="none" aria-hidden="true">
+            <rect x="6" y="6" width="84" height="72" rx="12" fill="var(--felt)" opacity=".18"/>
+            <g stroke="var(--border)" stroke-width="2">
+              <rect x="16" y="14" width="20" height="18" rx="5" fill="var(--card-face)"/>
+              <rect x="38" y="14" width="20" height="18" rx="5" fill="var(--card-face)"/>
+              <rect x="60" y="14" width="20" height="18" rx="5" fill="var(--card-face)"/>
+              <rect x="16" y="34" width="20" height="18" rx="5" fill="var(--card-face)"/>
+              <rect x="38" y="34" width="20" height="18" rx="5" fill="var(--card-face)"/>
+              <rect x="60" y="34" width="20" height="18" rx="5" fill="var(--card-face)"/>
+              <rect x="16" y="54" width="20" height="18" rx="5" fill="var(--card-face)"/>
+              <rect x="38" y="54" width="20" height="18" rx="5" fill="var(--card-face)"/>
+              <rect x="60" y="54" width="20" height="18" rx="5" fill="var(--card-face)"/>
+            </g>
+            <circle cx="26" cy="23" r="3.4" fill="var(--team-red)"/>
+            <circle cx="48" cy="23" r="3.4" fill="var(--team-blue)"/>
+            <circle cx="70" cy="43" r="3.4" fill="var(--team-red)"/>
+            <circle cx="26" cy="63" r="3.4" fill="var(--team-blue)"/>
+            <circle cx="70" cy="63" r="3.4" fill="var(--neutral)"/>
+          </svg>
+        </div>
+        <h3>Codenames</h3>
+        <p class="desc">Две команды, поле из 25 слов и капитаны, что связывают их одной подсказкой. Угадывай своих, береги чужих, держись подальше от киллера.</p>
+        <div class="tags">
+          <span class="tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="8" r="3.4"/><path d="M20 8.5a4 4 0 0 1 0 7"/></svg>2–10</span>
+          <span class="tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>15–30 мин</span>
+        </div>
+      </a>
+
+      <!-- Uno -->
+      <a class="tile rise d3" href="#">
+        <span class="status ok">Играбельно</span>
+        <div class="art-wrap">
+          <svg width="110" height="84" viewBox="0 0 110 84" fill="none" aria-hidden="true">
+            <g transform="rotate(-13 30 44)">
+              <rect x="12" y="14" width="40" height="60" rx="8" fill="var(--uno-blue)" stroke="#ffffff33" stroke-width="2"/>
+              <ellipse cx="32" cy="44" rx="15" ry="19" fill="var(--bg)" transform="rotate(18 32 44)"/>
+              <text x="32" y="52" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="20" fill="var(--uno-blue)" transform="rotate(-18 32 44)">5</text>
+            </g>
+            <g transform="rotate(8 60 44)">
+              <rect x="42" y="12" width="40" height="60" rx="8" fill="var(--uno-red)" stroke="#ffffff33" stroke-width="2"/>
+              <ellipse cx="62" cy="42" rx="15" ry="19" fill="var(--bg)" transform="rotate(18 62 42)"/>
+              <text x="62" y="50" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="20" fill="var(--uno-red)" transform="rotate(-18 62 42)">7</text>
+            </g>
+            <g transform="rotate(20 88 46)">
+              <rect x="68" y="16" width="40" height="60" rx="8" fill="var(--uno-yellow)" stroke="#ffffff33" stroke-width="2"/>
+              <ellipse cx="88" cy="46" rx="15" ry="19" fill="var(--card-ink)" transform="rotate(18 88 46)"/>
+              <text x="88" y="54" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="18" fill="var(--uno-yellow)" transform="rotate(-18 88 46)">'+2'</text>
+            </g>
+          </svg>
+        </div>
+        <h3>Uno</h3>
+        <p class="desc">Классическая карточная гонка на 108 карт. Семь вариаций правил, кнопка «UNO!» со штрафом, стэкинг +2 и честный челлендж на +4.</p>
+        <div class="tags">
+          <span class="tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="8" r="3.4"/><path d="M20 8.5a4 4 0 0 1 0 7"/></svg>2–10</span>
+          <span class="tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>10–20 мин</span>
+        </div>
+      </a>
+
+      <!-- Alias — locked figure, не клавиатурно-кликабельная «ссылка» -->
+      <div class="tile is-locked rise d4" role="img" aria-label="Alias — игра в разработке, скоро" tabindex="-1">
+        <span class="status soon">Скоро</span>
+        <div class="art-wrap">
+          <svg width="104" height="84" viewBox="0 0 104 84" fill="none" aria-hidden="true">
+            <path d="M14 16h76a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H52l-16 14v-14H14a6 6 0 0 1-6-6V22a6 6 0 0 1 6-6z" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="2.4"/>
+            <text x="52" y="42" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="26" fill="var(--accent)">слово!</text>
+            <g transform="translate(82 60)" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" fill="none">
+              <circle cx="8" cy="9" r="7.5"/>
+              <path d="M8 5v4l2.6 2.2"/>
+              <path d="M8 1.5v-1M15.5 9h1M8 16.5v1M.5 9h-1"/>
+            </g>
+          </svg>
+        </div>
+        <h3>Alias</h3>
+        <p class="desc">Объясняй слова своей команде на время, не называя самого слова и его корня. Словари по сложности, раунды на скорость.</p>
+        <div class="tags">
+          <span class="tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="8" r="3.4"/><path d="M20 8.5a4 4 0 0 1 0 7"/></svg>2+ команды</span>
+          <span class="tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>30–60 мин</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ КАК УСТРОЕНО — bento ============ -->
+  <section id="how">
+    <div class="sec-head">
+      <h2 class="rise d3">Как это <span class="script">устроено</span></h2>
+      <p class="lead-r rise d3">Без установки, без регистраций для гостей. Заходишь по коду — и за стол.</p>
+    </div>
+    <div class="how">
+      <div class="how-card rise d3">
+        <span class="num">раз</span>
+        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h9l5 5v13a2 2 0 0 1-2 2z"/><path d="M15 3v5h5M8 12h8M8 16h6"/></svg>Комната по коду</h4>
+        <p>Создал комнату — получил короткий код. Пошли его друзьям, они заходят без аккаунта. Один код — один стол, без установки и регистрации для гостей.</p>
+      </div>
+      <div class="how-card rise d3">
+        <span class="num">два</span>
+        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="7" width="14" height="12" rx="3"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7M9 13a3 3 0 0 0 6 0"/></svg>Боты за столом</h4>
+        <p>Не хватает людей — добавь ботов. Они ходят, отгадывают и честно доигрывают партию до конца.</p>
+      </div>
+      <div class="how-card rise d4">
+        <span class="num">три</span>
+        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 8v5l3.2 2M9 2h6M12 5V2"/></svg>Таймеры хода</h4>
+        <p>У каждого хода свой лимит. Никто не зависнет вечно — партия двигается ровно.</p>
+      </div>
+      <div class="how-card rise d4">
+        <span class="num">четыре</span>
+        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c-2 4-2 6 0 9 2-3 2-5 0-9z"/><path d="M5 11c2 1 4 1 5 3-2 3-5 3-7 0-1-2 0-3 2-3z"/><path d="M19 11c-2 1-4 1-5 3 2 3 5 3 7 0 1-2 0-3-2-3z"/><path d="M9 20c1-1.5 2-2 3-2s2 .5 3 2"/></svg>Бот-капитан</h4>
+        <p>В Codenames капитан-бот подбирает подсказки по смыслу слов через эмбеддинги — ход мысли настоящий, не случайный. Связывает слова в осмысленные группы и считает риск.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ОТКРЫТЫЕ СТОЛЫ ============ -->
+  <section id="rooms">
+    <div class="sec-head">
+      <h2 class="rise d4">Открытые <span class="script">столы</span></h2>
+      <p class="lead-r rise d4">Зайди в чужую комнату или подними свою — кодом или ссылкой.</p>
+    </div>
+    <div class="rooms">
+      <div class="room rise d4">
+        <div class="room-top">
+          <div class="room-badge cn"><svg viewBox="0 0 33 33" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="2" width="29" height="29" rx="5"/><circle cx="9" cy="9" r="2.4" fill="currentColor" stroke="none"/><circle cx="24" cy="9" r="2.4" fill="currentColor" stroke="none"/><circle cx="24" cy="24" r="2.4" fill="currentColor" stroke="none"/><circle cx="9" cy="24" r="2.4" fill="currentColor" stroke="none"/></svg></div>
+          <div>
+            <h4>Вечерний штаб</h4>
+            <div class="who">Codenames · ждут капитана синих</div>
+          </div>
+        </div>
+        <div class="room-foot">
+          <div class="avatars">
+            <span class="av" style="background:var(--av-1)">М</span>
+            <span class="av" style="background:var(--av-3)">С</span>
+            <span class="av" style="background:var(--av-2)">К</span>
+            <span class="av" style="background:var(--av-4)">Л</span>
+          </div>
+          <span class="room-meta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="8" r="3.2"/></svg>4/8</span>
+        </div>
+        <a class="join" href="#">Присоединиться</a>
+      </div>
+
+      <div class="room rise d4">
+        <div class="room-top">
+          <div class="room-badge un"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18"/></svg></div>
+          <div>
+            <h4>Без правил</h4>
+            <div class="who">Uno · стэкинг +2 включён</div>
+          </div>
+        </div>
+        <div class="room-foot">
+          <div class="avatars">
+            <span class="av" style="background:var(--av-5)">А</span>
+            <span class="av" style="background:var(--av-6)">Д</span>
+            <span class="av" style="background:var(--av-3)">Н</span>
+          </div>
+          <span class="room-meta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="8" r="3.2"/></svg>3/8</span>
+        </div>
+        <a class="join" href="#">Присоединиться</a>
+      </div>
+
+      <a class="room-create rise d4" href="#games">
+        <span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <b>Поднять свой стол</b>
+        <span>Выбери игру, задай правила и позови друзей</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer id="about" class="rise d4">
+    <h2 class="visually-hidden">О проекте</h2>
+    <a class="logo" href="#" aria-label="Настолки">
+      <svg class="mark" viewBox="0 0 33 33" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:28px;height:28px">
+        <rect x="1" y="1" width="31" height="31" rx="6"/>
+        <circle cx="8.25" cy="8.25" r="2.6" fill="currentColor" stroke="none"/>
+        <circle cx="24.75" cy="8.25" r="2.6" fill="currentColor" stroke="none"/>
+        <circle cx="24.75" cy="24.75" r="2.6" fill="currentColor" stroke="none"/>
+        <circle cx="8.25" cy="24.75" r="2.6" fill="currentColor" stroke="none"/>
+        <circle cx="16.5" cy="16.5" r="2.6" fill="currentColor" stroke="none"/>
+      </svg>
+      <b>Настолки</b>
+    </a>
+    <p>Уютный уголок для вечерних игр с друзьями — где бы вы ни были. Self-hosted, без установки, с ботами и честным счётом.</p>
+    <div class="sig">сделано с уютом</div>
+    <div class="flinks">
+      <a href="#about">О проекте</a>
+      <a href="#">GitHub</a>
+      <a href="#games">Игры</a>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  // переключатель темы (on-class ставится по текущему data-theme, заданному FOUC-скриптом)
+  const root = document.documentElement;
+  const btns = document.querySelectorAll('.theme-toggle button');
+  function syncToggle(){ const t = root.getAttribute('data-theme'); btns.forEach(b => b.classList.toggle('on', b.dataset.set === t)); }
+  function setTheme(t){
+    root.setAttribute('data-theme', t);
+    syncToggle();
+    try { localStorage.setItem('pi-theme', t); } catch(e){}
+  }
+  syncToggle();
+  btns.forEach(b => b.addEventListener('click', () => setTheme(b.dataset.set)));
+
+  // бургер навигации (замена display:none на <520px)
+  const burger = document.getElementById('navBurger');
+  const links = document.getElementById('navLinks');
+  burger.addEventListener('click', () => {
+    const open = links.classList.toggle('open');
+    burger.classList.toggle('open', open);
+    burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  // закрыть меню после клика по ссылке
+  links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    links.classList.remove('open'); burger.classList.remove('open'); burger.setAttribute('aria-expanded','false');
+  }));
+</script>
+</body>
+</html>

@@ -61,7 +61,7 @@ describe('giveClue', () => {
 
   test('count 0 — неограниченные попытки', () => {
     const g = giveClue(newGame(), { word: 'фываж', count: 0 });
-    expect(g.guessesLeft).toBe(Number.POSITIVE_INFINITY);
+    expect(g.guessesLeft).toBeNull();
   });
 });
 

@@ -8,8 +8,10 @@ export function createUnoRound(
   rules: UnoRules,
   scores: Record<string, number> = {},
   startIdx = 0,
+  options: { random?: () => number } = {},
 ): UnoState {
   if (playerIds.length < 2 || playerIds.length > 10) throw new Error('Игроков должно быть 2–10');
+  const random = options.random ?? Math.random;
   const state: UnoState = {
     rules,
     players: playerIds.map((id) => ({
@@ -20,7 +22,7 @@ export function createUnoRound(
     })),
     turn: startIdx % playerIds.length,
     dir: 1,
-    deck: shuffle(buildDeck()),
+    deck: shuffle(buildDeck(), random),
     discard: [],
     color: 'red',
     phase: 'play',
@@ -33,6 +35,7 @@ export function createUnoRound(
     roundWinner: null,
     winner: null,
     log: [],
+    random: options.random,
   };
   for (const p of state.players) {
     p.hand = state.deck.splice(-rules.startingCards);
@@ -40,7 +43,7 @@ export function createUnoRound(
   // первая карта сброса: +4 зарываем обратно
   let first = state.deck.pop() as UnoCard;
   while (first.value === 'wild4') {
-    state.deck.splice(Math.floor(Math.random() * state.deck.length), 0, first);
+    state.deck.splice(Math.floor(random() * state.deck.length), 0, first);
     first = state.deck.pop() as UnoCard;
   }
   state.discard.push(first);
