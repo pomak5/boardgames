@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { DEFAULT_HAND_SIZE, ImaginariumError } from './types';
 import type { ImaginariumErrorCode, ImaginariumState } from './types';
-import { createImaginariumGame, submitCard, submitLeader } from './engine';
+import { castVote, createImaginariumGame, revealTable, submitCard, submitLeader } from './engine';
 
 /** Удобный хелпер: вызывает fn и проверяет, что бросает ImaginariumError с нужным code. */
 function expectErrorCode(fn: () => unknown, code: ImaginariumErrorCode): void {
@@ -295,5 +295,143 @@ describe('submitCard', () => {
 
   test('игра завершена → GAME_FINISHED', () => {
     expectErrorCode(() => submitCard(finished(), 'b', 'card-001'), 'GAME_FINISHED');
+  });
+});
+
+// --- Хелперы для revealTable / castVote ---
+
+/** Игра в round.phase 'choosing' (ведущий уже подал). */
+const inChoosing = (seed = 42): ImaginariumState => {
+  const g = newGame(seed);
+  return submitLeader(g, 'a', g.hands['a']![0]!, 'ассоциация');
+};
+
+/** Игра в round.phase 'choosing' со всеми 4 подачами (стол ещё не открыт). */
+const inChoosingFull = (seed = 42): ImaginariumState => {
+  let g = inChoosing(seed);
+  for (const p of ['b', 'c', 'd']) g = submitCard(g, p, g.hands[p]![0]!);
+  return g;
+};
+
+/** Игра в round.phase 'voting' (все 4 игрока подали, стол перемешан). */
+const inVoting = (seed = 42): ImaginariumState => revealTable(inChoosingFull(seed), seeded(seed));
+
+describe('revealTable', () => {
+  test('валид (все 4 подали) → slots — перестановка игроков, phase=voting, лог reveal, outer association', () => {
+    const state = revealTable(inChoosingFull(42), seeded(42));
+    expect(state.round!.slots).toHaveLength(4);
+    expect(new Set(state.round!.slots!)).toEqual(new Set(['a', 'b', 'c', 'd']));
+    expect(state.round!.phase).toBe('voting');
+    expect(state.phase).toBe('association');
+    expect(state.log[state.log.length - 1]).toEqual({
+      type: 'reveal',
+      slots: state.round!.slots!,
+    });
+  });
+
+  test('частичные подачи (таймаут) → 2 слота, phase=voting, не бросает', () => {
+    let g = inChoosing(7);
+    g = submitCard(g, 'b', g.hands['b']![0]!);
+    const state = revealTable(g, seeded(7));
+    expect(state.round!.slots).toHaveLength(2);
+    expect(new Set(state.round!.slots!)).toEqual(new Set(['a', 'b']));
+    expect(state.round!.phase).toBe('voting');
+  });
+
+  test('неправильная фаза (до submitLeader, round.phase=association) → WRONG_PHASE', () => {
+    expectErrorCode(() => revealTable(newGame(), seeded()), 'WRONG_PHASE');
+  });
+
+  test('игра завершена → GAME_FINISHED', () => {
+    expectErrorCode(() => revealTable(finished(), seeded()), 'GAME_FINISHED');
+  });
+
+  test('детерминизм: одинаковый seed → одинаковый порядок; разный seed → разный', () => {
+    const a = revealTable(inChoosingFull(1), seeded(1));
+    const b = revealTable(inChoosingFull(1), seeded(1));
+    expect(a.round!.slots).toEqual(b.round!.slots);
+    const c = revealTable(inChoosingFull(1), seeded(99));
+    expect(JSON.stringify(a.round!.slots) === JSON.stringify(c.round!.slots)).toBe(false);
+  });
+
+  test('входное состояние не мутируется', () => {
+    const g = inChoosingFull(3);
+    const subsBefore = { ...g.round!.submissions };
+    const handsBefore = JSON.parse(JSON.stringify(g.hands));
+    const logBefore = g.log.length;
+    revealTable(g, seeded(3));
+    expect(g.round!.submissions).toEqual(subsBefore);
+    expect(g.hands).toEqual(handsBefore);
+    expect(g.log).toHaveLength(logBefore);
+    expect(g.round!.phase).toBe('choosing');
+    expect(g.round!.slots).toBeNull();
+  });
+});
+
+describe('castVote', () => {
+  test('валид: не-ведущий голосует за чужой слот → голос записан, лог vote, phase=voting', () => {
+    const state = inVoting(42);
+    const voter = 'b';
+    const own = state.round!.slots!.indexOf(voter);
+    const slot = state.round!.slots!.findIndex((p, i) => i !== own);
+    const next = castVote(state, voter, slot);
+    expect(next.round!.votes[voter]).toBe(slot);
+    expect(next.log[next.log.length - 1]).toEqual({ type: 'vote', voterId: voter, slot });
+    expect(next.round!.phase).toBe('voting');
+  });
+
+  test('ведущий голосует → LEADER_CANNOT_VOTE', () => {
+    const state = inVoting(42);
+    expectErrorCode(() => castVote(state, 'a', 0), 'LEADER_CANNOT_VOTE');
+  });
+
+  test('тот же не-ведущий дважды → ALREADY_VOTED', () => {
+    const state = inVoting(42);
+    const voter = 'b';
+    const own = state.round!.slots!.indexOf(voter);
+    const slot = state.round!.slots!.findIndex((p, i) => i !== own);
+    const after = castVote(state, voter, slot);
+    const own2 = after.round!.slots!.indexOf(voter);
+    const slot2 = after.round!.slots!.findIndex((p, i) => i !== own2);
+    expectErrorCode(() => castVote(after, voter, slot2), 'ALREADY_VOTED');
+  });
+
+  test('невалидный слот: -1 → INVALID_SLOT; slots.length → INVALID_SLOT', () => {
+    const state = inVoting(42);
+    expectErrorCode(() => castVote(state, 'b', -1), 'INVALID_SLOT');
+    expectErrorCode(() => castVote(state, 'b', state.round!.slots!.length), 'INVALID_SLOT');
+  });
+
+  test('голос за свой собственный слот → CANNOT_VOTE_OWN_CARD', () => {
+    const state = inVoting(42);
+    const voter = 'b';
+    const own = state.round!.slots!.indexOf(voter);
+    expectErrorCode(() => castVote(state, voter, own), 'CANNOT_VOTE_OWN_CARD');
+  });
+
+  test('не игрок → NOT_PLAYER', () => {
+    const state = inVoting(42);
+    expectErrorCode(() => castVote(state, 'z', 0), 'NOT_PLAYER');
+  });
+
+  test('неправильная фаза (round.phase=choosing) → WRONG_PHASE', () => {
+    const state = inChoosing(42);
+    expectErrorCode(() => castVote(state, 'b', 0), 'WRONG_PHASE');
+  });
+
+  test('игра завершена → GAME_FINISHED', () => {
+    expectErrorCode(() => castVote(finished(), 'b', 0), 'GAME_FINISHED');
+  });
+
+  test('входное состояние не мутируется', () => {
+    const state = inVoting(5);
+    const voter = 'b';
+    const own = state.round!.slots!.indexOf(voter);
+    const slot = state.round!.slots!.findIndex((p, i) => i !== own);
+    const votesBefore = { ...state.round!.votes };
+    const logBefore = state.log.length;
+    castVote(state, voter, slot);
+    expect(state.round!.votes).toEqual(votesBefore);
+    expect(state.log).toHaveLength(logBefore);
   });
 });

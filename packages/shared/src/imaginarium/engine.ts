@@ -176,3 +176,74 @@ export function submitCard(
     log: [...state.log, entry],
   };
 }
+
+/**
+ * Завершает фазу выбора: перемешивает сданные карты в пронумерованные слоты
+ * стола и переводит round.phase из 'choosing' в 'voting'. Допускает частичные
+ * подачи (таймаут). Внешний state.phase остаётся 'association'.
+ */
+export function revealTable(state: ImaginariumState, random?: () => number): ImaginariumState {
+  const r = random ?? Math.random;
+
+  if (state.phase === 'finished') {
+    throw new ImaginariumError('GAME_FINISHED', 'Игра завершена');
+  }
+  if (state.phase !== 'association' || state.round == null || state.round.phase !== 'choosing') {
+    throw new ImaginariumError('WRONG_PHASE', 'Сейчас нельзя открыть стол');
+  }
+
+  const playerIds = Object.keys(state.round.submissions);
+  const slots = shuffle(playerIds, r);
+  const entry: ImaginariumLogEntry = { type: 'reveal', slots };
+
+  return {
+    ...state,
+    round: {
+      ...state.round,
+      slots,
+      phase: 'voting',
+    },
+    log: [...state.log, entry],
+  };
+}
+
+/**
+ * Не-ведущий игрок голосует за слот стола (карту, которую считает картой
+ * ведущего). Нельзя голосовать за свой собственный слот. round.phase остаётся
+ * 'voting'. Внешний state.phase остаётся 'association'.
+ */
+export function castVote(state: ImaginariumState, voterId: string, slot: number): ImaginariumState {
+  if (state.phase === 'finished') {
+    throw new ImaginariumError('GAME_FINISHED', 'Игра завершена');
+  }
+  if (state.phase !== 'association' || state.round == null || state.round.phase !== 'voting') {
+    throw new ImaginariumError('WRONG_PHASE', 'Сейчас нельзя голосовать');
+  }
+  if (!state.players.includes(voterId)) {
+    throw new ImaginariumError('NOT_PLAYER', 'Вы не участник игры');
+  }
+  if (voterId === state.round.leader) {
+    throw new ImaginariumError('LEADER_CANNOT_VOTE', 'Ведущий не может голосовать');
+  }
+  if (state.round.votes[voterId] != null) {
+    throw new ImaginariumError('ALREADY_VOTED', 'Вы уже проголосовали');
+  }
+  if (state.round.slots == null || slot < 0 || slot >= state.round.slots.length) {
+    throw new ImaginariumError('INVALID_SLOT', 'Неверный номер слота');
+  }
+  if (state.round.slots[slot] === voterId) {
+    throw new ImaginariumError('CANNOT_VOTE_OWN_CARD', 'Нельзя голосовать за свою карту');
+  }
+
+  const votes = { ...state.round.votes, [voterId]: slot };
+  const entry: ImaginariumLogEntry = { type: 'vote', voterId, slot };
+
+  return {
+    ...state,
+    round: {
+      ...state.round,
+      votes,
+    },
+    log: [...state.log, entry],
+  };
+}

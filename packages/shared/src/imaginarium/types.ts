@@ -67,6 +67,7 @@ export type ImaginariumErrorCode =
   | 'CARD_NOT_IN_HAND'
   | 'CANNOT_VOTE_OWN_CARD'
   | 'EMPTY_ASSOCIATION'
+  | 'LEADER_CANNOT_VOTE'
   | 'DECK_TOO_SMALL'
   | 'INVALID_SLOT'
   | 'INVALID_PLAYERS';
