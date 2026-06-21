@@ -3,6 +3,17 @@ import type { Namespace } from 'socket.io';
 import type { ClientToServerEvents, ServerToClientEvents, Team } from '@boardgames/shared';
 import { RoomError, RoomManager } from './manager';
 import type { Room } from './manager';
+import { resolveIdentity } from '../auth/identity';
+import type { Janitable } from '../janitor';
+import {
+  cardIndexSchema,
+  chatTextSchema,
+  clueSchema,
+  codenamesSettingsSchema,
+  parseSocketArg,
+  setCaptainArgsSchema,
+  setTeamArgsSchema,
+} from '../validation';
 
 const BOT_DELAY_MS = Number(process.env.BOT_DELAY_MS ?? 1200);
 
@@ -20,22 +31,6 @@ type CodenamesNamespace = Namespace<
   SocketData
 >;
 
-/** Берёт ник и аватар из профиля по userId (если задан DATABASE_URL); иначе гость без аватара. */
-async function resolveIdentity(
-  userId: string | undefined,
-): Promise<{ nickname?: string; avatarUrl: string | null }> {
-  if (userId && process.env.DATABASE_URL) {
-    try {
-      const { getUserById } = await import('@boardgames/db');
-      const u = await getUserById(userId);
-      if (u) return { nickname: u.nickname, avatarUrl: u.avatarUrl };
-    } catch (e) {
-      console.error('resolveIdentity failed', e);
-    }
-  }
-  return { avatarUrl: null };
-}
-
 function hasGuesser(room: Room, team: Team): boolean {
   return [...room.players.values()].some((p) => p.team === team && p.role === 'guesser');
 }
@@ -44,18 +39,26 @@ function hasHumanCaptain(room: Room, team: Team): boolean {
   return [...room.players.values()].some((p) => p.team === team && p.role === 'captain');
 }
 
-export function registerCodenames(nsp: CodenamesNamespace): void {
+export function registerCodenames(nsp: CodenamesNamespace): Janitable {
   const manager = new RoomManager();
 
   /** Рассылает состояние комнаты, персональные виды игры и дедлайн хода всем её сокетам. */
   function broadcast(room: Room): void {
-    for (const [, socket] of nsp.sockets) {
-      const data = socket.data;
-      if (data.roomCode !== room.code || !data.playerId) continue;
-      socket.emit('room:state', manager.roomView(room));
-      const gameView = manager.viewFor(room, data.playerId);
-      if (gameView) socket.emit('game:state', gameView);
-      socket.emit('game:timer', room.phase === 'playing' ? room.turnDeadline : null);
+    // Итерируем только сокеты комнаты (adapter.rooms, O(room)) вместо всех сокетов
+    // неймспейса (O(all)) — аудит §10. adapter.rooms наполняется socket.join(room.code)
+    // в create/join/rejoin и чистится на leave/disconnect — sync на single-node.
+    const roomSocketIds = nsp.adapter.rooms.get(room.code);
+    if (roomSocketIds) {
+      for (const id of roomSocketIds) {
+        const socket = nsp.sockets.get(id);
+        if (!socket) continue;
+        const data = socket.data;
+        if (!data.playerId) continue;
+        socket.emit('room:state', manager.roomView(room));
+        const gameView = manager.viewFor(room, data.playerId);
+        if (gameView) socket.emit('game:state', gameView);
+        socket.emit('game:timer', room.phase === 'playing' ? room.turnDeadline : null);
+      }
     }
   }
 
@@ -64,14 +67,17 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
     const game = room.game;
     if (!process.env.DATABASE_URL || !game || game.winner == null) return;
     const winner = game.winner;
-    const recipients: { userId: string; team: Team }[] = [];
+    // Дедуп по userId: 2 вкладки одного юзера → 1 запись GameResult (а не 2).
+    const byUser = new Map<string, { userId: string; team: Team }>();
     for (const [, socket] of nsp.sockets) {
       const d = socket.data;
       if (d.roomCode !== room.code || !d.playerId || !d.userId) continue;
+      if (byUser.has(d.userId)) continue;
       const player = room.players.get(d.playerId);
       if (!player || !player.team) continue;
-      recipients.push({ userId: d.userId, team: player.team });
+      byUser.set(d.userId, { userId: d.userId, team: player.team });
     }
+    const recipients = [...byUser.values()];
     if (recipients.length === 0) return;
     try {
       const { recordGameResult } = await import('@boardgames/db');
@@ -240,17 +246,21 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
     socket.on('room:create', (nickname, settings, ack) => {
       void (async () => {
         try {
+          const cleanSettings = parseSocketArg(socket, codenamesSettingsSchema, settings);
+          if (cleanSettings === null) return ack({ ok: false, error: 'Некорректные настройки' });
           const id = await resolveIdentity(data.userId);
           const { room, player } = manager.createRoom(
             id.nickname ?? nickname,
-            settings,
+            cleanSettings,
             id.avatarUrl,
           );
           manager.dealNow(room);
           data.roomCode = room.code;
           data.playerId = player.id;
-          void socket.join(room.code);
+          await socket.join(room.code);
           ack({ ok: true, room: manager.roomView(room), playerId: player.id, token: player.token });
+          socket.emit('chat:history', room.chat);
+          broadcast(room);
           scheduleBot(room);
           scheduleTurnTimer(room);
         } catch (e) {
@@ -266,7 +276,7 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
           const { room, player } = manager.joinRoom(code, id.nickname ?? nickname, id.avatarUrl);
           data.roomCode = room.code;
           data.playerId = player.id;
-          void socket.join(room.code);
+          await socket.join(room.code);
           ack({ ok: true, room: manager.roomView(room), playerId: player.id, token: player.token });
           socket.emit('chat:history', room.chat);
           broadcast(room);
@@ -276,12 +286,12 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
       })();
     });
 
-    socket.on('room:rejoin', (code, token, ack) => {
+    socket.on('room:rejoin', async (code, token, ack) => {
       try {
         const { room, player } = manager.rejoin(code, token);
         data.roomCode = room.code;
         data.playerId = player.id;
-        void socket.join(room.code);
+        await socket.join(room.code);
         ack({ ok: true, room: manager.roomView(room), playerId: player.id, token: player.token });
         socket.emit('chat:history', room.chat);
         broadcast(room);
@@ -290,11 +300,11 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
       }
     });
 
-    const leaveCurrent = (): void => {
+    const leaveCurrent = async (): Promise<void> => {
       const room = inRoom();
       if (!room || !data.playerId) return;
       const removed = manager.leave(room, data.playerId);
-      void socket.leave(room.code);
+      await socket.leave(room.code);
       data.roomCode = undefined;
       data.playerId = undefined;
       if (removed) clearTimer(room);
@@ -308,7 +318,9 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
       guard(() => {
         const room = inRoom();
         if (!room || !data.playerId) return;
-        manager.setTeam(room, data.playerId, team, role);
+        const args = parseSocketArg(socket, setTeamArgsSchema, [team, role]);
+        if (args === null) return;
+        manager.setTeam(room, data.playerId, args[0], args[1]);
         broadcast(room);
         scheduleBot(room);
         scheduleTurnTimer(room);
@@ -319,7 +331,9 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
       guard(() => {
         const room = inRoom();
         if (!room || !data.playerId) return;
-        manager.setCaptainSlot(room, data.playerId, team, who);
+        const args = parseSocketArg(socket, setCaptainArgsSchema, [team, who]);
+        if (args === null) return;
+        manager.setCaptainSlot(room, data.playerId, args[0], args[1]);
         broadcast(room);
         scheduleBot(room);
         scheduleTurnTimer(room);
@@ -330,7 +344,9 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
       guard(() => {
         const room = inRoom();
         if (!room || !data.playerId) return;
-        manager.updateSettings(room, data.playerId, settings);
+        const clean = parseSocketArg(socket, codenamesSettingsSchema, settings);
+        if (clean === null) return;
+        manager.updateSettings(room, data.playerId, clean);
         broadcast(room);
       }),
     );
@@ -350,7 +366,9 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
       guard(() => {
         const room = inRoom();
         if (!room || !data.playerId) return;
-        const msg = manager.addChat(room, data.playerId, text);
+        const clean = parseSocketArg(socket, chatTextSchema, text);
+        if (clean === null) return;
+        const msg = manager.addChat(room, data.playerId, clean);
         nsp.to(room.code).emit('chat:message', msg);
       }),
     );
@@ -359,7 +377,9 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
       guard(() => {
         const room = inRoom();
         if (!room || !data.playerId) return;
-        manager.giveClue(room, data.playerId, clue);
+        const clean = parseSocketArg(socket, clueSchema, clue);
+        if (clean === null) return;
+        manager.giveClue(room, data.playerId, clean);
         broadcast(room);
         scheduleTurnTimer(room);
       }),
@@ -369,8 +389,10 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
       guard(() => {
         const room = inRoom();
         if (!room || !data.playerId) return;
+        const clean = parseSocketArg(socket, cardIndexSchema, cardIndex);
+        if (clean === null) return;
         const before = room.game;
-        manager.guess(room, data.playerId, cardIndex);
+        manager.guess(room, data.playerId, clean);
         broadcast(room);
         const after = room.game;
         // верное слово, ход остался у той же команды → бонус к таймеру; иначе новый ход
@@ -406,4 +428,9 @@ export function registerCodenames(nsp: CodenamesNamespace): void {
       }),
     );
   });
+  return {
+    cleanupStale: manager.cleanupStale.bind(manager),
+    restore: (snapshots) =>
+      snapshots.filter((s) => manager.restoreFromSnapshot(s.state)).length,
+  };
 }

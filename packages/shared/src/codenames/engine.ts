@@ -98,7 +98,7 @@ export function giveClue(state: CodenamesState, clue: Clue): CodenamesState {
     ...state,
     phase: 'guess',
     clue,
-    guessesLeft: clue.count === 0 ? Number.POSITIVE_INFINITY : clue.count + 1,
+    guessesLeft: clue.count === 0 ? null : clue.count + 1,
     log: [...state.log, { type: 'clue', team: state.turn, clue }],
   };
 }
@@ -149,8 +149,8 @@ export function guess(state: CodenamesState, cardIndex: number): CodenamesState 
   }
 
   if (card.owner === state.turn) {
-    next = { ...next, guessesLeft: next.guessesLeft - 1 };
-    return next.guessesLeft > 0 ? next : endTurn(next);
+    next = { ...next, guessesLeft: next.guessesLeft === null ? null : next.guessesLeft - 1 };
+    return next.guessesLeft === null || next.guessesLeft > 0 ? next : endTurn(next);
   }
   // Нейтральное или чужое слово — ход переходит.
   return endTurn(next);

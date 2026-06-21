@@ -32,8 +32,12 @@ export interface CodenamesState {
   turn: Team;
   phase: Phase;
   clue: Clue | null;
-  /** Сколько попыток осталось в текущем ходу (правило «число + 1»). */
-  guessesLeft: number;
+  /**
+   * Сколько попыток осталось в текущем ходу (правило «число + 1»).
+   * `null` = неограниченные попытки (подсказка с count 0); JSON-сейф (вместо
+   * `Infinity`, который превращается в `null` при JSON round-trip и ломает логику).
+   */
+  guessesLeft: number | null;
   winner: Team | null;
   winReason: WinReason | null;
   log: LogEntry[];

@@ -1,5 +1,6 @@
 /** Комнаты Uno в памяти: лобби с правилами, боты, таймер хода, чат. Движок — из @boardgames/shared. */
 import { randomUUID } from 'node:crypto';
+import { snapshotRoom as persistSnapshot, deleteRoom as persistDelete } from '../persist';
 import {
   botAction,
   callUno,
@@ -73,10 +74,21 @@ export const DEFAULT_UNO_SETTINGS: UnoRoomSettings = {
   timer: { enabled: true, turnSec: 30 },
 };
 
-function makePlayer(nickname: string, isBot = false, avatarUrl: string | null = null): UnoRoomPlayer {
+function makePlayer(
+  nickname: string,
+  isBot = false,
+  avatarUrl: string | null = null,
+): UnoRoomPlayer {
   const nick = nickname.trim().slice(0, MAX_NICK);
   if (!nick) throw new UnoRoomError('Введите ник');
-  return { id: randomUUID(), token: randomUUID(), nickname: nick, avatarUrl, connected: true, isBot };
+  return {
+    id: randomUUID(),
+    token: randomUUID(),
+    nickname: nick,
+    avatarUrl,
+    connected: true,
+    isBot,
+  };
 }
 
 function mergeSettings(prev: UnoRoomSettings, patch: UnoSettingsPatch): UnoRoomSettings {
@@ -139,6 +151,7 @@ export class UnoRoomManager {
       timer: null,
     };
     this.rooms.set(code, room);
+    this.snapshotRoom(room);
     return { room, player };
   }
 
@@ -153,6 +166,7 @@ export class UnoRoomManager {
       throw new UnoRoomError('Комната заполнена');
     const player = makePlayer(nickname, false, avatarUrl);
     room.players.push(player);
+    this.snapshotRoom(room);
     return { room, player };
   }
 
@@ -160,6 +174,7 @@ export class UnoRoomManager {
     const room = this.require(code);
     const player = this.player(room, token);
     player.connected = true;
+    this.snapshotRoom(room);
     return { room, player };
   }
 
@@ -172,11 +187,36 @@ export class UnoRoomManager {
     const humans = room.players.filter((p) => !p.isBot);
     if (humans.length === 0 || (room.phase !== 'lobby' && !humans.some((p) => p.connected))) {
       this.clearTimer(room);
+      void persistDelete('uno', room.code);
       this.rooms.delete(room.code);
       return true;
     }
     if (room.hostId === playerId) room.hostId = humans[0]!.id;
+    this.snapshotRoom(room);
     return false;
+  }
+
+  /**
+   * Чистка зомби-комнат (janitor): удаляет комнаты без живых сокетов. lobby/finished
+   * — сразу; playing — по grace от turnDeadline (игрок успеет реконнектнуться).
+   * Возвращает коды удалённых. См. `janitor.ts`.
+   */
+  cleanupStale(hasLiveSocket: (code: string) => boolean, now: number, graceMs: number): string[] {
+    const deleted: string[] = [];
+    for (const [code, room] of this.rooms) {
+      if (hasLiveSocket(code)) continue;
+      if (
+        room.phase === 'lobby' ||
+        room.phase === 'finished' ||
+        (room.turnDeadline != null && room.turnDeadline + graceMs < now)
+      ) {
+        this.clearTimer(room);
+        this.rooms.delete(code);
+        void persistDelete('uno', code);
+        deleted.push(code);
+      }
+    }
+    return deleted;
   }
 
   addBot(room: UnoRoom, token: string): void {
@@ -187,18 +227,21 @@ export class UnoRoomManager {
     const used = new Set(room.players.map((p) => p.nickname));
     const name = BOT_NAMES.find((n) => !used.has(n)) ?? `Бот №${room.players.length}`;
     room.players.push(makePlayer(name, true));
+    this.snapshotRoom(room);
   }
 
   removeBot(room: UnoRoom, token: string, botId: string): void {
     this.host(room, token);
     if (room.phase !== 'lobby') throw new UnoRoomError('Игра уже началась');
     room.players = room.players.filter((p) => !(p.isBot && p.id === botId));
+    this.snapshotRoom(room);
   }
 
   updateSettings(room: UnoRoom, token: string, patch: UnoSettingsPatch): void {
     this.host(room, token);
     if (room.phase !== 'lobby') throw new UnoRoomError('Игра уже началась');
     room.settings = mergeSettings(room.settings, patch);
+    this.snapshotRoom(room);
   }
 
   start(room: UnoRoom, token: string): void {
@@ -238,6 +281,7 @@ export class UnoRoomManager {
     room.game = null;
     room.phase = 'lobby';
     room.turnDeadline = null;
+    this.snapshotRoom(room);
   }
 
   act(room: UnoRoom, token: string, action: UnoAction): void {
@@ -274,8 +318,62 @@ export class UnoRoomManager {
         throw new UnoRoomError('Неизвестное действие');
     }
     room.game = next;
-    // «UNO!» и поимка не меняют очередь — таймер не трогаем
+    // «UNO!» и поимка не меняют очередь — таймер не трогаем,
+    // но состояние меняется (флаг/штраф) — снапшот нужен.
     if (action.type !== 'uno' && action.type !== 'catch') this.afterUpdate(room);
+    else this.snapshotRoom(room);
+  }
+
+  /**
+   * Снапшот комнаты в Redis (persist §1). UnoRoom.players — Array (не Map),
+   * timer-функцию не сериализуем (при restore пересоздаётся). game.random
+   * (функция) выкинется из JSON — ОК. Best-effort: ошибки не бросают.
+   */
+  snapshotRoom(room: UnoRoom): void {
+    const snapshot = {
+      code: room.code,
+      hostId: room.hostId,
+      phase: room.phase,
+      settings: room.settings,
+      players: room.players.map((p) => ({ ...p })),
+      chat: room.chat.slice(-50),
+      game: room.game,
+      turnDeadline: room.turnDeadline,
+    };
+    void persistSnapshot('uno', room.code, snapshot);
+  }
+
+  /**
+   * Восстанавливает комнату из Redis-снапшота (аудит §1 restore-on-startup).
+   * Реконструирует UnoRoom (players — уже array), вызывает afterUpdate для
+   * перевооружения таймера. Все players.connected = false.
+   */
+  restoreFromSnapshot(s: unknown): boolean {
+    try {
+      const snap = s as Record<string, unknown>;
+      if (!snap.code || !snap.phase) return false;
+      const players = ((snap.players as UnoRoomPlayer[]) ?? []).map((p) => ({
+        ...p,
+        connected: false,
+      }));
+      const room: UnoRoom = {
+        code: snap.code as string,
+        hostId: snap.hostId as string,
+        phase: snap.phase as RoomPhase,
+        settings: snap.settings as UnoRoomSettings,
+        players,
+        chat: (snap.chat as ChatMessage[]) ?? [],
+        game: (snap.game as UnoState | null) ?? null,
+        turnDeadline: (snap.turnDeadline as number | null) ?? null,
+        timer: null,
+      };
+      this.rooms.set(room.code, room);
+      // Перевооружаем таймер/бота через afterUpdate (свежий deadline от Date.now())
+      if (room.game && room.phase === 'playing') this.afterUpdate(room);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   addChat(room: UnoRoom, token: string, text: string): ChatMessage {
@@ -334,29 +432,35 @@ export class UnoRoomManager {
     const game = room.game;
     if (!game || room.phase !== 'playing') {
       room.turnDeadline = null;
+      this.snapshotRoom(room);
       return;
     }
     if (game.phase === 'finished') {
       room.phase = 'finished';
       room.turnDeadline = null;
+      this.snapshotRoom(room);
       return;
     }
     if (game.phase === 'roundEnd') {
       room.turnDeadline = null;
+      this.snapshotRoom(room);
       return;
     }
     if (this.currentBot(room)) {
       room.turnDeadline = null;
       room.timer = setTimeout(() => this.runBot(room), BOT_DELAY_MS);
+      this.snapshotRoom(room);
       return;
     }
     if (!room.settings.timer.enabled) {
       room.turnDeadline = null;
+      this.snapshotRoom(room);
       return;
     }
     const turnMs = room.settings.timer.turnSec * 1000;
     room.turnDeadline = Date.now() + turnMs;
     room.timer = setTimeout(() => this.runTimeout(room), turnMs);
+    this.snapshotRoom(room);
   }
 
   /** Один ход бота (для тестов — синхронно; в проде вызывается из таймера). */
