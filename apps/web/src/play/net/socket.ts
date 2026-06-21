@@ -63,9 +63,27 @@ export function getAliasSocket(): Socket {
   return aliasSocket;
 }
 
+let imaginariumSocket: Socket | null = null;
+
+/**
+ * Сокет неймспейса /imaginarium. Контракт событий уточняет вызывающий хук.
+ */
+export function getImaginariumSocket(): Socket {
+  imaginariumSocket ??= io(nsUrl("/imaginarium"), {
+    autoConnect: true,
+    auth: authProvider,
+  });
+  return imaginariumSocket;
+}
+
 /** Переподключает уже созданные сокеты, чтобы handshake подхватил новый/сброшенный токен. */
 export function reconnectSockets(): void {
-  for (const s of [codenamesSocket, unoSocket, aliasSocket]) {
+  for (const s of [
+    codenamesSocket,
+    unoSocket,
+    aliasSocket,
+    imaginariumSocket,
+  ]) {
     if (s) s.disconnect().connect();
   }
 }
