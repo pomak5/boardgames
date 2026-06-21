@@ -494,7 +494,7 @@ janitor. Зеркало `alias/manager.ts` + `alias/handlers.ts`, адаптир
 индивидуальный рейтинг и 3 фазы.
 
 - [ ] **2.1 — `manager.ts` скелет**: `RoomManager` с `Room`, `createRoom/joinRoom/
-  rejoin/leave/cleanupStale/viewFor/roomView`, `DEFAULT_SETTINGS`,
+rejoin/leave/cleanupStale/viewFor/roomView`, `DEFAULT_SETTINGS`,
       `MAX_PLAYERS=6`, `MIN_PLAYERS=3`. `snapshotRoom`/`restoreFromSnapshot`
       (Map→array для players, без timer-функции; перевооружение таймера активной
       фазы). Run: `bun run --filter '@boardgames/server' typecheck`.
@@ -532,7 +532,7 @@ janitor. Зеркало `alias/manager.ts` + `alias/handlers.ts`, адаптир
       `score: scores[playerId]`), `bind`, `guard`, все `room:*` + `game:*` + `chat:*`.
 
 - [ ] **2.9 — Регистрация в `games.ts`**: запись `{ namespace:'/imaginarium',
-  name:'Imaginarium', register:(nsp)=>registerImaginarium(nsp as never) }`.
+name:'Imaginarium', register:(nsp)=>registerImaginarium(nsp as never) }`.
 
 - [ ] **2.10 — `validation.ts`**: `imaginariumSettingsPatchSchema` (опц. поля с
       bounds: sec 15..180, targetScore 10..200|null, handSize 4..8),
