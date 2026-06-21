@@ -10,6 +10,7 @@ import type { Namespace } from 'socket.io';
 import type { Janitable } from './janitor';
 import { registerAlias } from './alias/handlers';
 import { registerCodenames } from './codenames/handlers';
+import { registerImaginarium } from './imaginarium/handlers';
 import { registerUno } from './uno/handlers';
 
 export interface GameModule {
@@ -40,5 +41,10 @@ export const games: readonly GameModule[] = [
     namespace: '/alias',
     name: 'Alias',
     register: (nsp) => registerAlias(nsp as never),
+  },
+  {
+    namespace: '/imaginarium',
+    name: 'Imaginarium',
+    register: (nsp) => registerImaginarium(nsp as never),
   },
 ];

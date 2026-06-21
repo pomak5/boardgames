@@ -86,6 +86,22 @@ export const aliasSettingsPatchSchema = z.object({
   showOpponents: z.boolean().optional(),
 });
 
+// ─────────────────────── Imaginarium ───────────────────────
+/** Патч настроек Imaginarium (как `ImaginariumSettingsPatch` в events.ts). */
+export const imaginariumSettingsPatchSchema = z.object({
+  associationSec: z.number().optional(),
+  choosingSec: z.number().optional(),
+  votingSec: z.number().optional(),
+  targetScore: z.number().nullable().optional(),
+  handSize: z.number().optional(),
+});
+/** Ассоциация ведущего: строка (непустоту проверяет движок EMPTY_ASSOCIATION). */
+export const associationSchema = z.string();
+/** CardId карты: строка (валидность в руке проверяет движок). */
+export const imaginariumCardIdSchema = z.string();
+/** Номер слота голосования: целое >= 0 (валидность проверяет движок). */
+export const imaginariumVoteSlotSchema = z.number().int().nonnegative();
+
 // ─────────────────────── chat ───────────────────────
 /** Текст сообщения чата: строка (длину обрезает `addChat` в менеджере). */
 export const chatTextSchema = z.string();

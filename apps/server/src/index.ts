@@ -87,10 +87,11 @@ for (const game of games) {
 // без него комнаты остаются RAM-only (как раньше). Restore переоружает таймеры
 // (Uno: afterUpdate, Alias: armRoundTimer, Codenames: при следующем действии).
 if (process.env.PERSIST_RESTORE === 'true' && persistAvailable()) {
-  const prefixMap: Record<string, 'codenames' | 'uno' | 'alias'> = {
+  const prefixMap: Record<string, 'codenames' | 'uno' | 'alias' | 'imaginarium'> = {
     '/codenames': 'codenames',
     '/uno': 'uno',
     '/alias': 'alias',
+    '/imaginarium': 'imaginarium',
   };
   for (const g of janitorGames) {
     if (!g.janitor?.restore) continue;
