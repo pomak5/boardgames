@@ -138,4 +138,30 @@ describe('createImaginariumGame', () => {
       expect(state.hands[p]).toHaveLength(DEFAULT_HAND_SIZE);
     }
   });
+
+  test('граничная колода: deck.length === handSize*players → успешно, deck пуст', () => {
+    const players = ['a', 'b', 'c', 'd'];
+    const state = createImaginariumGame({
+      playerIds: players,
+      deck: deck(24),
+      handSize: 6,
+      random: seeded(1),
+    });
+    for (const p of players) expect(state.hands[p]).toHaveLength(6);
+    expect(state.deck).toEqual([]);
+  });
+
+  test('сохранность множества карт: ничего не теряется и не дублируется', () => {
+    const players = ['a', 'b', 'c', 'd'];
+    const d = deck(84);
+    const state = createImaginariumGame({
+      playerIds: players,
+      deck: d,
+      handSize: 6,
+      random: seeded(7),
+    });
+    const dealt = [...players.flatMap((p) => state.hands[p]!), ...state.deck];
+    expect(dealt).toHaveLength(84);
+    expect(new Set(dealt)).toEqual(new Set(d));
+  });
 });
