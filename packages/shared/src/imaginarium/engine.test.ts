@@ -340,6 +340,30 @@ describe('revealTable', () => {
     });
   });
 
+  test('tableCards: slot-aligned с slots, tableCards[i] === submissions[slots[i]]', () => {
+    const state = revealTable(inChoosingFull(42), seeded(42));
+    const subs = state.round!.submissions;
+    const slots = state.round!.slots!;
+    const tableCards = state.round!.tableCards;
+    expect(tableCards).not.toBeNull();
+    expect(tableCards).toHaveLength(Object.keys(subs).length);
+    for (let i = 0; i < slots.length; i++) {
+      expect(tableCards![i]).toBe(subs[slots[i]!]);
+    }
+  });
+
+  test('tableCards: содержит ровно сданные cardId (set-равенство, без дубликатов)', () => {
+    const state = revealTable(inChoosingFull(42), seeded(42));
+    expect(new Set(state.round!.tableCards!)).toEqual(
+      new Set(Object.values(state.round!.submissions)),
+    );
+  });
+
+  test('tableCards: null до reveal (в choosing)', () => {
+    const state = inChoosingFull(42);
+    expect(state.round!.tableCards).toBeNull();
+  });
+
   test('частичные подачи (таймаут) → 2 слота, phase=voting, не бросает', () => {
     let g = inChoosing(7);
     g = submitCard(g, 'b', g.hands['b']![0]!);

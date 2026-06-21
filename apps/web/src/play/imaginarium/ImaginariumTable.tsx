@@ -354,7 +354,13 @@ function VotingScreen({
         <h2 className="im-phase__title">Идёт голосование</h2>
         <Association association={round.association} />
         <p className="im-hint">Вы ведущий — вы не голосуете.</p>
-        <Slots n={n} interactive={false} selected={null} onSelect={() => {}} />
+        <Slots
+          n={n}
+          tableCards={round.tableCards}
+          interactive={false}
+          selected={null}
+          onSelect={() => {}}
+        />
       </section>
     );
   }
@@ -368,6 +374,7 @@ function VotingScreen({
         )}
         <Slots
           n={n}
+          tableCards={round.tableCards}
           interactive={false}
           selected={myVote ?? null}
           onSelect={() => {}}
@@ -380,9 +387,16 @@ function VotingScreen({
       <h2 className="im-phase__title">Голосуйте за карту ведущего</h2>
       <Association association={round.association} />
       <p className="im-hint">
-        Карты на столе скрыты — голосуйте по номеру. Не голосуйте за свою.
+        Выберите карту, которая по-вашему соответствует ассоциации ведущего. Не
+        голосуйте за свою.
       </p>
-      <Slots n={n} interactive selected={selSlot} onSelect={setSelSlot} />
+      <Slots
+        n={n}
+        tableCards={round.tableCards}
+        interactive
+        selected={selSlot}
+        onSelect={setSelSlot}
+      />
       <div className="im-phase__actions">
         <button
           type="button"
@@ -420,7 +434,11 @@ function ScoringScreen({ game, nick, api }: PhaseProps) {
               className={`im-reveal__slot${isLeaderSlot ? " im-reveal__slot--leader" : ""}`}
             >
               <div className="im-reveal__card">
-                <CardBack size={120} />
+                {round.tableCards ? (
+                  <CardFace cardId={round.tableCards[i] ?? ""} size={120} />
+                ) : (
+                  <CardBack size={120} />
+                )}
                 <span className="im-reveal__num">№{i + 1}</span>
               </div>
               <div className="im-reveal__meta">
@@ -496,11 +514,13 @@ function Hand({
 
 function Slots({
   n,
+  tableCards,
   interactive,
   selected,
   onSelect,
 }: {
   n: number;
+  tableCards: CardId[] | null;
   interactive: boolean;
   selected: number | null;
   onSelect: (s: number | null) => void;
@@ -518,7 +538,11 @@ function Slots({
           disabled={!interactive}
           onClick={() => interactive && onSelect(selected === i ? null : i)}
         >
-          <CardBack size={120} />
+          {tableCards ? (
+            <CardFace cardId={tableCards[i] ?? ""} size={120} />
+          ) : (
+            <CardBack size={120} />
+          )}
           <span className="im-slot__num">{i + 1}</span>
         </button>
       ))}

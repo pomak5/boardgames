@@ -304,6 +304,10 @@ export interface ImaginariumRoundView {
   hasSubmitted: boolean;
   /** slotIndex -> playerId (чей оригинал). null до scoring (на voting скрыто). */
   slots: string[] | null;
+  /** Арты карт на столе (slot-aligned с slots), публичны на voting и scoring.
+   *  null до reveal (association/choosing). На voting owner скрыт (slots null),
+   *  но арты видны — голосование по картинкам. */
+  tableCards: CardId[] | null;
   /** Голоса. На voting — только свой (одна запись); на scoring — все. */
   votes: Record<string, number>;
   /** Проголосовал ли ЗРИТЕЛЬ. */

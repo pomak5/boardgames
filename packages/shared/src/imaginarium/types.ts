@@ -24,6 +24,9 @@ export interface ImaginariumRound {
   /** Слоты на столе после перемешивания: slotIndex -> playerId (чей оригинал).
    *  null до revealTable. */
   slots: string[] | null;
+  /** Арты карт на столе (slot-aligned с slots): tableCards[i] = CardId в слоте i.
+   *  null до revealTable. Владелец скрыт на voting (виден только на scoring через slots). */
+  tableCards: CardId[] | null;
   /** Голоса: voterId -> slotIndex. */
   votes: Record<string, number>;
   phase: ImaginariumRoundPhase;

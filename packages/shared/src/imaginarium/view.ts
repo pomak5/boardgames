@@ -26,6 +26,7 @@ export function redactImaginarium(
   let roundView: ImaginariumRoundView | null = null;
   if (round != null) {
     const scoring = round.phase === 'scoring';
+    const revealArts = round.phase === 'voting' || round.phase === 'scoring';
     const votes = scoring
       ? { ...round.votes }
       : round.votes[id] != null
@@ -37,6 +38,7 @@ export function redactImaginarium(
       submittedCount: Object.keys(round.submissions).length,
       hasSubmitted: round.submissions[id] != null,
       slots: scoring ? (round.slots ? [...round.slots] : null) : null,
+      tableCards: revealArts ? (round.tableCards ? [...round.tableCards] : null) : null,
       votes,
       hasVoted: round.votes[id] != null,
       phase: round.phase,

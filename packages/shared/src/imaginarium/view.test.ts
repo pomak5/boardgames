@@ -228,4 +228,68 @@ describe('redactImaginarium', () => {
     expect(state.log).toHaveLength(logLenBefore);
     expect(state.hands['a']).toEqual(handABefore);
   });
+
+  // --- 13. tableCards: voting art visible, owner hidden ---
+  test('13. voting: tableCards виден (арт), slots скрыт (null) для всех зрителей', () => {
+    const g = newGame();
+    let state = submitLeader(g, 'a', g.hands['a']![0]!, 'assoc');
+    for (const p of ['b', 'c', 'd']) state = submitCard(state, p, state.hands[p]![0]!);
+    state = revealTable(state, seeded(42));
+    expect(state.round!.tableCards).not.toBeNull();
+    const count = Object.keys(state.round!.submissions).length;
+    for (const v of PLAYERS) {
+      const view = redactImaginarium(state, { id: v });
+      expect(view.round!.tableCards).not.toBeNull();
+      expect(view.round!.tableCards).toHaveLength(count);
+      expect(view.round!.slots).toBeNull();
+    }
+  });
+
+  // --- 14. tableCards: scoring full ---
+  test('14. scoring: tableCards и slots раскрыты полностью', () => {
+    const g = newGame();
+    let state = submitLeader(g, 'a', g.hands['a']![0]!, 'assoc');
+    for (const p of ['b', 'c', 'd']) state = submitCard(state, p, state.hands[p]![0]!);
+    state = revealTable(state, seeded(42));
+    state = castVote(state, 'b', otherSlot(state, 'b'));
+    state = castVote(state, 'c', otherSlot(state, 'c'));
+    state = tallyRound(state);
+    for (const v of PLAYERS) {
+      const view = redactImaginarium(state, { id: v });
+      expect(view.round!.tableCards).toEqual(state.round!.tableCards);
+      expect(view.round!.slots).toEqual(state.round!.slots);
+    }
+  });
+
+  // --- 15. tableCards: association/choosing null ---
+  test('15. association/choosing: tableCards === null', () => {
+    const g = newGame();
+    expect(redactImaginarium(g, { id: 'a' }).round!.tableCards).toBeNull();
+    const choosing = submitLeader(g, 'a', g.hands['a']![0]!, 'assoc');
+    expect(redactImaginarium(choosing, { id: 'b' }).round!.tableCards).toBeNull();
+  });
+
+  // --- 16. tableCards: non-player viewer sees art (public) ---
+  test('16. voting: не-игрок зритель видит tableCards (арт публичен)', () => {
+    const g = newGame();
+    let state = submitLeader(g, 'a', g.hands['a']![0]!, 'assoc');
+    for (const p of ['b', 'c', 'd']) state = submitCard(state, p, state.hands[p]![0]!);
+    state = revealTable(state, seeded(42));
+    const view = redactImaginarium(state, { id: 'z' });
+    expect(view.round!.tableCards).not.toBeNull();
+    expect(view.round!.tableCards).toHaveLength(Object.keys(state.round!.submissions).length);
+  });
+
+  // --- 17. tableCards: immutability ---
+  test('17. иммутабельность tableCards: redact не мутирует state.round.tableCards', () => {
+    const g = newGame();
+    let state = submitLeader(g, 'a', g.hands['a']![0]!, 'assoc');
+    for (const p of ['b', 'c', 'd']) state = submitCard(state, p, state.hands[p]![0]!);
+    state = revealTable(state, seeded(42));
+    const tcRef = state.round!.tableCards;
+    const tcSnapshot = [...(tcRef ?? [])];
+    redactImaginarium(state, { id: 'a' });
+    expect(state.round!.tableCards).toBe(tcRef);
+    expect(state.round!.tableCards).toEqual(tcSnapshot);
+  });
 });

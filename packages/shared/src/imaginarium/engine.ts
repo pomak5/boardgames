@@ -81,6 +81,7 @@ export function createImaginariumGame(opts: CreateImaginariumOptions): Imaginari
       association: null,
       submissions: {},
       slots: null,
+      tableCards: null,
       votes: {},
       phase: 'association',
     },
@@ -192,8 +193,16 @@ export function revealTable(state: ImaginariumState, random?: () => number): Ima
     throw new ImaginariumError('WRONG_PHASE', 'Сейчас нельзя открыть стол');
   }
 
-  const playerIds = Object.keys(state.round.submissions);
-  const slots = shuffle(playerIds, r);
+  const submissions = state.round.submissions;
+  const playerIds = Object.keys(submissions);
+  // Одна перестановка индексов — slots и tableCards остаются выровнены
+  // (tableCards[i] === submissions[slots[i]] для всех i).
+  const order = shuffle(
+    playerIds.map((_, i) => i),
+    r,
+  );
+  const slots = order.map((i) => playerIds[i]!);
+  const tableCards = order.map((i) => submissions[playerIds[i]!]!);
   const entry: ImaginariumLogEntry = { type: 'reveal', slots };
 
   return {
@@ -201,6 +210,7 @@ export function revealTable(state: ImaginariumState, random?: () => number): Ima
     round: {
       ...state.round,
       slots,
+      tableCards,
       phase: 'voting',
     },
     log: [...state.log, entry],
@@ -395,6 +405,7 @@ export function advanceLeader(state: ImaginariumState): ImaginariumState {
       association: null,
       submissions: {},
       slots: null,
+      tableCards: null,
       votes: {},
       phase: 'association',
     },
@@ -436,6 +447,7 @@ export function skipRound(state: ImaginariumState): ImaginariumState {
       association: null,
       submissions: {},
       slots: null,
+      tableCards: null,
       votes: {},
       phase: 'association',
     },
