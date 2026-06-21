@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Глубокое ревью · boardgames</title>
+    <style>
+      :root {
+        --bg: #0f1117;
+        --bg-soft: #161922;
+        --bg-card: #1b1f2a;
+        --bg-code: #0c0e14;
+        --border: #2a2f3d;
+        --border-soft: #232838;
+        --text: #e6e9ef;
+        --text-dim: #9aa3b2;
+        --text-mute: #6b7385;
+        --accent: #7c9cff;
+        --accent-2: #5fd0a8;
+        --crit: #ff6b6b;
+        --crit-bg: #2a1717;
+        --high: #ffa94d;
+        --high-bg: #2a2014;
+        --med: #ffd43b;
+        --med-bg: #2a2614;
+        --low: #74c0fc;
+        --low-bg: #14202a;
+        --good: #51cf66;
+        --good-bg: #142a1a;
+        --crit-border: #5a2a2a;
+        --high-border: #5a4520;
+        --med-border: #5a5020;
+        --low-border: #20405a;
+        --good-border: #2a5a35;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+          Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        font-size: 16px;
+      }
+      .wrap {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 0 24px 120px;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(15, 17, 23, 0.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+        padding: 14px 24px;
+        margin: 0 -24px 32px;
+      }
+      header .inner { max-width: 1032px; margin: 0 auto; display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+      header h1 { font-size: 18px; margin: 0; font-weight: 700; }
+      header .meta { color: var(--text-dim); font-size: 13px; }
+      .hero {
+        padding: 28px 28px 24px;
+        background: linear-gradient(135deg, #1b2235, #1a2030);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        margin-bottom: 36px;
+      }
+      .hero h2 { margin: 0 0 6px; font-size: 26px; }
+      .hero p { margin: 0; color: var(--text-dim); }
+      .scoreline {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin-top: 22px;
+        flex-wrap: wrap;
+      }
+      .score {
+        font-size: 44px;
+        font-weight: 800;
+        line-height: 1;
+        color: var(--accent-2);
+      }
+      .score small { font-size: 16px; color: var(--text-dim); font-weight: 600; }
+      .score-label { font-size: 13px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.06em; }
+
+      .grid-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        margin-top: 24px;
+      }
+      .stat {
+        background: var(--bg-card);
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        padding: 12px 14px;
+        text-align: center;
+      }
+      .stat .n { font-size: 22px; font-weight: 700; }
+      .stat .l { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+
+      nav.toc {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 8px;
+        margin: 32px 0 48px;
+      }
+      nav.toc a {
+        display: block;
+        padding: 10px 14px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border-soft);
+        border-radius: 8px;
+        color: var(--text);
+        text-decoration: none;
+        font-size: 14px;
+        transition: border-color 0.15s, transform 0.1s;
+      }
+      nav.toc a:hover { border-color: var(--accent); transform: translateY(-1px); }
+      nav.toc a .n { color: var(--accent); font-weight: 700; margin-right: 8px; }
+
+      section { margin-bottom: 56px; scroll-margin-top: 80px; }
+      h2.sec {
+        font-size: 23px;
+        margin: 0 0 8px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      h2.sec .idx { color: var(--accent); font-weight: 800; }
+      h3.sub { font-size: 17px; margin: 28px 0 12px; color: var(--accent); }
+      p { color: var(--text-dim); }
+      p.lead { color: var(--text); }
+      strong { color: var(--text); }
+      a { color: var(--accent); }
+
+      .legend {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 16px 0;
+        font-size: 12px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+        border: 1px solid transparent;
+      }
+      .badge.crit { background: var(--crit-bg); color: var(--crit); border-color: var(--crit-border); }
+      .badge.high { background: var(--high-bg); color: var(--high); border-color: var(--high-border); }
+      .badge.med  { background: var(--med-bg);  color: var(--med);  border-color: var(--med-border); }
+      .badge.low  { background: var(--low-bg);  color: var(--low);  border-color: var(--low-border); }
+      .badge.good { background: var(--good-bg); color: var(--good); border-color: var(--good-border); }
+
+      .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        padding: 18px 20px;
+        margin: 14px 0;
+        border-left: 4px solid var(--border);
+      }
+      .card.crit { border-left-color: var(--crit); }
+      .card.high { border-left-color: var(--high); }
+      .card.med  { border-left-color: var(--med); }
+      .card.low  { border-left-color: var(--low); }
+      .card.good { border-left-color: var(--good); }
+      .card .head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .card .head .t { font-weight: 700; color: var(--text); font-size: 15px; }
+      .card .where { font-size: 12px; color: var(--text-mute); font-family: ui-monospace, "SF Mono", Consolas, monospace; }
+      .card p { margin: 6px 0; color: var(--text-dim); }
+      .card ul { margin: 6px 0; padding-left: 20px; color: var(--text-dim); }
+      .card ul li { margin: 3px 0; }
+      .card .fix {
+        margin-top: 10px;
+        padding: 10px 12px;
+        background: var(--bg-code);
+        border-radius: 8px;
+        font-size: 13px;
+        color: var(--accent-2);
+        border: 1px solid var(--border-soft);
+      }
+      .card .fix::before { content: "→ Как чинить: "; color: var(--text-mute); font-weight: 700; }
+
+      code, pre {
+        font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+        font-size: 13px;
+      }
+      :not(pre) > code {
+        background: var(--bg-code);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--accent);
+        border: 1px solid var(--border-soft);
+      }
+      pre {
+        background: var(--bg-code);
+        border: 1px solid var(--border-soft);
+        border-radius: 8px;
+        padding: 14px 16px;
+        overflow-x: auto;
+        margin: 12px 0;
+        color: var(--text);
+      }
+      pre code { color: inherit; background: none; border: none; padding: 0; }
+      .kw { color: #c792ea; }
+      .str { color: #c3e88d; }
+      .com { color: #5c6370; font-style: italic; }
+      .fn { color: #82aaff; }
+
+      .stack-table, .file-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0;
+        font-size: 14px;
+      }
+      .stack-table th, .stack-table td, .file-table th, .file-table td {
+        border: 1px solid var(--border-soft);
+        padding: 8px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      .stack-table th, .file-table th {
+        background: var(--bg-soft);
+        color: var(--text);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .stack-table td:first-child, .file-table td:first-child { color: var(--accent); font-weight: 600; }
+      .stack-table td, .file-table td { color: var(--text-dim); }
+      .file-table td code { font-size: 12px; }
+
+      .verdict {
+        background: linear-gradient(135deg, #142a1a, #1a2030);
+        border: 1px solid var(--good-border);
+        border-radius: 12px;
+        padding: 18px 20px;
+        margin: 16px 0;
+      }
+      .verdict .vh { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--good); margin-bottom: 8px; }
+      .verdict .vh.bad { color: var(--crit); }
+
+      .callout {
+        background: var(--bg-soft);
+        border-left: 3px solid var(--accent);
+        padding: 12px 16px;
+        border-radius: 0 8px 8px 0;
+        margin: 14px 0;
+        font-size: 14px;
+      }
+
+      details summary {
+        cursor: pointer;
+        color: var(--accent);
+        font-weight: 600;
+        padding: 6px 0;
+      }
+      details[open] summary { margin-bottom: 8px; }
+
+      footer {
+        text-align: center;
+        color: var(--text-mute);
+        font-size: 13px;
+        padding-top: 40px;
+        border-top: 1px solid var(--border);
+      }
+      .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      @media (max-width: 720px) {
+        .two-col { grid-template-columns: 1fr; }
+        .hero h2 { font-size: 21px; }
+        .score { font-size: 36px; }
+      }
+
+      /* Трекер статуса фиксов */
+      .st {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;
+        white-space: nowrap; border: 1px solid transparent; text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .st.done { background: var(--good-bg); color: var(--good); border-color: var(--good-border); }
+      .st.wip  { background: var(--med-bg);  color: var(--med);  border-color: var(--med-border); }
+      .st.todo { background: var(--bg-soft); color: var(--text-mute); border-color: var(--border-soft); }
+      .dash {
+        background: var(--bg-card); border: 1px solid var(--border-soft);
+        border-radius: 12px; padding: 18px 20px; margin: 0 0 32px;
+      }
+      .dash h2 { font-size: 18px; margin: 0 0 4px; }
+      .dash .sub { margin: 0 0 6px; color: var(--text-mute); font-size: 13px; }
+      .dash .counts { margin: 0 0 14px; font-size: 13px; color: var(--text-dim); }
+      .dash .counts b { color: var(--text); }
+      .dash-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .dash-table th {
+        text-align: left; padding: 6px 10px; background: var(--bg-soft); color: var(--text);
+        font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+      }
+      .dash-table td { padding: 7px 10px; border-top: 1px solid var(--border-soft); vertical-align: top; }
+      .dash-table td.fix { color: var(--text); }
+      .dash-table td a { color: var(--accent); text-decoration: none; }
+      .dash-table td a:hover { text-decoration: underline; }
+      .dash-group td { font-weight: 700; color: var(--text); background: var(--bg-soft); padding-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="inner">
+        <h1>🎲 boardgames — ревью кода</h1>
+        <span class="meta">глубокий аудит · main @ <code>154829b</code> · 16 июня 2026 · трекер обновлён 19 июня</span>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <div class="hero">
+        <h2>Глубокое ревью архитектуры, кода, безопасности и стека</h2>
+        <p>Self-hosted онлайн-платформа настольных игр. Bun + Fastify + socket.io · React 19 + Vite · PostgreSQL + Prisma. Играбельны Codenames и Uno.</p>
+        <div class="scoreline">
+          <div>
+            <div class="score">7.5<small>/10</small></div>
+            <div class="score-label">общая оценка зрелости</div>
+          </div>
+          <div class="legend">
+            <span class="badge crit">CRITICAL · 1</span>
+            <span class="badge high">HIGH · 8</span>
+            <span class="badge med">MEDIUM · 16</span>
+            <span class="badge low">LOW · 10</span>
+            <span class="badge good">GOOD · 25+</span>
+          </div>
+        </div>
+        <div class="grid-stats">
+          <div class="stat"><div class="n">2</div><div class="l">игры готовы</div></div>
+          <div class="stat"><div class="n">~5K</div><div class="l">LOC движка</div></div>
+          <div class="stat"><div class="n">~1K</div><div class="l">LOC тестов</div></div>
+          <div class="stat"><div class="n">0</div><div class="l">any / unsafe</div></div>
+        </div>
+      </div>
+
+      <section class="dash" id="status">
+        <h2>Трекер фиксов</h2>
+        <p class="sub">Что сделано, в работе и в планах по итогам ревью. Обновляется по мере применения. Источник статусов — <code>CLAUDE.md</code> (вехи 2026-06-17 и 2026-06-19).</p>
+        <p class="counts"><b>Сделано: 43</b> · В работе: 0 · В планах: 0</p>
+        <table class="dash-table">
+          <thead>
+            <tr><th>Статус</th><th>Фикс</th><th>Где</th><th>Приоритет</th></tr>
+          </thead>
+          <tbody>
+            <tr class="dash-group"><td colspan="4">✅ Сделано — ранее (CRITICAL-фикс)</td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Uno: прокинуть <code>random</code> в движок (детерминизм, реплеи, property-тесты)</td><td><a href="#s3">§3</a></td><td><span class="badge crit">CRIT</span></td></tr>
+
+            <tr class="dash-group"><td colspan="4">✅ Сделано — этот проход</td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Обработка ошибок Prisma (P2002→409) + <code>setErrorHandler</code></td><td><a href="#s6">§6</a></td><td><span class="badge high">HIGH</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Закоммитить миграцию Prisma <code>init</code></td><td><a href="#s6">§6</a></td><td><span class="badge high">HIGH</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Индексы БД: <code>[userId,won]</code>, <code>[userId,playedAt]</code></td><td><a href="#s6">§6</a></td><td><span class="badge high">HIGH</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Web-CI: <code>--frozen-lockfile</code></td><td><a href="#s8">§8</a></td><td><span class="badge high">HIGH</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">CI: кеш <code>bun</code> + prisma-engine</td><td><a href="#s8">§8</a></td><td><span class="badge high">HIGH</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>WEB_ORIGIN</code>: warning при дефолте (fail-closed сохранён)</td><td><a href="#s5">§5</a></td><td><span class="badge high">HIGH</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>database.md</code>: миграции закоммичены (дрейф док<->кода закрыт)</td><td><a href="#s9">§9</a></td><td><span class="badge high">HIGH</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">log-строка эндпоинтов auth: актуальный список (DRY из <code>registerAuthRoutes</code>)</td><td><a href="#s9">§9</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>mvp-plan.md</code>: актуальный статус (Uno готов, аккаунты отгружены)</td><td><a href="#s9">§9</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>resolveIdentity</code> → общий модуль <code>auth/identity.ts</code> (DRY)</td><td><a href="#s4">§4</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>recordFinish</code>: дедуп реципиентов по <code>userId</code> (2 вкладки = 1 запись)</td><td><a href="#s4">§4</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">postgres-service + <code>migrate deploy</code> в CI (DB-слой под тестом)</td><td><a href="#s8">§8</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>.gitignore</code>: <code>.env*</code> с исключением <code>.env.example</code></td><td><a href="#s9">§9</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">npm→bun в <code>mvp-plan.md</code></td><td><a href="#s9">§9</a></td><td><span class="badge low">LOW</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">pin <code>bun-version</code> в CI</td><td><a href="#s8">§8</a></td><td><span class="badge low">LOW</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Удалить ветку <code>feat/frontend-socketio</code> (избыточна)</td><td><a href="#s2">§2</a></td><td><span class="badge low">LOW</span></td></tr>
+
+            <tr class="dash-group"><td colspan="4">✅ Сделано — попутно (верификация CI нашла, не в ревью)</td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>.prettierignore</code>: <code>**/*.prisma</code> — у prettier нет парсера .prisma, ломал CI <code>format:check</code> (exit 2)</td><td><a href="#s8">§8</a></td><td><span class="badge high">HIGH</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>review.html</code>: битый HTML-тег <code>&lt;div class="fix"&gt;…&lt;/p&gt;</code> → <code>&lt;/div&gt;</code> (сам файл ревью ломал prettier)</td><td><a href="#s9">§9</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Форматирование 3 неотформатированных файлов (<code>codenames/manager.ts</code>, <code>uno/manager.ts</code>, <code>uno/handlers.ts</code>) — блокировали CI <code>format:check</code></td><td><a href="#s8">§8</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>.prettierignore</code>: <code>docs/review.html</code> + <code>docker-compose.override.yml</code> (hand-crafted / локальный dev-override)</td><td><a href="#s8">§8</a></td><td><span class="badge low">LOW</span></td></tr>
+
+            <tr class="dash-group"><td colspan="4">✅ Сделано — Alias и доки (2026-06-19)</td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Мёртвый <code>GameId = 'alias'</code> — теперь backed полноценной игрой: движок <code>packages/shared/src/alias/</code>, сервер <code>apps/server/src/alias/</code> (неймспейс <code>/alias</code>), события <code>Alias*</code>, фронт <code>apps/web/src/play/alias/</code>, сидер словаря (см. CLAUDE.md, веха 2026-06-19)</td><td><a href="#s3">§3</a></td><td><span class="badge low">LOW</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>apps/web</code> вне workspaces — задокументировано как осознанное решение в <code>CLAUDE.md</code> (STANDALONE, biome, причина frozen-lockfile + format check)</td><td><a href="#s1">§1</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr class="dash-group"><td colspan="4">✅ Сделано — быстрые победы аудита (2026-06-19)</td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Порезать неиспользуемые Radix-пакеты — удалено 27 (20 Radix + 7 доп-deps: cmdk/embla/input-otp/recharts/react-day-picker/vaul/react-resizable-panels); осталось 6 используемых Radix</td><td><a href="#s7">§7</a></td><td><span class="badge high">HIGH</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>JSON.parse</code> localStorage — helper <code>net/session.ts</code> (zod safeParse + try/catch), подключён в useRoom/useUnoRoom/useAliasRoom; битый ключ удаляется</td><td><a href="#s7">§7</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Дублирующая запись в лог при wild-карте — <code>playCard</code> не логирует wild/wild4 (кроме выигрышной), <code>chooseColor</code> пишет один play; +2 теста</td><td><a href="#s3">§3</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Тесты на redaction (view) — <code>codenames/view.test.ts</code> (5) + <code>uno/view.test.ts</code> (6): скрытие чужих рук/ключа, catchablePlayerId, playable, slice(-30), Infinity→'unlimited'</td><td><a href="#s3">§3</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">bot+embeddings в отдельный entry — убраны из barrel <code>@shared</code>; сервер импортит <code>suggestClue</code> из <code>@boardgames/shared/codenames/bot</code> (новый exports-entry). Web-бандл не изменился (Vite уже tree-shake'ил) — изоляция структурная</td><td><a href="#s3">§3</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Дублирование типов web↔shared — useUnoRoom импортит UnoRoomView/UnoAction/ChatMessage/UnoSettingsPatch из <code>@shared</code>; убран мёртвый импорт UnoColor/UnoRules</td><td><a href="#s7">§7</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr class="dash-group"><td colspan="4">☐ В планах</td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Janitor зомби-комнат — <code>janitor.ts</code> (раз в 60с чистит комнаты без живых сокетов; lobby/finished сразу, playing по grace от <code>turnDeadline</code>); <code>cleanupStale</code> в 3 менеджерах; старт в <code>index.ts</code> + graceful shutdown. +16 тестов. Репланирование таймера на реконнекте отложено к persist (§1) — без persist нечего восстанавливать</td><td><a href="#s4">§4</a></td><td><span class="badge high">HIGH</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Runtime-валидация входов (zod) — REST auth (register/login/avatar) + socket: <code>chat:send</code>, <code>room:settings</code>/<code>room:create</code> (3 игры), <code>game:act</code> (Uno), <code>game:clue</code>/<code>game:guess</code> (Codenames), <code>setTeam</code>/<code>setCaptain</code>. +35 тестов</td><td><a href="#s5">§5</a></td><td><span class="badge high">HIGH</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>GameResult.game</code> → Postgres enum <code>Game</code> (codenames/uno/alias) + миграция <code>20260619221418_game_enum</code> (USING-каст, без потери данных); индексы сохранены</td><td><a href="#s6">§6</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Аватары → MinIO/S3 (<code>apps/server/src/storage.ts</code>, S3-совместимый): data-URL → object, в БД URL. Fallback на data-URL если storage не настроен. e2e verифицировано (object в MinIO, URL отдаётся, БД худаёт с 2.7КБ до 79B). +10 тестов</td><td><a href="#s6">§6</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Никнейм/чат: аудит рендера — XSS-безопасно (нет <code>dangerouslySetInnerHTML</code>, user-text только в JSX text/<code>aria-label</code>/<code>alt</code> — React экранирует; <code>avatarUrl</code> валидируется сервером). CSP-заголовок отложен к deploy (static-сервер не в репо)</td><td><a href="#s5">§5</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>broadcast</code> через <code>nsp.adapter.rooms.get(code)</code> (O(room) вместо O(all сокетов неймспейса)) в 3 handlers; verифицировано 2-клиентным socket-e2e (оба получают room:state, чат A→B)</td><td><a href="#s10">§10</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Состояние комнат: persist-снапшоты — write-side (snapshotRoom во всех 3 менеджерах) + restore-on-startup (restoreFromSnapshot + index.ts wiring под PERSIST_RESTORE=true, переоружение таймеров: Uno afterUpdate, Alias armRoundTimer, Codenames при следующем действии)</td><td><a href="#s1">§1</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">JWT в localStorage → HttpOnly cookie — @fastify/cookie, SameSite=Lax, Secure в prod; Vite proxy /api same-origin; credentials:'include'; Bearer header fallback; logout route; socket.io cookie reading; +6 cookie-auth тестов (priority, fallback, broken cookie)</td><td><a href="#s5">§5</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">e2e: socket-e2e в <code>bun test</code> (7 тестов, реальный client⇄server codenames, zod-регрессии) + Playwright UI-smoke (config + <code>e2e/smoke.pw.ts</code>, отдельная CI-джоба <code>e2e</code> с chromium) + <code>bun audit</code> (advisory) в <code>check</code> и <code>web</code>. Найдены vuln (см. §8 body)</td><td><a href="#s8">§8</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Redis-адаптер socket.io (multi-node) — @socket.io/redis-adapter, env-gated REDIS_URL, pub/sub клиенты в index.ts, graceful shutdown</td><td><a href="#s10">§10</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Connection pool Prisma — <code>new PrismaClient({ log: ['warn','error'] })</code> + раздел в <code>database.md</code> про <code>?connection_limit=&pool_timeout=&pgbouncer=</code> URL-params и PgBouncer</td><td><a href="#s6">§6</a></td><td><span class="badge med">MED</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix">Codenames log — <code>redactCodenames</code> кэпит <code>log.slice(-MAX_LOG)</code> (MAX_LOG=60, как Uno). +1 тест</td><td><a href="#s10">§10</a></td><td><span class="badge low">LOW</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>Infinity</code> в <code>guessesLeft</code> не JSON-сейф — заменён на <code>null</code> (types.ts, engine.ts, view.ts: <code>null → 'unlimited'</code>)</td><td><a href="#s3">§3</a></td><td><span class="badge low">LOW</span></td></tr>
+            <tr><td><span class="st done">✓ сделано</span></td><td class="fix"><code>void socket.join()</code> → <code>await</code> (под multi-node) — все 3 handlers (codenames/uno/alias)</td><td><a href="#s4">§4</a></td><td><span class="badge low">LOW</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <p class="lead">
+        Проект <strong>значительно выше среднего уровня для MVP/PoC</strong>. Аккуратная монорепо-структура, единый чистый движок без I/O, строгий TypeScript, типизированные socket-события, хорошее тестовое покрытие Codenames и продвинутый бот-капитан на эмбеддингах. Основные проблемы сосредоточены в <strong>инфраструктуре вокруг кода</strong>: нет закоммиченных миграций Prisma, нет кеширования в CI, ненадёжное хранение состояния комнат (только в RAM), и одно детерминизм-нарушение в движке Uno. Ниже — по слоям.
+      </p>
+
+      <nav class="toc">
+        <a href="#s1"><span class="n">1</span>Стек и архитектура</a>
+        <a href="#s2"><span class="n">2</span>Ветка frontend-socketio</a>
+        <a href="#s3"><span class="n">3</span>Игровой движок (shared)</a>
+        <a href="#s4"><span class="n">4</span>Сервер (socket.io + auth)</a>
+        <a href="#s5"><span class="n">5</span>Безопасность</a>
+        <a href="#s6"><span class="n">6</span>БД и Prisma</a>
+        <a href="#s7"><span class="n">7</span>Веб-клиент</a>
+        <a href="#s8"><span class="n">8</span>CI и инфраструктура</a>
+        <a href="#s9"><span class="n">9</span>Документация</a>
+        <a href="#s10"><span class="n">10</span>Производительность</a>
+        <a href="#s11"><span class="n">11</span>План действий</a>
+      </nav>
+
+      <!-- =================== 1. СТЕК =================== -->
+      <section id="s1">
+        <h2 class="sec"><span class="idx">1</span>Стек и архитектура</h2>
+        <p class="lead">Стек выбран грамотно, соответствует задаче и масштабу. Высокая связность, низкое зацепление.</p>
+
+        <table class="stack-table">
+          <tr><th>Слой</th><th>Технология</th><th>Оценка</th></tr>
+          <tr><td>Язык</td><td>TypeScript 5.9 везде, <code>strict</code> + <code>noUncheckedIndexedAccess</code></td><td><span class="badge good">GOOD</span></td></tr>
+          <tr><td>Рантайм/PM</td><td>Bun 1.3 (workspaces, без turbo)</td><td><span class="badge good">GOOD</span></td></tr>
+          <tr><td>Сервер</td><td>Fastify 5 (REST) + socket.io 4 (realtime, неймспейс на игру)</td><td><span class="badge good">GOOD</span></td></tr>
+          <tr><td>Фронтенд</td><td>React 19 + Vite 7 + react-router + framer-motion</td><td><span class="badge good">GOOD</span></td></tr>
+          <tr><td>БД</td><td>PostgreSQL 16 + Prisma 6</td><td><span class="badge good">GOOD</span></td></tr>
+          <tr><td>Хостинг</td><td>Self-hosted VPS, docker-compose</td><td><span class="badge med">MEDIUM</span></td></tr>
+          <tr><td>UI-кит</td><td>shadcn/ui + Radix + Tailwind 4</td><td><span class="badge med">MEDIUM</span></td></tr>
+        </table>
+
+        <h3 class="sub">Архитектурные принципы — выдержаны</h3>
+        <div class="card good">
+          <div class="head"><span class="badge good">GOOD</span><span class="t">Сервер авторитарен, единый движок</span></div>
+          <p><code>packages/shared</code> — единственный источник игровой логики. Сервер валидирует ходы, клиент шлёт намерения. Пер-view-редакция состояния сервером (<code>redactCodenames</code>, <code>redUno</code>) — корректно прячет чужие руки/ключ. Это правильно и безопасно.</p>
+        </div>
+        <div class="card good">
+          <div class="head"><span class="badge good">GOOD</span><span class="t">Реестр игр — точка расширения</span></div>
+          <p><code>apps/server/src/games.ts:25</code> — массив <code>GameModule[]</code>. Чтобы добавить игру, нужна одна запись; <code>index.ts:33</code> поднимает неймспейс автоматически. Чистый plugin-паттерн.</p>
+        </div>
+        <div class="card good">
+          <div class="head"><span class="badge good">GOOD</span><span class="t">Движок чистый (no I/O)</span></div>
+          <p>Все функции движка — чистые трансформеры состояния. Нет сети, таймеров, <code>Date.now()</code>, логирования. Рандом инжектируется параметром (<code>codenames/engine.ts:24</code>), что делает их детерминированными и тестируемыми. <em>Uno</em> с 2026-06-17 тоже инжектирует <code>random</code> (CRITICAL-фикс закрыт, см. трекер).</p>
+        </div>
+
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Состояние комнат только в RAM — теряется при рестарте</span></div>
+          <p>Оба менеджера хранят комнаты в <code>private rooms = new Map&lt;...&gt;</code> (<code>codenames/manager.ts:66</code>, <code>uno/manager.ts:95</code>). При падении/рестарте сервера все активные партии исчезают, игроки не смогут <code>rejoin</code>. Для MVP с self-hosted VPS допустимо, но это <strong>главный архитектурный риск для надёжности</strong>.</p>
+          <div class="fix">Для прод-нагрузки — периодический снапшот активных комнат в Redis/Postgres (раз в N секунд или на смену фазы), либо явное признание «партия живёт до рестарта» в SLA. Снапшотить только невидимую часть (своё состояние), видимое уже приходит по сокету.</div>
+        </div>
+
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">apps/web намеренно вне workspaces — две системы сборки</span></div>
+          <p>Web — standalone, форматируется Biome; корень — Prettier + ESLint. Решение задокументировано в <code>CLAUDE.md:124</code> и сделано чтобы обойти frozen-lockfile конфликт. Но это <strong>удваивает когнитивную нагрузку и инфра-настройку</strong>, и источник постоянных «почему CI падает»-ситуаций (как с <code>bun.lock</code> в этом ревью).</p>
+          <div class="fix">Если frozen-lockfile был единственной причиной выноса — рассмотрите возврат web в workspaces с единым lockfile; bun workspaces это поддерживают. Иначе держать, но явно задокументировать как технический долг.</div>
+        </div>
+      </section>
+
+      <!-- =================== 2. ВЕТКА =================== -->
+      <section id="s2">
+        <h2 class="sec"><span class="idx">2</span>feat/frontend-socketio — нужна ли?</h2>
+        <div class="verdict">
+          <div class="vh">✅ Вердикт: ветка полностью избыточна, безопасна к удалению</div>
+          <p style="margin:0">Это <strong>старый ранний снимок</strong> кода миграции с Convex на socket.io (14 июня, <code>cadec25</code>, основан на <code>a1e91e3</code>). Всё ценное в ней уже есть в <code>main</code> в более полном виде. На origin она уже удалена.</p>
+        </div>
+
+        <h3 class="sub">Что в ветке есть, а в main — НЕТ (сравнение)</h3>
+        <table class="stack-table">
+          <tr><th>Функция</th><th>frontend-socketio</th><th>main</th></tr>
+          <tr><td>Аватары игроков</td><td>❌ нет <code>avatarUrl</code></td><td>✅ есть + из профиля</td></tr>
+          <tr><td>Таймеры хода</td><td>❌ отсутствуют полностью</td><td>✅ <code>scheduleTurnTimer</code>, bonus, grace</td></tr>
+          <tr><td>Слоты капитана</td><td>❌ нет <code>room:setCaptain</code></td><td>✅ <code>setCaptainSlot</code></td></tr>
+          <tr><td>Запись результатов в БД</td><td>❌ нет <code>recordFinish</code></td><td>✅ <code>recordGameResult</code></td></tr>
+          <tr><td>Ник/аватар из профиля</td><td>❌ нет <code>resolveIdentity</code></td><td>✅ есть</td></tr>
+          <tr><td>Таймаут-переход хода</td><td>❌ нет <code>timeoutPass/SkipClue</code></td><td>✅ есть</td></tr>
+          <tr><td>Бонус за угаданное слово</td><td>❌</td><td>✅ <code>addGuessBonus</code></td></tr>
+          <tr><td>Структура каталога</td><td><code>apps/space/</code> (старое имя)</td><td><code>apps/web/</code> (переименовано)</td></tr>
+        </table>
+
+        <p>Дифф <code>packages/shared/src/events.ts</code> показывает, что ветка <strong>удаляет</strong> поля, которые main считает обязательными (<code>avatarUrl</code>, <code>timer</code>, <code>startedAt</code>, <code>game:timer</code>, <code>room:setCaptain</code>). Слияние было бы <strong>откатом функциональности на 2 дня назад</strong> плюс 8 конфликтов (включая 5 <code>modify/delete</code> по <code>apps/space/</code>).</p>
+
+        <div class="callout">
+          <strong>Рекомендация:</strong> <code>git branch -D feat/frontend-socketio</code>. Ни одной уникальной ценной строки в ней нет.
+        </div>
+      </section>
+
+      <!-- =================== 3. ДВИЖОК =================== -->
+      <section id="s3">
+        <h2 class="sec"><span class="idx">3</span>Игровой движок · <code>packages/shared</code></h2>
+        <p class="lead">~3.1K LOC кода + ~820 LOC тестов. Codenames — образцового качества. Uno — функционально полный, но с одним критическим и несколькими средними дефектами.</p>
+
+        <table class="file-table">
+          <tr><th>Модуль</th><th>LOC</th><th>Тесты</th></tr>
+          <tr><td><code>codenames/</code> (engine, bot, dictionary, coop, view, types)</td><td>~1015</td><td>408 ✅</td></tr>
+          <tr><td><code>uno/</code> (types, view, round, rules, special, timeout, internal, play, draw, bot, engine)</td><td>~890</td><td>385 ✅</td></tr>
+          <tr><td><code>events.ts</code>, <code>roomCode.ts</code></td><td>~205</td><td>26 ✅</td></tr>
+          <tr><td><code>codenames/embeddings.data.json</code></td><td>1.2 МБ</td><td>—</td></tr>
+        </table>
+
+        <div class="card good">
+          <div class="head"><span class="badge good">GOOD</span><span class="t">Бот-капитан Codenames — высокого качества</span></div>
+          <p>Cosine-сходство над int8-квантованными navec-эмбеддингами с корректной денормализацией (<code>codenames/bot.ts:52</code>). Многокритериальный скоринг: размер группы → margin <code>targetSim − dangerSim</code>. Жёсткий потолок по киллеру <code>ASSASSIN_CAP = 0.35</code> (<code>bot.ts:28,120</code>). Взвешенные опасности (киллер 1.0, оппонент 0.85, нейтрал 0.6). Профили риска реально меняют порог. Тесты на 50 сидах.</p>
+        </div>
+
+        <div class="card crit">
+          <div class="head"><span class="badge crit">CRITICAL</span><span class="t">Uno нарушает детерминизм — <code>Math.random</code> вшит в движок</span> <span class="where">uno/deck.ts:27 · uno/round.ts:43 · uno/bot.ts:36</span></div>
+          <p><code>shuffle()</code> (<code>deck.ts:27</code>) и <code>createUnoRound</code> (<code>round.ts:43</code>) хардкодят <code>Math.random()</code>, а бот (<code>bot.ts:36</code>) решает челлендж через <code>Math.random() &lt; p</code>. Codenames для сравнения всю случайность прокидывает параметром (<code>engine.ts:24</code>). Следствия:</p>
+          <ul>
+            <li>Невозможны детерминированные тесты Uno (создание раунда, поведение бота на челлендже).</li>
+            <li>Нельзя реплеить/отлаживать партию — каждое создание колоды непредсказуемо.</li>
+            <li>Ломает чистый контракт «движок = чистая функция».</li>
+          </ul>
+          <div class="fix">Прокинуть <code>random: () =&gt; number</code> параметром во все функции Uno (как сделано в Codenames). В проде передавать <code>Math.random</code>, в тестах — seeded LCG. Заодно это позволит добавить property-тесты на полную партию Uno.</div>
+          <p style="margin-top:10px"><strong style="color:var(--good)">✅ Закрыто (2026-06-17):</strong> <code>random</code> прокинут в <code>shuffle</code>, <code>createUnoRound</code> и <code>botAction</code> (поле <code>UnoState.random</code>); в проде <code>Math.random</code>, в тестах — seeded LCG. Тесты «детерминизм (random injection)» зелёные. См. трекер и CLAUDE.md (веха 2026-06-17).</p>
+        </div>
+
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Дублирующая запись в лог при игре wild-карты</span> <span class="where">uno/play.ts:117 + uno/special.ts:11</span></div>
+          <p>При розыгрыше wild: <code>playCard</code> пишет <code>log('play')</code> (play.ts:117), затем фаза → <code>chooseColor</code>, и <code>chooseColor</code> пишет <code>log('play')</code> ещё раз (special.ts:11). Клиенты видят <code>log.slice(-30)</code> — получат дубликат. Не сломает игру, но «оском» в истории хода.</p>
+          <div class="fix">В <code>playCard</code> для wild-карты не писать лог (или писать «ожидаю выбора цвета»), а финальный <code>play</code>-лог оставлять только в <code>chooseColor</code>. Покрыть тестом.</div>
+          <p style="margin-top:10px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19):</strong> <code>playCard</code> не логирует wild/wild4 (кроме выигрышной карты — там <code>chooseColor</code> не зовётся), <code>chooseColor</code> пишет один <code>play</code> с выбранным цветом. +2 теста-регрессии в <code>engine.test.ts</code>.</p>
+        </div>
+
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">1.2 МБ эмбеддингов тащатся в любой бандл импорта shared</span> <span class="where">codenames/bot.ts:7</span></div>
+          <p><code>bot.ts</code> статически импортирует <code>embeddings.data.json</code> (1.2 МБ). Так как <code>index.ts</code> реэкспортит <code>./codenames</code> → <code>./bot</code>, <strong>любой</strong> web-бандл, импортящий хоть что-то из <code>@boardgames/shared</code>, тянет весь блоб — даже Uno-only клиенты или клиенты, которым нужны только типы. Ленивая загрузка (<code>load()</code> при первом вызове) есть, но JSON-строка уже в бандле.</p>
+          <div class="fix">Вынести bot + embeddings в отдельный entry (<code>@boardgames/shared/bot</code>) или динамический <code>import()</code>. Сервер импортит напрямую, web — только если реально показывает бота.</div>
+        </div>
+
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Нет тестов на redaction-функции (view)</span></div>
+          <p><code>redactUno</code> (<code>uno/view.ts:38</code>) и <code>redactCodenames</code> (<code>codenames/view.ts:6</code>) — критичные для безопасности (скрывают чужие руки/ключ) — не покрыты тестами. Логика <code>playable</code>, <code>catchablePlayerId</code>, <code>canPass</code>, <code>handCount</code> — всё нетестированное.</p>
+          <div class="fix">Добавить <code>uno/view.test.ts</code> и <code>codenames/view.test.ts</code>: проверить, что чужая рука не видна, что <code>playable</code> корректен, что ключ виден только капитану/в финале.</div>
+        </div>
+
+        <div class="card low">
+          <div class="head"><span class="badge low">LOW</span><span class="t">Мёртвый <code>GameId = 'alias'</code> без движка</span> <span class="where">events.ts:4</span></div>
+          <p>Тип разрешает <code>'alias'</code>, но ни движка, ни событий, ни неймспейса Alias в репо нет. Потенциальная дыра: <code>room:create</code> мог бы принять игру без бэкенда.</p>
+          <p style="margin-top:8px"><strong style="color:var(--good)">✅ Обновлено (2026-06-19):</strong> закрыто — Alias полностью реализован (движок <code>packages/shared/src/alias/</code> + сервер <code>apps/server/src/alias/</code> + неймспейс <code>/alias</code> + события <code>Alias*</code> + фронт + сидер словаря). См. трекер и CLAUDE.md (веха 2026-06-19).</p>
+        </div>
+        <div class="card low">
+          <div class="head"><span class="badge low">LOW</span><span class="t"><code>Infinity</code> в <code>guessesLeft</code> не JSON-сейф</span> <span class="where">codenames/engine.ts:101 → view.ts:16</span></div>
+          <p><code>count===0</code> даёт <code>guessesLeft = Infinity</code>, в view перекодируется в <code>'unlimited'</code>. Нагрузка на <code>Number.isFinite</code> в view. Если состояние когда-нибудь будут сериализовать в БД — <code>Infinity</code> превратится в <code>null</code> и сломает логику.</p>
+          <p style="margin-top:8px"><strong style="color:var(--text-mute)">⏳ Отложено к persist (§1):</strong> проверено — <code>CodenamesState</code> нигде не сериализуется в JSON (RAM-only; по проводу идёт <code>redactCodenames</code>, который уже конвертирует <code>Infinity→'unlimited'</code> через <code>Number.isFinite</code>). Реальная экспозиция возникнет только при persist+restore (MED §1) — тогда <code>null</code> после round-trип сломал бы <code>guess()</code> (<code>null-1=NaN</code>, <code>NaN&gt;0=false</code> → досрочный endTurn). Фикс (sentinel вместо <code>Infinity</code> + guard в <code>guess()</code>) скоординирован с задачей persist, чтобы не трогать engine-семантику без нужды и без e2e-покрытия.</p>
+        </div>
+      </section>
+
+      <!-- =================== 4. СЕРВЕР =================== -->
+      <section id="s4">
+        <h2 class="sec"><span class="idx">4</span>Сервер · socket.io + Fastify</h2>
+        <p class="lead">Чистая слоистая архитектура: bootstrap → реестр → неймспейсы → manager + handlers. Хорошо структурированные таймеры и планирование ботов.</p>
+
+        <div class="card good">
+          <div class="head"><span class="badge good">GOOD</span><span class="t">Паттерн guard + broadcast единообразен</span></div>
+          <p>Все хендлеры обёрнуты в <code>guard()</code> (<code>codenames/handlers.ts:231</code>), который ловит <code>RoomError</code> → <code>game:error</code>, а прочее → логирует. <code>broadcast()</code> обходит сокеты комнаты и шлёт каждому его персональный view. Согласованно в обеих играх.</p>
+        </div>
+        <div class="card good">
+          <div class="head"><span class="badge good">GOOD</span><span class="t">Таймеры Codenames продуманы</span></div>
+          <p>Двойной таймер: <code>firstTurnSec</code> на первый ход, при просрочке капитана — «время игроков» (grace), и только потом ход переходит (<code>handlers.ts:168-200</code>). Бонус <code>bonusSec</code> за верное слово (<code>addGuessBonus</code>). Снятие таймера при любой смене состояния. Условная логика «ждём живого капитана» — корректна.</p>
+        </div>
+
+        <div class="card high">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">Таймеры хранятся в <code>setTimeout</code> без валидации на рестарте</span> <span class="where">codenames/manager.ts:51 · uno/manager.ts:52</span></div>
+          <p>Каждая комната хранит <code>timer: ReturnType&lt;typeof setTimeout&gt;</code>. При рестарте процесса все таймеры теряются → ход может зависнуть навсегда (никакой fallback-логики «комната простояла N минут → закрыть»). В сочетании с RAM-only состоянием (§1) — это означает зависшие/зомби-комнаты после любого деплоя.</p>
+          <div class="fix">Либо persist + восстановление таймеров при старте, либо janitor-задача: раз в минуту вычищать комнаты без живых сокетов дольше порога. Дедлайн уже хранится (<code>turnDeadline</code>) — достаточно на реконнекте перепланировать таймер по нему.</div>
+        </div>
+
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t"><code>recordFinish</code> гонка при нескольких сокетах одного юзера</span> <span class="where">codenames/handlers.ts:63 · uno/handlers.ts:44</span></div>
+          <p>Сбор <code>recipients</code> идёт по <code>nsp.sockets</code>. Если у одного <code>userId</code> открыто 2 вкладки — он попадёт в recipients дважды и результат запишется дважды (2 строки <code>GameResult</code>). Uno защищён <code>recorded: Set&lt;string&gt;</code> анти-дублём по комнате, Codenames — нет (вызовется на каждый guess, доводящий до finish, но фаза-фильтр спасает).</p>
+          <div class="fix">Дедуп по <code>userId</code> перед записью (<code>new Map(userId → team)</code>), либо уникальный индекс БД на (userId, finishedAt-окно). Перенести флаг <code>recorded</code> из handler-scope в поле комнаты.</div>
+        </div>
+
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t"><code>resolveIdentity</code> дублируется в двух хендлерах</span> <span class="where">codenames/handlers.ts:24 ≡ uno/handlers.ts:22</span></div>
+          <p>Идентичные функции получения ника/аватара по <code>userId</code>. Нарушает DRY; при правке одной вторая рассинхронизируется.</p>
+          <div class="fix">Вынести в <code>apps/server/src/auth/identity.ts</code>, импортить в обоих. Это естественная точка и для кеширования (см. §6).</div>
+        </div>
+
+        <div class="card low">
+          <div class="head"><span class="badge low">LOW</span><span class="t"><code>void socket.join()</code> — результат промиса игнорируется</span></div>
+          <p>Везде <code>void socket.join(room.code)</code>. <code>join</code> в socket.io возвращает Promise (при использовании Redis-адаптера). В single-node — безопасно, но при горизонтальном масштабировании room-join может не успеть — и <code>broadcast</code> через <code>nsp.to()</code> не дойдёт. Сейчас broadcast идёт по <code>nsp.sockets</code> перебором, так что не критично, но ломает будущий multi-node.</p>
+          <p style="margin-top:8px"><strong style="color:var(--text-mute)">⏳ Отложено к Redis-адаптеру (§10):</strong> на single-node (in-memory adapter) <code>socket.join</code> синхронный — <code>await</code> не добавляет ценности. Фикс (10 сайтов + 5 async-конверсий в 3 хендлерах) скоординирован с подключением Redis-адаптера (MED §10), где он реально нужен и будет проверен вместе. Сейчас — churn без e2e-покрытия и verifiable benefit.</p>
+        </div>
+      </section>
+
+      <!-- =================== 5. БЕЗОПАСНОСТЬ =================== -->
+      <section id="s5">
+        <h2 class="sec"><span class="idx">5</span>Безопасность</h2>
+        <p class="lead">Авторизация реализована корректно для MVP. Несколько реальных рисков, ни одного критического.</p>
+
+        <div class="card good">
+          <div class="head"><span class="badge good">GOOD</span><span class="t">Пароли — argon2id, JWT — HS256 через jose</span></div>
+          <p><code>Bun.password.hash</code> (по умолчанию argon2id) — современно. JWT через проверенную библиотеку <code>jose</code>, HS256, срок 30 дней. Guard в <code>index.ts:15-20</code>: если задан <code>DATABASE_URL</code>, но нет <code>JWT_SECRET</code> — сервер не стартует. Прод не загрузится с dev-секретом.</p>
+        </div>
+        <div class="card good">
+          <div class="head"><span class="badge good">GOOD</span><span class="t">Per-player redaction состояния</span></div>
+          <p>Сервер рассылает каждому сокету его персональный view (<code>redactCodenames</code>/<code>redactUno</code>). Чужие руки/ключ не утекают по проводу. Это правильная модель для авторитарного сервера.</p>
+        </div>
+        <div class="card good">
+          <div class="head"><span class="badge good">GOOD</span><span class="t">Rate-limiter на auth-роутах</span></div>
+          <p>In-memory лимитер 10 попыток/мин по <code>IP+маршрут</code> (<code>routes.ts:35-51</code>) на register/login. Защита от брутфорса и спам-регистрации. Самоочистка при &gt;5000 записей.</p>
+        </div>
+
+        <div class="card high">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">Нет валидации входных данных сервером (schema validation)</span></div>
+          <p>REST-роуты (<code>routes.ts</code>) и socket-хендлеры читают <code>req.body</code> / аргументы как <code>as RegisterBody</code> без runtime-валидации. Никакого zod/ajv/Fastify-schema. В коде уже есть <code>zod ^4</code> в web-зависимостях. В хендлерах — полностью доверие к TS-типам от клиента. Любой malformed payload (число вместо строки, огромный <code>cardIndex</code>, чужой <code>targetId</code>) пройдёт до движка.</p>
+          <div class="fix">Движок во многом защищён (валидация внутри), но нужен периметр: Fastify schema validation на REST + zod-схемы на socket-аргументы. Особенно <code>room:settings</code>, <code>game:act</code>, <code>chat:send</code> (текст до 500 — но проверяется ли длина в обработчикеUno? да, <code>manager.ts:283</code> ok). Минимум — тип + длина на все строковые поля.</div>
+        </div>
+
+        <div class="card high">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">CORS разрешает только один origin из env — но дефолт localhost</span> <span class="where">index.ts:9,12,30</span></div>
+          <p><code>WEB_ORIGIN ?? 'http://localhost:5173'</code>. Если при деплое забыть <code>WEB_ORIGIN</code> — сокеты/REST будут принимать только localhost, что тихо сломает прод. Это «fail-closed», что хорошо, но неочевидно для оператора.</p>
+          <div class="fix">Либо требовать <code>WEB_ORIGIN</code> явно в проде (как <code>JWT_SECRET</code>), либо warning в логе при дефолте. Документировать в deploy-гайде.</div>
+        </div>
+
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">JWT в localStorage — уязвим к XSS</span></div>
+          <p>Токен в <code>localStorage</code> (<code>auth.ts:5</code>). Любой XSS утянет токен. HttpOnly-cookie был бы безопаснее, но сложнее с cross-origin (web :5173 ↔ server :3001). Для MVP приемлемо, но это технический долг: CSP-заголовки и sanitize пользовательского ввода (никнейм, чат) становятся обязательными.</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Никнейм/чат выводятся без явной санитизации</span></div>
+          <p>Никнеймы и сообщения чата проходят через trim+slice, но проверка, что они НЕ содержат разметку/скрипт, зависит от того, как фронт их рендерит. Если где-то <code>dangerouslySetInnerHTML</code> или небезопасный атрибут — XSS. Нужен аудит React-рендера + Content-Security-Policy заголовок от сервера статики.</p>
+          <p style="margin-top:8px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19, рендер):</strong> аудит <code>apps/web/src</code> — <code>dangerouslySetInnerHTML</code> нигде нет; никнеймы/текст чата рендерятся как JSX text (<code>{m.text}</code>, <code>{p.nickname}</code>) и в <code>aria-label</code>/<code>alt</code> — React auto-экранирует; <code>style</code>-атрибуты используют статичные CSS-var; <code>&lt;img src={avatarUrl}&gt;</code> не исполняет <code>javascript:</code>, а <code>avatarUrl</code> валидируется сервером (<code>data:image/</code> + лимит); <code>NAV_LINKS</code> статичные. XSS-вектор через рендер отсутствует.</p>
+          <p style="margin-top:6px"><strong style="color:var(--text-mute)">⏳ Отложено (CSP-заголовок):</strong> meaningful CSP требует server-side header (env-aware <code>connect-src</code> для dev :3001 vs prod same-origin + nonces для prod-ассетов). Meta-CSP либо ломает Vite-dev (inline HMR), либо с <code>'unsafe-inline'</code> теряет смысл. Static-сервер SPA не в репо — CSP добавляется при deploy-настройке (nginx/Vite preview).</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Аватары как data-URL — потенциал для;base64-атак</span></div>
+          <p>Хранение <code>data:image/*</code> в БД (<code>routes.ts:97-109</code>) валидируется префиксом и длиной (140 КБ). Но нет проверки magic bytes/реального декодирования — злоумышленник может заслать <code>data:image/png,</code> + произвольный payload до лимита. Само по себе не RCE, но базу можно забивать мусором. И каждое чтение юзера тянет ~140 КБ.</p>
+        </div>
+      </section>
+
+      <!-- =================== 6. БД =================== -->
+      <section id="s6">
+        <h2 class="sec"><span class="idx">6</span>БД и Prisma · <code>packages/db</code></h2>
+        <p class="lead">Минималистичная, нормализованная схема. Изолированный слой доступа. Несколько реальных индексных/ошибочных пробелов.</p>
+
+        <div class="card good">
+          <div class="head"><span class="badge good">GOOD</span><span class="t">Чистая изоляция Prisma</span></div>
+          <p>Только <code>src/index.ts</code> импортит <code>@prisma/client</code>; наружу отдаются доменные интерфейсы (<code>UserPublic</code>, <code>GameStats</code>). <code>postinstall: prisma generate</code> гарантирует генерацию клиента. Cascade-delete на <code>GameResult.user</code> — нет осиротевших строк.</p>
+        </div>
+
+        <div class="card high">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">Не закоммичено ни одной миграции Prisma</span></div>
+          <p>В <code>packages/db/prisma/</code> только <code>schema.prisma</code>, папки <code>migrations/</code> нет. При этом <code>docs/database.md:51-57</code> описывает прод-флоу через <code>migrate:deploy</code> «по уже закоммиченным миграциям». На свежей прод-БД <code>migrate:deploy</code> будет no-op, пока локально не прогнали <code>migrate dev</code>. Это <strong>главное расхождение доков и реальности</strong>.</p>
+          <div class="fix">Прогнать <code>bun run --filter @boardgames/db migrate -- --name init</code>, закоммитить <code>packages/db/prisma/migrations/</code>. Добавить шаг применения миграций в CI (с эфемерным postgres-service).</div>
+        </div>
+
+        <div class="card high">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">Нет обработки ошибок Prisma → гонка даёт 500</span></div>
+          <p>Ни одна из 12 функций (<code>createUser</code>, <code>findUserByEmail</code>, ...) не оборачивает Prisma-вызовы в try/catch и не транслирует коды (напр. <code>P2002</code> unique-нарушение → 409). В <code>routes.ts:61-63</code> сначала <code>findUserByEmail</code>, потом <code>createUser</code> — между ними окно гонки, и конкурентная регистрация кинет необработанный <code>PrismaClientKnownRequestError</code> → Fastify отдаст 500 вместо чистого 409.</p>
+          <div class="fix">Перехватывать <code>P2002</code> в <code>createUser</code>/<code>routes.ts</code> и отдавать 409. Добавить <code>app.setErrorHandler</code> в <code>index.ts</code> для единообразия 500-ответов.</div>
+        </div>
+
+        <div class="card high">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">Leaderboard — full-table <code>groupBy</code> без нужного индекса</span></div>
+          <p><code>getLeaderboard</code> (<code>src/index.ts:163-186</code>) делает два <code>groupBy</code> по всей таблице <code>GameResult</code> без <code>where</code>, параллельно через <code>Promise.all</code>, плюс <code>user.findMany</code>. Есть <code>@@index([game])</code> и <code>@@index([userId])</code>, но нет композитного <code>[userId, won]</code> и нет индекса на <code>won</code>. С ростом таблицы агрегации деградируют.</p>
+          <div class="fix">Добавить <code>@@index([userId, won])</code> и/или materialized view для лидерборда с периодическим пересчётом. <code>getRecentResults</code> — композитный <code>[userId, playedAt(desc)]</code> (<code>playedAt</code> сейчас не индексирован, хотя используется в <code>orderBy</code>).</div>
+        </div>
+
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t"><code>GameResult.game</code> — free-text, не enum</span></div>
+          <p><code>game String</code> ограничен только комментарием, не enum/FK. Взаимоисключающие <code>team</code> (Codenames) и <code>score</code> (Uno) — оба nullable. По мере роста игр таблица обрастёт nullable-колонками. Нет DB-гарантии отказа невалидному <code>game</code>.</p>
+          <div class="fix"><code>game</code> → Postgres enum. Дальше — либо per-game таблицы результатов, либо JSONB-колонка для game-specific полей.</div>
+          <p style="margin-top:8px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19):</strong> <code>game</code> → Postgres enum <code>Game</code> (codenames/uno/alias) в <code>schema.prisma</code>; миграция <code>20260619221418_game_enum</code> с <code>ALTER TYPE ... USING "game"::"Game"</code> (существующие строки сохранены, индекс <code>GameResult_game_idx</code> перенесён автоматически). Prisma-клиент перегенерирован (<code>$Enums.Game</code>). Per-game таблицы / JSONB — отдельная будущая задача (взаимоисключающие <code>team</code>/<code>score</code> пока nullable).</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Аватары data-URL в БД — ~140 КБ на каждое чтение юзера</span></div>
+          <p>Каждый <code>/auth/me</code>, login, leaderboard, и fetch юзера в хендлере тянул ~140 КБ base64. <code>getLeaderboard</code> тащил <code>avatarUrl</code> для 20 юзеров → потенциально ~2.8 МБ за вызов. TOAST смягчал on-disk, но трафик/сериализация оставались.</p>
+          <div class="fix">S3/статика + URL-колонка. Или минимум — не выбирать <code>avatarUrl</code> в leaderboard-запросе, отдавать отдельным батчем по demand.</div>
+          <p style="margin-top:8px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19):</strong> <code>apps/server/src/storage.ts</code> (S3-совместимый через <code>@aws-sdk/client-s3</code>: MinIO/R2/AWS). <code>POST /auth/avatar</code>: data-URL → object <code>avatars/&lt;userId&gt;.&lt;ext&gt;</code> в bucket, в БД — публичный URL; старый object чистится при смене/сбросе. <strong>Fallback</strong>: если storage env не задан — data-URL прямо в БД (старый путь, для dev без MinIO). e2e verифицировано на live MinIO (object создан, URL отдаёт HTTP 200 image/webp, БД: новый юзер 79B URL vs старый 2.7КБ data-URL). Config через env (<code>S3_ENDPOINT/REGION/BUCKET/ACCESS_KEY/SECRET_KEY/PUBLIC_BASE/FORCE_PATH_STYLE</code>), добавлен в <code>apps/server/.env</code> и <code>docker-compose.override.yml</code> (MinIO). +10 unit-тестов.</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Нет конфигурации connection pool</span></div>
+          <p><code>new PrismaClient()</code> без аргументов (<code>src/index.ts:8</code>). Дефолт <code>connection_limit = num_cpus*2+1</code>. На VPS сойдётся, но нигде не документировано, нет PgBouncer-гайданса.</p>
+          <p style="margin-top:8px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19):</strong> <code>new PrismaClient({ log: ['warn', 'error'] })</code> — предупреждения Prisma (исчерпание пула, медленные запросы) теперь в логе сервера. Connection limit/pool timeout настраиваются через <code>DATABASE_URL</code> query-params (<code>?connection_limit=10&pool_timeout=10</code>), PgBouncer — через <code>?pgbouncer=true&connection_limit=1</code> — всё описано в <code>docs/database.md</code> «Connection pool / PgBouncer» (вкл. заметку про multi-node + <code>@socket.io/redis-adapter</code>).</p>
+        </div>
+      </section>
+
+      <!-- =================== 7. WEB =================== -->
+      <section id="s7">
+        <h2 class="sec"><span class="idx">7</span>Веб-клиент · React 19 + Vite</h2>
+        <p class="lead">Хорошо структурированный net-слой, типизированные хуки комнат. Множество установленных, но неиспользуемых Radix-компонентов.</p>
+
+        <div class="card good">
+          <div class="head"><span class="badge good">GOOD</span><span class="t">Типизированные socket-хуки комнат</span></div>
+          <p><code>useRoom</code> (codenames) и <code>useUnoRoom</code> полностью типизированы через <code>Socket&lt;ServerEvents, ClientEvents&gt;</code>. Чёткий <code>RoomApi</code>/<code>UnoRoomApi</code> контракт. Восстановление сессии после reload через <code>localStorage</code> + <code>room:rejoin</code> (<code>useRoom.ts:96-104</code>). <code>withAck</code> единообразно управляет busy/error.</p>
+        </div>
+        <div class="card good">
+          <div class="head"><span class="badge good">GOOD</span><span class="t">Singleton-сокеты с reconnect на смену токена</span></div>
+          <p>Один сокет на неймспейс на вкладку (<code>socket.ts:18</code>, lazy <code>??=</code>). <code>reconnectSockets()</code> переподключает при login/logout, чтобы handshake подхватил новый токен. Корректно.</p>
+        </div>
+
+        <div class="card high">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">21 Radix-пакет в зависимостях — установлен «весь» shadcn</span></div>
+          <p>В <code>apps/web/package.json:17-42</code> — 26 <code>@radix-ui/*</code>, плюс embla, cmdk, input-otp, recharts, react-day-picker, vaul, react-resizable-panels. При этом <code>components/ui/</code> содержит только 9 файлов (button, dialog, input, label, separator, sheet, skeleton, toggle, tooltip). CLAUDE.md:117 прямо требует «только реально используемые». Значит, ~17 пакетов тянутся в bundle/install впустую.</p>
+          <div class="fix">Прогнать <code>knip</code> или depcheck, удалить неиспользуемые Radix-пакеты и acompanhando deps. Каждый неиспользуемый = лишний MB в <code>node_modules</code> и потенциальный audit-шум.</div>
+        </div>
+
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t"><code>JSON.parse</code> localStorage без try/catch</span> <span class="where">useRoom.ts:99 · useUnoRoom.ts:184</span></div>
+          <p>Чтение сессии: <code>const { code, token } = JSON.parse(raw)</code>. Если в storage мусор/старый формат — бросит, эффект упадёт, ребилд сломается. <code>socket.emit('room:rejoin', ...)</code> тогда даже не вызовется.</p>
+          <div class="fix">Обернуть в try/catch, при ошибке удалять ключ. <code>zod</code>-схема на shape сессии.</div>
+          <p style="margin-top:10px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19):</strong> helper <code>apps/web/src/play/net/session.ts</code> (<code>readRoomSession</code>: try/catch + zod <code>safeParse</code>), подключён в <code>useRoom</code>/<code>useUnoRoom</code>/<code>useAliasRoom</code>; битый ключ удаляется, эффект реконнекта пропускается.</p>
+        </div>
+
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Дублирование типов между web и shared</span></div>
+          <p><code>useUnoRoom.ts:7-50</code> заново объявляет <code>UnoRoomView</code>, <code>UnoRoomSettingsView</code>, <code>UnoAction</code>, <code>ChatMessage</code>, <code>UnoSettingsPatch</code> — хотя они есть в <code>@shared</code>/<code>events.ts</code>. Источник рассинхронизации: поменяешь в shared — в web останется старое.</p>
+          <div class="fix">Импортить типы из <code>@shared</code>; web-локальные оставить только для чисто-фронтовых (напр. busy).</div>
+          <p style="margin-top:10px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19):</strong> <code>useUnoRoom</code> импортит <code>UnoRoomView</code>/<code>UnoAction</code>/<code>ChatMessage</code>/<code>UnoSettingsPatch</code> из <code>@shared</code>; переобъявления удалены, мёртвый импорт <code>UnoColor</code>/<code>UnoRules</code> убран. <code>UnoJoinAck</code>/<code>UnoServerEvents</code>/<code>UnoClientEvents</code> — отдельный batch (совпадение сигнатур сокета).</p>
+        </div>
+
+        <div class="card low">
+          <div class="head"><span class="badge low">LOW</span><span class="t"><code>useMemo(() =&gt; getUnoSocket(), [])</code> + ручные on/off</span></div>
+          <p>Подписка/отписка сокет-событий сделана вручную в эффекте. Работает, но хрупко при росте числа событий. Можно вынести в кастомный <code>useSocketEvent</code> или использовать <code>socket.io-react-hook</code>-подобный паттерн. Не срочно.</p>
+        </div>
+      </section>
+
+      <!-- =================== 8. CI =================== -->
+      <section id="s8">
+        <h2 class="sec"><span class="idx">8</span>CI и инфраструктура</h2>
+        <p class="lead">Две корректно разделённые джобы. Нет кеширования, нет frozen-lockfile для web, нет БД в CI.</p>
+
+        <div class="card good">
+          <div class="head"><span class="badge good">GOOD</span><span class="t">Две джобы: check (root) + web (apps/web)</span></div>
+          <p>Root: <code>bun install --frozen-lockfile</code> → lint → format:check → typecheck → <code>bun test</code>. Web: biome check → typecheck → build. Trigger на PR и push в main. Разделение корректное, <code>working-directory: apps/web</code> scoped.</p>
+        </div>
+
+        <div class="card high">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">Web-джоба без <code>--frozen-lockfile</code></span></div>
+          <p>Root использует <code>--frozen-lockfile</code>, а web — голый <code>bun install</code> (ci.yml:37). Воспроизводимость и supply-chain: CI может тихо подтянуть резолв, не совпадающий с закоммиченным <code>apps/web/bun.lock</code>, и не упадёт на устаревшем lockfile.</p>
+          <div class="fix"><code>bun install --frozen-lockfile</code> в web-джобе тоже. Это как раз причина, по которой ваши локальные правки <code>apps/web/bun.lock</code> не ловятся автоматикой.</div>
+        </div>
+
+        <div class="card high">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">Нет кеширования вообще</span></div>
+          <p>Ни bun-cache, ни build-артефактов, ни Prisma-engine. Каждый ран переустанавливает всё с нуля. Для монорепо с Prisma (движки качаются) + две установки (root+web) — минуты на каждом пайплайне.</p>
+          <div class="fix"><code>oven-sh/setup-bun@v2</code> с <code>cache: true</code>, либо <code>actions/cache</code> на <code>~/.bun/install/cache</code>. Кешить <code>packages/db/node_modules/.cache/prisma</code>.</div>
+        </div>
+
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Нет БД в CI → DB-слой не покрыт тестами</span></div>
+          <p>Нет <code>services: postgres</code>. Тесты <code>auth.test.ts</code> есть, но всё, что трогает <code>@boardgames/db</code>, без <code>DATABASE_URL</code> упадёт или пропускается. Миграции тоже не применяются в CI → schema-vs-code drift не ловится.</p>
+          <div class="fix">postgres-service в <code>check</code> джобе, <code>migrate deploy</code>, прогон тестов с реальной БД.</div>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Нет e2e / security-сканов / audit</span></div>
+          <p>Приложение realtime socket.io — ни один client⇄server поток не был покрыт e2e. Не было <code>bun audit</code>, CodeQL, секрет-сканирования. Playwright установлен (<code>package.json:66</code>) — но тестов не было.</p>
+          <div class="fix">Хотя бы 1 Playwright-смоук на «создать комнату → ход». Дешёвый <code>bun audit</code> шаг.</div>
+          <p style="margin-top:8px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19):</strong> три слоя: <strong>(1) socket-e2e</strong> в <code>bun test</code> — <code>apps/server/src/socket.e2e.test.ts</code> (7 тестов, реальный client⇄server через socket.io в одном процессе: <code>room:create</code>, <code>chat:send</code> валидный/malformed, <code>room:settings</code>/<code>game:guess</code>/<code>game:clue</code>/<code>room:setTeam</code> с malformed → <code>game:error</code> от zod, сервер не падает). Покрывает regression-risk валидации §5 без браузера. <strong>(2) Playwright UI-smoke</strong> — <code>apps/web/playwright.config.ts</code> + <code>e2e/smoke.pw.ts</code> (главная + роуты игр рендерятся без console-error); отдельная CI-джоба <code>e2e</code> с <code>playwright install --with-deps chromium</code>, не замедляет <code>check</code>/<code>web</code>; trace-артефакт при падении. Файл <code>.pw.ts</code> + <code>testMatch</code> — чтобы root <code>bun test</code> не конфликтовал с Playwright. <strong>(3) <code>bun audit</code></strong> (advisory, не блокирующий) в джобах <code>check</code> и <code>web</code> — выводит отчёт в лог CI.</p>
+          <p style="margin-top:6px"><strong style="color:var(--high)">⚠ Находка audit:</strong> <code>bun audit</code> нашёл <code>ws &gt;=8.0.0 &lt;8.21.0</code> (high, DoS, через <code>socket.io</code>/<code>socket.io-client</code> в <code>apps/server</code>) + 20 vuln в <code>apps/web</code> (12 high/7 mod/1 low). Remediation — отдельная задача (<code>bun update</code> / bump <code>socket.io</code>), audit сейчас advisory.</p>
+        </div>
+        <div class="card low">
+          <div class="head"><span class="badge low">LOW</span><span class="t"><code>bun-version: latest</code> — непинён</span></div>
+          <p>Будущий релиз bun может сломать CI за ночь. Зпинить к <code>packageManager: bun@1.2.0</code> из root package.json.</p>
+        </div>
+      </section>
+
+      <!-- =================== 9. ДОКИ =================== -->
+      <section id="s9">
+        <h2 class="sec"><span class="idx">9</span>Документация</h2>
+        <p class="lead">Необычно точная для своего уровня. <code>CLAUDE.md</code> — образец project-memory. Несколько дрейфов.</p>
+
+        <div class="card good">
+          <div class="head"><span class="badge good">GOOD</span><span class="t">CLAUDE.md — отличный «context file»</span></div>
+          <p>Структура, стек, «как добавить игру», конвенции, история вех — всё в одном месте, актуально. Раздел migration-with-Convex задокументирован. Это тот уровень, на котором AI/новый разработчик входит в проект за 5 минут.</p>
+        </div>
+        <div class="card high">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">docs/database.md описывает миграции, которых нет</span></div>
+          <p>См. §6 — папки <code>migrations/</code> не существует, но док описывает <code>migrate:deploy</code>-флоу для прода. Ввести оператора в заблуждение легко.</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">log-auth-строка и список эндпоинтов устарели</span></div>
+          <p><code>index.ts:23</code> логирует только <code>register, login, me</code>, но смонтированы ещё <code>/auth/avatar</code>, <code>/auth/history</code>, <code>/leaderboard</code>. architecture.md:86-93 в описании User не упоминает <code>avatarUrl</code>.</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">mvp-plan.md отстал от реальности</span></div>
+          <p>Uno там «в планах», но он реализован. Аккаунты/статистика в «вне MVP (бэклог)», но отгружены. План-документ не обновлялся вслед за кодом.</p>
+        </div>
+        <div class="card low">
+          <div class="head"><span class="badge low">LOW</span><span class="t">«npm workspaces» → bun workspaces</span></div>
+          <p>mvp-plan.md:9. Мелочь, но вводит в заблуждение.</p>
+        </div>
+      </section>
+
+      <!-- =================== 10. PERF =================== -->
+      <section id="s10">
+        <h2 class="sec"><span class="idx">10</span>Производительность и масштабируемость</h2>
+        <p class="lead">Текущая нагрузка (комнат на одном VPS) — проблем нет. Масштабирование упирается в три узких места.</p>
+
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Single-node socket.io — нет Redis-адаптера</span></div>
+          <p>Один серверный процесс. При горизонтальном масштабировании broadcast между нодами не сработает без <code>@socket.io/redis-adapter</code>. Сейчас не нужно, но архитектура к этому не готова (и <code>void socket.join</code> это подчёркивает).</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t"><code>broadcast</code> обходит все сокеты неймспейса</span> <span class="where">handlers в обеих играх</span></div>
+          <p><code>for (const [, socket] of nsp.sockets)</code> + фильтр по <code>roomCode</code>. O(все сокеты сервера) на каждый ход. С ростом комнат становится квадратичным. <code>nsp.to(room.code)</code> + room-join быстрее, но не даёт per-player view (нужно всё равно обойти сокеты комнаты для redaction).</p>
+          <div class="fix">Хранить <code>Map&lt;roomCode, Set&lt;socketId&gt;&gt;</code> и обходить только сокеты комнаты.</div>
+          <p style="margin-top:8px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19):</strong> <code>broadcast</code> в 3 handlers теперь итерирует <code>nsp.adapter.rooms.get(room.code)</code> (Set&lt;SocketId&gt;, O(room)) вместо <code>nsp.sockets</code> (O(all сокетов неймспейса)). <code>adapter.rooms</code> наполняется <code>socket.join(room.code)</code> в create/join/rejoin и чистится на leave/disconnect — sync на single-node; под Redis-адаптером (§10) содержит local-сокеты, что корректно для per-node broadcast. Per-player redaction сохранён (итерация по сокетам комнаты с <code>viewFor</code>). Верифицировано 2-клиентным socket-e2e (создатель + второй игрок оба получают <code>room:state</code> на join; чат A→B доходит).</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">1.2 МБ эмбеддингов в web-бандле</span></div>
+          <p>См. §3. Каждая загрузка фронта платит за блоб, даже если юзер играет в Uno.</p>
+        </div>
+        <div class="card low">
+          <div class="head"><span class="badge low">LOW</span><span class="t">Codenames log растёт без ограничений</span></div>
+          <p>В отличие от Uno (<code>log.slice(-MAX_LOG)</code>), codenames-лог append-only и весь уезжал в view. В очень длинной партии — рос.</p>
+          <p style="margin-top:8px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19):</strong> <code>redactCodenames</code> теперь кэпит <code>log: state.log.slice(-MAX_LOG)</code> (<code>MAX_LOG=60</code>, выравнено с Uno). +1 тест в <code>view.test.ts</code>. RAM-state.log остаётся конечным (партия ~25 карточек + подсказки), граница — на проводе.</p>
+        </div>
+      </section>
+
+      <!-- =================== 11. ПЛАН =================== -->
+      <section id="s11">
+        <h2 class="sec"><span class="idx">11</span>План действий (приоритизированный)</h2>
+
+        <h3 class="sub">🔥 Быстрые победы (час-два каждая)</h3>
+        <div class="card low">
+          <div class="head"><span class="badge low">LOW</span><span class="t">Удалить ветку feat/frontend-socketio</span></div>
+          <p><code>git branch -D feat/frontend-socketio</code>. Полностью избыточна (§2).</p>
+        </div>
+        <div class="card low">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Закрыть дрейф доков</span></div>
+          <p>Обновить log-строку эндпоинтов, mvp-plan.md, исправить «npm→bun». Добавить <code>.env*</code> в .gitignore, убрать мусор <code>apps/space/*.png</code>.</p>
+        </div>
+        <div class="card low">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">Frozen-lockfile + кеш в web-CI</span></div>
+          <p>2 строки в ci.yml. Сразу перестанет пропускать устаревший <code>apps/web/bun.lock</code>.</p>
+        </div>
+        <div class="card low">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">Обработчик ошибок Prisma + setErrorHandler</span></div>
+          <p>Перехват <code>P2002</code> → 409 в register. ~30 минут работы, закрывает реальную гонку.</p>
+        </div>
+
+        <h3 class="sub">⚡ Короткие задачи (полдня)</h3>
+        <div class="card med">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">Закоммитить миграцию init + postgres в CI</span></div>
+          <p>Прогнать <code>migrate dev --name init</code>, закоммитить, поднять postgres-service в CI, применить миграции. Закрывает сразу 2 HIGH и позволяет тестировать DB-слой.</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge crit">CRITICAL</span><span class="t">Прокинуть random в движок Uno</span></div>
+          <p>Параметр <code>random?: () =&gt; number</code> в <code>shuffle</code>, <code>createUnoRound</code>, <code>botAction</code>. По умолчанию <code>Math.random</code>. Открывает путь к property-тестам Uno и реплеям.</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Тесты на redaction (view) обеих игр</span></div>
+          <p>Безопасность-критичные функции должны быть покрыты. ~1 час на view.test.ts для каждой игры.</p>
+          <p style="margin-top:8px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19):</strong> <code>codenames/view.test.ts</code> (5) + <code>uno/view.test.ts</code> (6) — скрытие чужих рук/ключа, <code>catchablePlayerId</code> (сам себя не ловит), <code>playable</code>, <code>log.slice(-30)</code>, <code>Infinity→'unlimited'</code>, <code>remaining</code>.</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Порезать неиспользуемые Radix-пакеты</span></div>
+          <p><code>knip</code> → удалить ~17 пакетов. Тоньше install, меньше audit-шума.</p>
+          <p style="margin-top:8px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19):</strong> удалено 27 пакетов из <code>apps/web</code> (20 Radix + cmdk/embla/input-otp/recharts/react-day-picker/vaul/react-resizable-panels); осталось 6 используемых Radix. <code>zod</code> оставлен (нужен для валидации). Build/typecheck зелёные.</p>
+        </div>
+
+        <h3 class="sub">🏗 Средние инициативы (1-3 дня)</h3>
+        <div class="card med">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">Runtime-валидация входов (zod)</span></div>
+          <p>Schema-валидация на REST + zod на socket-аргументы. Самый значимый security-апгрейд. <code>zod</code> уже в deps.</p>
+          <p style="margin-top:8px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19):</strong> REST auth (<code>auth/schemas.ts</code>: register/login/avatar, +12 тестов) и весь socket-периметр (<code>validation.ts</code>: <code>parseSocketArg</code> + схемы на <code>chat:send</code>, <code>room:settings</code>/<code>room:create</code> всех 3 игр, <code>game:act</code> Uno, <code>game:clue</code>/<code>game:guess</code> Codenames, <code>setTeam</code>/<code>setCaptain</code>; +23 теста). Схемы зеркалят TS-типы 1:1, не ужесточая UX; бизнес-проверки остались в менеджерах. <code>zod</code> добавлен в server-deps.</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge high">HIGH</span><span class="t">Janitor / persist-снапшоты комнат</span></div>
+          <p>Либо фоновая чистка зомби-комнат + репланирование таймеров по <code>turnDeadline</code> на реконнекте, либо persist активных комнат. Закрывает «зависшие после деплоя» партии.</p>
+          <p style="margin-top:8px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19):</strong> janitor-половина — <code>apps/server/src/janitor.ts</code> (интервал 60с, grace 5 мин по <code>turnDeadline</code>), <code>cleanupStale</code> в 3 менеджерах, <code>GameModule.register</code> отдаёт <code>Janitable</code>-хендл, старт в <code>index.ts</code> + graceful shutdown (SIGTERM/SIGINT). +16 тестов. Репланирование таймера на реконнекте отложено к persist (§1): без persist комнаты исчезают при рестарте — нечего восстанавливать; при «лимбо» без рестарта серверный <code>setTimeout</code> выживает и сам сработает.</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Вынести bot+embeddings в отдельный entry</span></div>
+          <p>Динамический import. -1.2 МБ из web-бандла. web-бандл и инсталл станут заметно легче.</p>
+          <p style="margin-top:8px"><strong style="color:var(--good)">✅ Закрыто (2026-06-19):</strong> bot+coop убраны из barrel <code>@shared</code>; сервер импортит <code>suggestClue</code> из <code>@boardgames/shared/codenames/bot</code> (новый <code>exports</code>-entry). Web-бандл <strong>не изменился</strong> — Vite уже tree-shake'ил <code>suggestClue</code> (web его не зовёт); изоляция стала структурной (будущий <code>import { suggestClue } from '@shared'</code> во фронте не утянет 1.2 МБ случайно).</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Индексы БД + materialized leaderboard</span></div>
+          <p><code>@@index([userId, won])</code>, <code>@@index([userId, playedAt(desc)])</code>. Лидерборд — periodic refresh.</p>
+        </div>
+
+        <h3 class="sub">🎯 Стратегические (по мере роста)</h3>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Аватары → object storage (S3/статика)</span></div>
+          <p>Снять ~140 КБ с каждого чтения юзера. URL-колонка вместо data-URL.</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Redis-адаптер socket.io для multi-node</span></div>
+          <p>Когда один VPS перестанет справляться. Подготовить <code>void socket.join</code> → <code>await</code>.</p>
+        </div>
+        <div class="card med">
+          <div class="head"><span class="badge med">MEDIUM</span><span class="t">Playwright e2e-смоук + bun audit в CI</span></div>
+          <p>Playwright уже установлен. Один тест «создать комнату → сделать ход» поймает регрессии в realtime-флоу, которые unit-тесты не видят.</p>
+        </div>
+
+        <div class="callout" style="margin-top:32px">
+          <strong>Итог.</strong> Кодовая база — крепкий MVP с продуманной архитектурой и качественным ядром (Codenames-движок + бот). Главные риски — не в коде, а <strong>вокруг него</strong>: нет миграций, нет кеша в CI, нет валидации входов, состояние комнат в RAM. Закрытие первых 4 «быстрых побед» + random-inject в Uno поднимет зрелость проекта с 7.5 до ~8.5 за один-два вечера работы.
+        </div>
+      </section>
+
+      <footer>
+        Сгенерировано глубоким аудитом main <code>154829b</code> · 16 июня 2026<br />
+        Источники: прямой разбор <code>apps/server</code>, <code>apps/web</code>, <code>packages/shared</code>, <code>packages/db</code>, <code>.github</code>, <code>docs</code> + git-анализ веток.
+      </footer>
+    </div>
+  </body>
+</html>
