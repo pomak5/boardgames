@@ -1,776 +1,1836 @@
-/* ===== Codenames online — игровой экран по design/final.html ===== */
+/* ===== Коднеймс — игровой стол (перенос design/codenames-teams.html) =====
+   Скоупировано под .cn-table. Токены — из play/theme.css. */
 
-.cg {
-  max-width: 1500px;
+.cn-table {
+  position: relative;
+  z-index: 1;
+  width: 100%;
   margin: 0 auto;
-  padding: 14px 18px 28px;
+  padding: 0 clamp(16px, 2.4vw, 40px) 24px;
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  color: var(--text);
+  gap: 16px;
 }
 
-/* ---------- шапка ---------- */
-.cg-top {
+/* ============ topbar ============ */
+.cn-table .topbar {
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 10px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  gap: 14px;
+  padding: 18px 0 4px;
+  flex-wrap: wrap;
 }
-.cg-brand {
-  display: inline-flex;
+.cn-table .logo {
+  display: flex;
+  gap: 12px;
   align-items: center;
-  gap: 8px;
   text-decoration: none;
-  color: var(--accent);
 }
-.cg-brand__logo {
-  display: grid;
-  place-items: center;
+.cn-table .logo .mark {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
-  background: var(--accent);
-  color: var(--accent-text);
-  font-size: 20px;
+  color: var(--accent);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.cg-brand__name {
-  font-family: "Caveat", cursive;
-  font-size: 26px;
+.cn-table .logo:hover .mark {
+  transform: rotate(120deg);
+}
+.cn-table .logo b {
+  font-family: 'Caveat', cursive;
   font-weight: 700;
+  font-size: 30px;
   color: var(--accent);
 }
-.cg-top__game {
+.cn-table .home-link {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding-left: 16px;
-  border-left: 1px solid var(--border);
-}
-.cg-top__gicon {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: var(--surface-2);
+  gap: 7px;
+  font: 800 14px 'Nunito', sans-serif;
   color: var(--accent);
-  font-size: 18px;
+  text-decoration: none;
+  padding: 11px 15px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  transition: 0.15s;
 }
-.cg-top__gname {
-  font-weight: 800;
-  color: var(--text-strong);
-}
-.cg-top__meta {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  margin-left: 12px;
-}
-.cg-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.cg-meta__label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-}
-.cg-code {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text-strong);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  padding: 4px 10px;
-  border-radius: 9px;
-  cursor: pointer;
-}
-.cg-code:hover {
+.cn-table .home-link:hover {
+  transform: translateY(-1px);
   border-color: var(--accent-soft);
 }
-.cg-copied {
-  font-size: 11px;
-  color: var(--accent);
+.cn-table .home-link svg {
+  width: 16px;
+  height: 16px;
 }
-.cg-clock {
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
+.cn-table .divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+  flex: none;
+}
+.cn-table .room-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.cn-table .room-title h1 {
+  font: 900 20px 'Nunito', sans-serif;
+  color: var(--text-strong);
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.cn-table .room-title h1 .script {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 1.18em;
+}
+.cn-table .room-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font: 800 13px 'Nunito', sans-serif;
+  color: var(--text-strong);
+  padding: 7px 10px 7px 13px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.cn-table .room-code:hover {
+  border-color: var(--accent-soft);
+}
+.cn-table .room-code__code {
+  font: 800 15px 'Nunito', sans-serif;
+  letter-spacing: 0.18em;
   color: var(--text-strong);
 }
-.cg-clock--low {
-  color: var(--team-red);
+.cn-table .room-code .copy-ic {
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+  flex: none;
+  transition: color 0.15s;
 }
-.cg-top__actions {
+.cn-table .room-code:hover .copy-ic {
+  color: var(--accent);
+}
+.cn-table .room-code.copied {
+  border-color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 12%, var(--surface-2));
+}
+.cn-table .room-code.copied .copy-ic,
+.cn-table .room-code.copied .room-code__code {
+  color: var(--ok);
+}
+.cn-table .room-copied {
+  font: 800 11px 'Nunito', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ok);
+  padding: 5px 10px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--ok) 16%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--ok) 38%, transparent);
+  white-space: nowrap;
+  animation: cnt-pop 0.18s ease-out;
+}
+@keyframes cnt-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-3px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.cn-table .leave-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 800 14px 'Nunito', sans-serif;
+  color: var(--muted);
+  padding: 8px 16px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s,
+    transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cn-table .leave-btn .leave-ic {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+.cn-table .leave-btn:hover {
+  color: var(--team-red);
+  border-color: color-mix(in srgb, var(--team-red) 45%, transparent);
+  background: color-mix(in srgb, var(--team-red) 8%, var(--surface));
+  transform: translateY(-2px);
+}
+.cn-table .leave-btn:active {
+  transform: translateY(1px);
+}
+.cn-table .spacer {
+  flex: 1;
+  min-width: 8px;
+}
+.cn-table .turn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  font: 800 15px 'Nunito', sans-serif;
+  padding: 10px 18px;
+  border-radius: var(--r-pill);
+  color: #fff;
+  box-shadow: var(--shadow);
+  white-space: nowrap;
+}
+.cn-table .turn-pill.blue {
+  background: linear-gradient(
+    135deg,
+    var(--team-blue),
+    color-mix(in srgb, var(--team-blue), #000 25%)
+  );
+}
+.cn-table .turn-pill.red {
+  background: linear-gradient(
+    135deg,
+    var(--team-red),
+    color-mix(in srgb, var(--team-red), #000 25%)
+  );
+}
+.cn-table .turn-pill.neutral {
+  background: var(--neutral);
+}
+.cn-table .turn-pill .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fff;
+  animation: cnt-blink 1.4s ease-in-out infinite;
+}
+@keyframes cnt-blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+.cn-table .nav-actions {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-left: auto;
 }
-.cg-iconbtn {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
+.cn-table .theme-toggle {
+  display: flex;
+  gap: 5px;
+  padding: 5px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.cn-table .theme-toggle button {
+  border: none;
+  background: transparent;
   color: var(--muted);
   cursor: pointer;
-  font-size: 18px;
-  transition:
-    color 0.15s ease,
-    transform 0.15s ease;
-}
-.cg-iconbtn:hover {
-  color: var(--accent);
-  transform: translateY(-1px);
-}
-.cg-ic {
-  width: 1em;
-  height: 1em;
-}
-
-/* ---------- три колонки ---------- */
-.cg-main {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-pill);
   display: grid;
-  grid-template-columns: 230px minmax(0, 1fr) 250px;
-  gap: 16px;
-  align-items: start;
+  place-items: center;
+  transition: 0.18s;
 }
-.cg-rightcol {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+.cn-table .theme-toggle button svg {
+  width: 18px;
+  height: 18px;
 }
-
-/* ---------- командные панели ---------- */
-.cg-team {
+.cn-table .theme-toggle button.on {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.cn-table .icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
   box-shadow: var(--shadow);
-  padding: 14px 14px 16px;
-  border-top: 4px solid var(--team-color, var(--border));
+  color: var(--accent);
+  cursor: pointer;
+  transition: 0.18s;
 }
-.cg-team--red {
-  --team-color: var(--team-red);
+.cn-table .icon-btn:hover {
+  border-color: var(--accent-soft);
+  transform: translateY(-2px);
 }
-.cg-team--blue {
-  --team-color: var(--team-blue);
+.cn-table .icon-btn svg {
+  width: 20px;
+  height: 20px;
 }
-.cg-team--active {
-  box-shadow:
-    0 0 0 2px var(--team-color) inset,
-    var(--shadow);
-}
-.cg-team__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-.cg-team__name {
-  margin: 0;
-  font-family: "Caveat", cursive;
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--team-color);
-}
-.cg-team__count {
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--team-color);
-  font-variant-numeric: tabular-nums;
-}
-.cg-team__role {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-  margin: 10px 0 6px;
-}
-.cg-team__role :first-child {
-  color: var(--team-color);
-}
-.cg-agents {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.cg-member {
+.cn-table .me-pill {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 2px;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 4px 12px 4px 4px;
+  box-shadow: var(--shadow);
+  transition: 0.18s;
 }
-.cg-member__name {
-  font-weight: 600;
+.cn-table .me-pill:hover {
+  border-color: var(--accent-soft);
+}
+.cn-table .me-pill .me-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  max-width: 110px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============ stage ============ */
+.cn-table .stage {
+  display: grid;
+  grid-template-columns: minmax(240px, 280px) 1fr minmax(240px, 280px);
+  grid-template-areas: 'left center right';
+  gap: 18px;
+  justify-content: center;
+  align-items: stretch;
+  min-height: 0;
+}
+.cn-table .col-left {
+  grid-area: left;
+}
+.cn-table .col-center {
+  grid-area: center;
+}
+.cn-table .col-right {
+  grid-area: right;
+}
+.cn-table .col-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.cn-table .panel {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+}
+.cn-table .panel h3 {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+/* активная команда: цветная обводка + «дышащий» radial-градиент */
+.cn-table .panel.team.active {
+  border: 2.5px solid var(--team-color);
+  background: radial-gradient(
+    120% 140% at 30% 20%,
+    color-mix(in srgb, var(--team-color) 20%, var(--surface)) 0%,
+    var(--surface) 60%
+  );
+  background-size: 180% 180%;
+  background-position: 30% 20%;
+  animation: cnt-team-drift 5s ease-in-out infinite;
+}
+.cn-table .panel.team.red.active {
+  --team-color: var(--team-red);
+}
+.cn-table .panel.team.blue.active {
+  --team-color: var(--team-blue);
+}
+@keyframes cnt-team-drift {
+  0%,
+  100% {
+    background-position: 30% 20%;
+  }
+  50% {
+    background-position: 70% 80%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cn-table .panel.team.active {
+    animation: none;
+    background-position: 30% 20%;
+  }
+}
+
+/* ============ команда ============ */
+.cn-table .team-head {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 14px;
+}
+.cn-table .team-head .badge {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  flex: none;
+  box-shadow: var(--shadow);
+}
+.cn-table .team-head .badge svg {
+  width: 24px;
+  height: 24px;
+}
+.cn-table .team-head.red .badge {
+  background: var(--team-red);
+}
+.cn-table .team-head.blue .badge {
+  background: var(--team-blue);
+}
+.cn-table .team-head .tname {
+  font: 900 19px 'Nunito', sans-serif;
+  color: var(--text-strong);
+  line-height: 1.1;
+}
+.cn-table .team-head .left-w {
+  margin-left: auto;
+  white-space: nowrap;
+  text-align: right;
+}
+.cn-table .team-head .left-w b {
+  font: 900 40px 'Nunito', sans-serif;
+  line-height: 0.85;
+  color: var(--muted);
+}
+.cn-table .team-head.red .left-w b {
+  color: var(--team-red);
+}
+.cn-table .team-head.blue .left-w b {
+  color: var(--team-blue);
+}
+/* капитан — золотистый блок + корона */
+.cn-table .captain {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 15px;
+  border-radius: var(--r-sm);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--gold) 18%, var(--surface-2)) 0%,
+    var(--surface-2) 100%
+  );
+  border: 1.5px solid color-mix(in srgb, var(--gold) 50%, transparent);
+  margin-bottom: 12px;
+}
+.cn-table .captain .crown {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-text);
+  display: grid;
+  place-items: center;
+  flex: none;
+  box-shadow: var(--shadow);
+}
+.cn-table .captain .crown svg {
+  width: 21px;
+  height: 21px;
+}
+.cn-table .captain .c-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+.cn-table .captain .c-meta .role {
+  font: 700 11px 'Nunito', sans-serif;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.cn-table .captain .c-meta .name {
+  font: 800 16px 'Nunito', sans-serif;
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cn-table .captain .you {
+  margin-left: auto;
+  font: 800 14px 'Nunito', sans-serif;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--accent-text);
+  white-space: nowrap;
+}
+.cn-table .captain.is-bot .crown {
+  background: var(--muted);
+}
+.cn-table .captain.is-empty {
+  opacity: 0.7;
+  border-style: dashed;
+}
+/* места: кнопки выбора капитана/бота */
+.cn-table .seat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.cn-table .seat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 800 12px 'Nunito', sans-serif;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--accent);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: 0.15s;
+}
+.cn-table .seat-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.cn-table .seat-btn:hover {
+  border-color: var(--accent-soft);
+  transform: translateY(-1px);
+}
+.cn-table .seat-btn.danger {
+  color: var(--team-red);
+}
+
+.cn-table .players-label {
+  font: 700 11px 'Nunito', sans-serif;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.cn-table .players {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cn-table .player {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
+}
+.cn-table .player .av {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font: 800 14px 'Nunito', sans-serif;
+  flex: none;
+  overflow: hidden;
+}
+.cn-table .player .av img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cn-table .player .pname {
+  font: 800 15px 'Nunito', sans-serif;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
 }
-.cg-member--empty,
-.cg-member--bot .cg-member__name {
-  color: var(--muted);
-  font-style: italic;
-  font-weight: 500;
-}
-.cg-ava {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--surface-2);
-  color: var(--text-strong);
-  font-size: 12px;
-  font-weight: 800;
-  flex: none;
-  border: 1px solid var(--border);
-}
-.cg-ava--red {
-  background: color-mix(in srgb, var(--team-red) 22%, var(--surface-2));
-  color: var(--team-red);
-  border-color: color-mix(in srgb, var(--team-red) 35%, transparent);
-}
-.cg-ava--blue {
-  background: color-mix(in srgb, var(--team-blue) 22%, var(--surface-2));
-  color: var(--team-blue);
-  border-color: color-mix(in srgb, var(--team-blue) 35%, transparent);
-}
-.cg-star {
-  width: 14px;
-  height: 14px;
-  color: var(--gold);
-  flex: none;
-}
-.cg-dot {
+.cn-table .player .pstate {
+  margin-left: auto;
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  background: var(--ok);
   flex: none;
 }
-.cg-dot--on {
-  background: #5c8a3a;
-}
-.cg-dot--off {
+.cn-table .player.offline .pstate {
   background: var(--muted);
   opacity: 0.5;
 }
-.cg-team__cards {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--border);
-  font-size: 13px;
+.cn-table .players-empty {
+  font: 700 13px 'Nunito', sans-serif;
   color: var(--muted);
-}
-.cg-team__cards b {
-  color: var(--text-strong);
-}
-.cg-cards-ic {
-  width: 18px;
-  height: 18px;
-  color: var(--team-color, var(--muted));
+  padding: 6px 2px;
 }
 
-/* ---------- центр: доска ---------- */
-.cg-center {
+/* ============ центр: поле → подсказка ============ */
+.cn-table .board-wrap {
+  background: radial-gradient(
+    120% 90% at 50% 0%,
+    color-mix(in srgb, var(--felt) 18%, var(--surface)) 0%,
+    var(--surface) 70%
+  );
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: clamp(14px, 2vw, 24px);
+  box-shadow: var(--shadow-big);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  min-height: 0;
 }
-.cg-board {
+.cn-table .board {
+  container-type: inline-size;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+  grid-auto-rows: auto;
+  column-gap: clamp(4px, 0.4vw, 6px);
+  row-gap: clamp(4px, 0.4vw, 6px);
+  min-height: 0;
 }
-
-/* ---------- экшн-бар под доской ---------- */
-.cg-action {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 14px 16px;
-}
-.cg-action__role {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--muted);
-  margin-bottom: 8px;
-}
-.cg-action__hint {
-  font-size: 12px;
-  color: var(--muted);
-}
-.cg-clueform__row {
-  display: flex;
-  align-items: stretch;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-.cg-input {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-  padding: 10px 12px;
-}
-.cg-input:focus {
-  outline: none;
-  border-color: var(--accent-soft);
-  box-shadow: 0 0 0 3px var(--ring);
-}
-.cg-step {
+.cn-table .cell {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--r);
+  background: var(--card-face);
+  border: 2px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 4px;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface-2);
-  padding: 0 4px 0 12px;
-}
-.cg-step__val {
-  font-weight: 800;
-  font-size: 18px;
-  color: var(--text-strong);
-  min-width: 16px;
+  justify-content: center;
   text-align: center;
-}
-.cg-step__btns {
-  display: flex;
-  flex-direction: column;
-}
-.cg-step__btns button {
-  border: 0;
-  background: transparent;
-  color: var(--muted);
+  padding: 6px 8px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: clamp(13px, 3.2cqw, 26px);
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  color: var(--card-ink);
+  box-shadow: 0 6px 16px #8a5a2b26;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.18s, box-shadow 0.18s;
+  user-select: none;
   cursor: pointer;
-  padding: 1px 4px;
-  line-height: 0;
+  overflow: hidden;
+  width: 100%;
 }
-.cg-step__btns button:hover {
-  color: var(--accent);
+.cn-table .cell:not(.open):hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-soft);
+  box-shadow: 0 10px 22px #8a5a2b40;
 }
-.cg-caret {
+.cn-table .cell:active {
+  transform: translateY(-1px) scale(0.99);
+}
+.cn-table .cell.disabled {
+  cursor: default;
+}
+.cn-table .cell.disabled:hover {
+  transform: none;
+}
+.cn-table .cell .mk {
+  position: absolute;
+  top: 9px;
+  left: 9px;
   width: 14px;
   height: 14px;
-}
-
-.cg-btn {
-  border: 0;
-  border-radius: 12px;
-  background: var(--accent);
-  color: var(--accent-text);
-  font-weight: 800;
-  padding: 10px 18px;
-  cursor: pointer;
-  box-shadow: 0 3px 0 var(--accent-shadow);
-  transition:
-    transform 0.12s ease,
-    box-shadow 0.12s ease;
-}
-.cg-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-.cg-btn:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 var(--accent-shadow);
-}
-.cg-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.cg-btn--ghost {
-  background: var(--surface-2);
-  color: var(--text);
-  box-shadow: none;
-  border: 1px solid var(--border);
-}
-.cg-btn--round {
-  padding: 10px 12px;
   border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--card-face);
+}
+.cn-table .cell.mk-red .mk {
+  background: var(--team-red);
+}
+.cn-table .cell.mk-blue .mk {
+  background: var(--team-blue);
+}
+.cn-table .cell.mk-neutral .mk {
+  background: var(--neutral);
+}
+.cn-table .cell.mk-assassin .mk {
+  background: var(--assassin);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px var(--card-face);
+}
+.cn-table .cell.open-red {
+  background: var(--team-red);
+  color: #fff;
+  border-color: var(--team-red);
+}
+.cn-table .cell.open-blue {
+  background: var(--team-blue);
+  color: #fff;
+  border-color: var(--team-blue);
+}
+.cn-table .cell.open-neutral {
+  background: var(--neutral);
+  color: #fff;
+  border-color: var(--neutral);
+}
+.cn-table .cell.open-assassin {
+  background: var(--assassin);
+  color: #fff;
+  border-color: var(--assassin);
+}
+.cn-table .cell.open-red .mk,
+.cn-table .cell.open-blue .mk,
+.cn-table .cell.open-neutral .mk,
+.cn-table .cell.open-assassin .mk {
+  display: none;
+}
+.cn-table .cell.open {
+  transform: none;
+  cursor: default;
+  animation: cnt-flip 0.5s ease;
+}
+@keyframes cnt-flip {
+  0% {
+    transform: rotateY(0);
+  }
+  50% {
+    transform: rotateY(90deg);
+  }
+  100% {
+    transform: rotateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cn-table .cell.open {
+    animation: none;
+  }
 }
 
-.cg-wait,
-.cg-guessbar {
+/* ============ clue-strip ============ */
+.cn-table .clue-strip {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: linear-gradient(150deg, var(--felt), var(--felt-dark));
+  color: #fff7ec;
+  border-radius: var(--r);
+  padding: 14px 20px;
+  margin-top: clamp(12px, 1.4vw, 18px);
+  box-shadow: var(--shadow);
+}
+.cn-table .clue-strip .cw {
+  display: flex;
+  align-items: baseline;
   gap: 12px;
   flex-wrap: wrap;
 }
-.cg-wait {
-  color: var(--muted);
-  font-weight: 600;
+.cn-table .clue-strip .phase {
+  font: 800 13px 'Nunito', sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff7ec;
 }
-.cg-cluebadge {
+.cn-table .clue-strip .word {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: clamp(30px, 2.8vw, 42px);
+  line-height: 1;
+  color: #fff;
+}
+.cn-table .clue-strip .count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  background: #ffffff22;
+  font: 900 22px 'Nunito', sans-serif;
+  color: #fff7ec;
+}
+.cn-table .clue-strip .timer-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding: 9px 16px;
+  border-radius: var(--r-pill);
+  background: #ffffff22;
+  border: 1.5px solid #ffffff55;
+  font: 900 18px 'Nunito', sans-serif;
+  color: #fff7ec;
+  transition: background 0.3s, border-color 0.3s, color 0.3s, box-shadow 0.3s;
+  white-space: nowrap;
 }
-.cg-cluebadge__word {
-  font-weight: 800;
-  font-size: 18px;
-  color: var(--text-strong);
+.cn-table .clue-strip .timer-pill svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
 }
-.cg-cluebadge__num {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-text);
-  font-weight: 800;
-  font-size: 13px;
+.cn-table .clue-strip .timer-pill.urgent {
+  background: var(--team-red);
+  border-color: var(--team-red);
+  color: #fff;
+  animation: cnt-timer-urgent 1s ease-in-out infinite;
 }
-.cg-cluebadge__left {
-  color: var(--muted);
-  font-size: 13px;
+@keyframes cnt-timer-urgent {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--team-red) 0%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--team-red) 35%, transparent);
+  }
 }
-.cg-final {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+@media (prefers-reduced-motion: reduce) {
+  .cn-table .clue-strip .timer-pill.urgent {
+    animation: none;
+  }
 }
-.cg-final__banner {
-  font-family: "Caveat", cursive;
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--text-strong);
+.cn-table .clue-strip .wait-note {
+  font: 800 14px 'Nunito', sans-serif;
+  color: #fff7ec;
+  opacity: 0.85;
 }
-.cg-series__red {
-  color: var(--team-red);
-}
-.cg-series__blue {
-  color: var(--team-blue);
-}
-
-/* ---------- правая колонка: ход + история ---------- */
-.cg-turn,
-.cg-history {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 12px 14px;
-}
-.cg-turn__label,
-.cg-history__title {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-  margin-bottom: 8px;
-}
-.cg-turn__team {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 800;
-  font-size: 18px;
-}
-.cg-turn__team--red {
-  color: var(--team-red);
-}
-.cg-turn__team--blue {
-  color: var(--team-blue);
-}
-.cg-turn__sub {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--muted);
-}
-.cg-history__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.cg-chip {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-/* ---------- низ: чат + как играть ---------- */
-.cg-bottom {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 16px;
-  align-items: start;
-}
-.cg-chat,
-.cg-howto {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 12px 14px;
-}
-.cg-chat__head,
-.cg-howto__head {
-  display: flex;
+.cn-table .btn-pass {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-weight: 800;
-  color: var(--text-strong);
-  margin-bottom: 10px;
+  padding: 10px 18px;
+  font: 800 14px 'Nunito', sans-serif;
+  color: #fff7ec;
+  background: transparent;
+  border: 1.5px solid #ffffff55;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s,
+    transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.cg-chat__feed {
-  max-height: 210px;
+.cn-table .btn-pass svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+.cn-table .btn-pass:hover {
+  background: #ffffff22;
+  border-color: #fff7ec;
+}
+.cn-table .btn-pass:active {
+  transform: translateY(1px);
+}
+
+/* форма ввода подсказки (на felt-полосе) */
+.cn-table .clue-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 240px;
+}
+.cn-table .clue-form .cw-label {
+  font: 800 13px 'Nunito', sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff7ec;
+  white-space: nowrap;
+}
+.cn-table .clue-input {
+  flex: 1;
+  min-width: 160px;
+  font: 800 18px 'Nunito', sans-serif;
+  padding: 11px 16px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid #ffffff55;
+  background: #ffffff1a;
+  color: #fff;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.cn-table .clue-input::placeholder {
+  color: #fff7ec99;
+}
+.cn-table .clue-input:focus {
+  border-color: #fff;
+  background: #ffffff26;
+}
+.cn-table .count-stepper {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff22;
+  border: 1.5px solid #ffffff55;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+.cn-table .count-stepper .ct-val {
+  min-width: 44px;
+  text-align: center;
+  font: 900 22px 'Nunito', sans-serif;
+  color: #fff7ec;
+  padding: 0 6px;
+}
+.cn-table .count-stepper button {
+  width: 34px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: #fff7ec;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s;
+}
+.cn-table .count-stepper button:hover {
+  background: #ffffff22;
+}
+.cn-table .count-stepper button svg {
+  width: 14px;
+  height: 14px;
+}
+.cn-table .btn-clue {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  font: 800 15px 'Nunito', sans-serif;
+  color: var(--accent-shadow);
+  background: #fff7ec;
+  border: none;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  box-shadow: 0 4px 0 #00000033;
+  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+}
+.cn-table .btn-clue:hover {
+  filter: brightness(1.05);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #00000033;
+}
+.cn-table .btn-clue:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 0 #00000033;
+}
+.cn-table .btn-clue:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 4px 0 #00000033;
+}
+
+/* финиш: победа + новый раунд (в clue-strip) */
+.cn-table .finish-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.cn-table .finish-row .winner {
+  font: 900 22px 'Nunito', sans-serif;
+  color: #fff;
+}
+.cn-table .finish-row .winner .script {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 1.2em;
+}
+.cn-table .finish-row .reason {
+  font: 800 13px 'Nunito', sans-serif;
+  color: #fff7ec;
+  opacity: 0.85;
+}
+.cn-table .btn-newround {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  font: 800 15px 'Nunito', sans-serif;
+  color: var(--accent-shadow);
+  background: #fff7ec;
+  border: none;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  box-shadow: 0 4px 0 #00000033;
+  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+}
+.cn-table .btn-newround:hover {
+  filter: brightness(1.05);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #00000033;
+}
+.cn-table .finish-hint {
+  font: 800 13px 'Nunito', sans-serif;
+  color: #fff7ec;
+  opacity: 0.7;
+  margin-left: auto;
+}
+
+/* история подсказок капитана */
+.cn-table .clue-history {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1.5px solid var(--border);
+}
+.cn-table .ch-label {
+  display: block;
+  font: 700 11px 'Nunito', sans-serif;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.cn-table .ch-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.cn-table .ch-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
+  font: 800 15px 'Nunito', sans-serif;
+  color: var(--text);
+}
+.cn-table .ch-item b {
+  font: 900 16px 'Nunito', sans-serif;
+}
+.cn-table .team.red .ch-item b {
+  color: var(--team-red);
+}
+.cn-table .team.blue .ch-item b {
+  color: var(--team-blue);
+}
+.cn-table .ch-empty {
+  font: 700 13px 'Nunito', sans-serif;
+  color: var(--muted);
+}
+
+/* ============ нижний ряд: чат + как играть ============ */
+.cn-table .bottom {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+}
+.cn-table .bottom .panel.chat {
+  min-height: 16rem;
+}
+.cn-table .chat-feed {
+  flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding-right: 4px;
+  gap: 10px;
+  margin-bottom: 12px;
+  max-height: 260px;
 }
-.cg-event {
+.cn-table .chat-ev {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 13px;
-  color: var(--muted);
-}
-.cg-event--red {
-  color: var(--team-red);
-}
-.cg-event--blue {
-  color: var(--team-blue);
-}
-.cg-msg {
-  font-size: 14px;
   color: var(--text);
 }
-.cg-msg__author {
-  font-weight: 700;
+.cn-table .chat-ev .ev-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex: none;
+}
+.cn-table .chat-ev .ev-dot.red {
+  background: var(--team-red);
+}
+.cn-table .chat-ev .ev-dot.blue {
+  background: var(--team-blue);
+}
+.cn-table .chat-ev .ev-dot.neutral {
+  background: var(--muted);
+}
+.cn-table .chat-msg {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+}
+.cn-table .chat-msg .mav {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex: none;
+  overflow: hidden;
+}
+.cn-table .chat-msg .mav img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cn-table .chat-msg .mbody {
+  min-width: 0;
+}
+.cn-table .chat-msg .mbody .mauthor {
+  font-weight: 800;
+  margin-right: 6px;
   color: var(--text-strong);
 }
-.cg-msg--me .cg-msg__author {
-  color: var(--accent);
+.cn-table .chat-msg .mbody .mtext {
+  color: var(--text);
 }
-.cg-chat__empty {
+.cn-table .chat-msg .mtime {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.cn-table .chat-empty {
+  font-size: 13px;
   color: var(--muted);
   font-style: italic;
-  font-size: 13px;
 }
-.cg-chat__form {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
+.cn-table .chat-input-row {
+  position: relative;
+  margin-top: auto;
 }
-.cg-howto__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.cn-table .chat-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 44px 0 14px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font: 600 14px 'Nunito', sans-serif;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.cn-table .chat-input:focus {
+  border-color: var(--accent-soft);
+}
+.cn-table .chat-send {
+  position: absolute;
+  right: 6px;
+  top: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+}
+.cn-table .chat-send svg {
+  width: 18px;
+  height: 18px;
+}
+.cn-table .howto {
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
-.cg-howto__list li {
+.cn-table .howto-list {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  flex-direction: column;
+  gap: 14px;
   font-size: 13px;
   color: var(--text);
-  line-height: 1.35;
+  line-height: 1.45;
 }
-.cg-howto__list li :first-child {
+.cn-table .howto-list .hi {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+}
+.cn-table .howto-list .hi svg {
+  width: 20px;
+  height: 20px;
   color: var(--accent);
   flex: none;
-  margin-top: 2px;
+  margin-top: 1px;
 }
-.cg-leave {
-  margin-top: 14px;
-  width: 100%;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
+.cn-table .leave-link {
+  margin-top: auto;
+  padding-top: 16px;
+  font: 800 13px 'Nunito', sans-serif;
   color: var(--muted);
-  border-radius: 11px;
-  padding: 8px;
+  background: none;
+  border: none;
   cursor: pointer;
-  font-weight: 600;
+  text-align: left;
+  transition: color 0.15s;
 }
-.cg-leave:hover {
+.cn-table .leave-link:hover {
   color: var(--team-red);
-  border-color: color-mix(in srgb, var(--team-red) 35%, transparent);
 }
 
-/* ---------- доска под референс: чистые залитые плитки ---------- */
-.cg-board .cn-card,
-.cg-board .cn-card__face {
-  min-height: 80px;
+/* серия партий */
+.cn-table .series {
+  font: 800 13px 'Nunito', sans-serif;
+  color: var(--muted);
+  white-space: nowrap;
 }
-.cg-board .cn-card__face {
-  border-radius: 13px;
-  padding: 12px 10px;
+.cn-table .series b {
+  font-size: 15px;
 }
-.cg-board .cn-card__front {
-  background: linear-gradient(
-    176deg,
-    #fffdf8 0%,
-    color-mix(in srgb, var(--card-face) 86%, #d6bd95) 100%
-  );
-  border: 1px solid color-mix(in srgb, var(--card-ink) 13%, transparent);
-  box-shadow:
-    0 2px 0 #ffffffcc inset,
-    0 6px 14px #0000001f,
-    0 2px 4px #0000001a;
+.cn-table .series .s-red {
+  color: var(--team-red);
 }
-.cg-board .cn-card__frame,
-.cg-board .cn-card__corner,
-.cg-board .cn-stamp {
-  display: none;
-}
-.cg-board .cn-card__front .cn-card__word {
-  font-family: "Nunito", sans-serif;
-  font-weight: 800;
-  font-size: clamp(11px, 1.55vw, 15px);
-  letter-spacing: 0.03em;
-  color: var(--card-ink);
-  text-shadow: 0 1px 0 #ffffff7a;
-}
-.cg-board .cn-card:not(:disabled):hover .cn-card__front {
-  box-shadow:
-    0 2px 0 #ffffffcc inset,
-    0 10px 20px #0000002e,
-    0 3px 6px #00000022;
+.cn-table .series .s-blue {
+  color: var(--team-blue);
 }
 
-/* вид шпион-мастера: полностью залитые цветные плитки, как в референсе */
-.cg-board .cn-key--red,
-.cg-board .cn-key--blue,
-.cg-board .cn-key--neutral,
-.cg-board .cn-key--assassin {
-  border-color: transparent;
-  box-shadow:
-    0 6px 14px #00000026,
-    0 2px 4px #0000001f;
-}
-.cg-board .cn-key--red {
-  background: linear-gradient(172deg, #e8654c 0%, var(--team-red) 68%, #b53b27 100%);
-}
-.cg-board .cn-key--blue {
-  background: linear-gradient(172deg, #4f86bf 0%, var(--team-blue) 68%, #2d5783 100%);
-}
-.cg-board .cn-key--neutral {
-  background: linear-gradient(172deg, #efe4cf 0%, #e1d0b0 100%);
-}
-.cg-board .cn-key--assassin {
-  background: linear-gradient(172deg, #39342e 0%, #211d18 100%);
-}
-.cg-board .cn-key--red .cn-card__word,
-.cg-board .cn-key--blue .cn-card__word,
-.cg-board .cn-key--assassin .cn-card__word {
-  color: #fff7ec;
-  text-shadow: 0 1px 2px #00000055;
-}
-.cg-board .cn-key--neutral .cn-card__word {
-  color: #5b4a35;
-  text-shadow: 0 1px 0 #ffffff7a;
+/* ============ a11y ============ */
+.cn-table a:focus-visible,
+.cn-table button:focus-visible,
+.cn-table .cell:focus-visible,
+.cn-table .room-code:focus-visible,
+.cn-table .me-pill:focus-visible,
+.cn-table .chat-input:focus-visible,
+.cn-table .clue-input:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
 }
 
-/* активная команда — лёгкая подсветка фоном */
-.cg-team--active {
-  background: color-mix(in srgb, var(--team-color) 6%, var(--surface));
+/* ============ появление ============ */
+@keyframes cnt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
-.cg-hat {
-  width: 1.05em;
-  height: 1.05em;
-  flex: none;
+.cn-table .rise {
+  opacity: 1;
+  animation: cnt-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.cn-table .d0 {
+  animation-delay: 0.04s;
+}
+.cn-table .d1 {
+  animation-delay: 0.1s;
+}
+.cn-table .d2 {
+  animation-delay: 0.18s;
+}
+.cn-table .d3 {
+  animation-delay: 0.26s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cn-table .rise {
+    animation: none;
+    opacity: 1;
+  }
+  .cn-table .turn-pill .dot {
+    animation: none;
+  }
 }
 
-
-/* ---------- адаптив ---------- */
-@media (max-width: 1100px) {
-  .cg-main {
+/* ============ адаптив ============ */
+@media (max-width: 1180px) {
+  .cn-table .stage {
     grid-template-columns: 1fr;
+    grid-template-areas: none;
   }
-  .cg-rightcol {
-    flex-direction: row;
-    flex-wrap: wrap;
+  .cn-table .col-left,
+  .cn-table .col-right {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
   }
-  .cg-rightcol > * {
-    flex: 1 1 200px;
+  .cn-table .col-center {
+    order: -1;
   }
-  .cg-bottom {
+}
+@media (max-width: 880px) {
+  .cn-table .bottom {
     grid-template-columns: 1fr;
   }
 }
-@media (max-width: 720px) {
-  .cg-top {
-    flex-wrap: wrap;
+@media (max-width: 760px) {
+  .cn-table .col-left,
+  .cn-table .col-right {
+    grid-template-columns: 1fr;
+  }
+  .cn-table {
+    padding: 0 14px 50px;
+  }
+  .cn-table .board {
+    column-gap: 5px;
+    row-gap: 5px;
+  }
+  .cn-table .cell {
+    padding: 6px 4px;
+  }
+  .cn-table .clue-strip .word {
+    font-size: 28px;
+  }
+  .cn-table .topbar {
     gap: 10px;
   }
-  .cg-top__meta {
-    order: 5;
-    width: 100%;
-    margin-left: 0;
+  .cn-table .room-title h1 {
+    font-size: 18px;
   }
-  .cg-board {
-    gap: 7px;
+  .cn-table .divider {
+    display: none;
+  }
+}
+@media (max-width: 480px) {
+  .cn-table .board {
+    column-gap: 4px;
+    row-gap: 6px;
   }
 }
 
-/* ---------- тёплый «бумажный стол»: лёгкие звёзды в полях ---------- */
-.cg {
-  position: relative;
-}
-.cg::before,
-.cg::after {
-  content: "";
-  position: fixed;
-  width: 130px;
-  height: 130px;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.4;
-  background-repeat: no-repeat;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cg fill='none' stroke='%23b8884a' stroke-width='1.4' stroke-linejoin='round'%3E%3Cpath d='M28 16l3 6.4 7 1-5 4.9 1.2 7-6.2-3.3-6.2 3.3 1.2-7-5-4.9 7-1z'/%3E%3Cpath d='M98 62l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.5 5-.7z'/%3E%3Cpath d='M60 104l1.8 3.8 4.1.6-3 2.9.7 4.1-3.6-1.9-3.7 1.9.7-4.1-2.9-2.9 4.1-.6z'/%3E%3C/g%3E%3C/svg%3E");
-}
-.cg::before {
-  top: 84px;
-  left: 18px;
-}
-.cg::after {
-  bottom: 28px;
-  right: 18px;
-  transform: scaleX(-1);
-}
-.cg > * {
+/* ============ entry (создание/вход комнаты) — .cn-entry ============ */
+/* topbar/logo/home-link/room-title/theme-toggle/icon-btn/btn уже объявлены
+   под .cn-table; продублируем без префикса для .cn-entry, чтобы экран
+   входа выглядел как игровой стол. */
+.cn-entry {
   position: relative;
   z-index: 1;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 2.4vw, 40px) 80px;
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
-@media (max-width: 1200px) {
-  .cg::before,
-  .cg::after {
+.cn-entry .topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 0 4px;
+  flex-wrap: wrap;
+}
+.cn-entry .logo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  text-decoration: none;
+}
+.cn-entry .logo .mark {
+  width: 34px;
+  height: 34px;
+  color: var(--accent);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cn-entry .logo:hover .mark {
+  transform: rotate(120deg);
+}
+.cn-entry .logo b {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 30px;
+  color: var(--accent);
+}
+.cn-entry .home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 800 14px 'Nunito', sans-serif;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 11px 15px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  transition: 0.15s;
+}
+.cn-entry .home-link:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-soft);
+}
+.cn-entry .home-link svg {
+  width: 16px;
+  height: 16px;
+}
+.cn-entry .divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+  flex: none;
+}
+.cn-entry .room-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.cn-entry .room-title h1 {
+  font: 900 20px 'Nunito', sans-serif;
+  color: var(--text-strong);
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.cn-entry .room-title h1 .script {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 1.18em;
+}
+.cn-entry .spacer {
+  flex: 1;
+  min-width: 8px;
+}
+.cn-entry .nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cn-entry .theme-toggle {
+  display: flex;
+  gap: 5px;
+  padding: 5px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.cn-entry .theme-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-pill);
+  display: grid;
+  place-items: center;
+  transition: 0.18s;
+}
+.cn-entry .theme-toggle button svg {
+  width: 18px;
+  height: 18px;
+}
+.cn-entry .theme-toggle button.on {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.cn-entry .icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow);
+  color: var(--accent);
+  cursor: pointer;
+  transition: 0.18s;
+}
+.cn-entry .icon-btn:hover {
+  border-color: var(--accent-soft);
+  transform: translateY(-2px);
+}
+.cn-entry .icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* hero */
+.cn-entry .entry-hero {
+  position: relative;
+  text-align: center;
+  padding: 54px 0 30px;
+}
+.cn-entry .entry-art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+.cn-entry .art {
+  position: absolute;
+  filter: drop-shadow(0 14px 22px #8a5a2b33);
+  will-change: transform;
+}
+[data-theme='dark'] .cn-entry .art {
+  filter: drop-shadow(0 14px 26px #00000099);
+}
+.cn-entry .art-card {
+  width: 118px;
+  height: 74px;
+  border-radius: 10px;
+  background: var(--card-face);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+}
+.cn-entry .art-card .word {
+  font: 800 15px 'Nunito', sans-serif;
+  color: var(--card-ink);
+  letter-spacing: 0.04em;
+}
+.cn-entry .art-card .pip {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--team-red);
+  align-self: flex-end;
+  margin: 6px 8px 0 0;
+  box-shadow: 0 0 0 2px var(--card-face);
+}
+.cn-entry .art-die {
+  width: 52px;
+  height: 52px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #fffbf5, #e8e0d6);
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  padding: 8px;
+  gap: 2px;
+  box-shadow: var(--shadow);
+}
+[data-theme='dark'] .cn-entry .art-die {
+  background: linear-gradient(135deg, #e8e2d4, #cfc8b8);
+}
+.cn-entry .art-die i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--card-ink);
+  align-self: center;
+  justify-self: center;
+}
+.cn-entry .art-die i.hide {
+  visibility: hidden;
+}
+.cn-entry .art-1 {
+  top: 8%;
+  left: 8%;
+  --r: -7deg;
+}
+.cn-entry .art-3 {
+  bottom: 14%;
+  left: 14%;
+  --r: -11deg;
+}
+.cn-entry .art-4 {
+  bottom: 8%;
+  right: 12%;
+  --r: 5deg;
+}
+@keyframes cne-floaty {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--r, 0deg));
+  }
+  50% {
+    transform: translateY(-10px) rotate(var(--r, 0deg));
+  }
+}
+.cn-entry .art {
+  animation: cne-floaty 6s ease-in-out infinite;
+}
+.cn-entry .art-3 {
+  animation-duration: 6.8s;
+  animation-delay: 0.3s;
+}
+.cn-entry .art-4 {
+  animation-duration: 7.2s;
+  animation-delay: 0.9s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cn-entry .art {
+    animation: none;
+  }
+}
+.cn-entry .kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 800 12px 'Nunito', sans-serif;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.cn-entry .kicker .spark {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+  opacity: 0.8;
+}
+.cn-entry .entry-hero h1 {
+  font-size: clamp(34px, 6.4vw, 60px);
+  font-weight: 900;
+  color: var(--text-strong);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.cn-entry .entry-hero h1 .script {
+  position: relative;
+  display: inline-block;
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 1.16em;
+  padding: 0 0.06em;
+  white-space: nowrap;
+}
+.cn-entry .entry-hero h1 .script .underline {
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  bottom: -12px;
+  width: 108%;
+  height: 16px;
+  color: var(--accent);
+  opacity: 0.85;
+}
+.cn-entry .entry-hero .lead {
+  font-size: 17px;
+  color: var(--muted);
+  max-width: 540px;
+  margin: 26px auto 30px;
+}
+
+/* карточка с формой */
+.cn-entry .entry-card {
+  width: min(420px, 100%);
+  margin: 0 auto;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-big);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+.cn-entry .entry-me {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--r);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--gold) 14%, var(--surface-2)) 0%,
+    var(--surface-2) 100%
+  );
+  border: 1.5px solid color-mix(in srgb, var(--gold) 45%, transparent);
+}
+.cn-entry .entry-me__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.cn-entry .entry-me__label {
+  font: 700 11px 'Nunito', sans-serif;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.cn-entry .entry-me__nick {
+  font: 800 17px 'Nunito', sans-serif;
+  color: var(--text-strong);
+}
+.cn-entry .entry-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font: 700 12px 'Nunito', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cn-entry .entry-field input {
+  font: 800 16px 'Nunito', sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 13px 16px;
+  border-radius: var(--r-sm);
+  border: 2px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-strong);
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.cn-entry .entry-field input::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+}
+.cn-entry .entry-field input:focus {
+  border-color: var(--accent-soft);
+  background: var(--surface);
+}
+.cn-entry .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 14px 26px;
+  font: 800 15px 'Nunito', sans-serif;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--r);
+  transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.16s, border-color 0.16s, filter 0.16s, opacity 0.16s;
+  text-decoration: none;
+  width: 100%;
+}
+.cn-entry .btn svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+.cn-entry .btn:active {
+  transform: translateY(2px);
+}
+.cn-entry .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.cn-entry .btn-pri {
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow: 0 5px 0 var(--accent-shadow);
+}
+.cn-entry .btn-pri:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 var(--accent-shadow);
+}
+.cn-entry .btn-sec {
+  background: var(--surface);
+  color: var(--accent);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.cn-entry .btn-sec:hover:not(:disabled) {
+  border-color: var(--accent-soft);
+  transform: translateY(-2px);
+}
+.cn-entry .entry-divider {
+  text-align: center;
+  font: 700 12px 'Nunito', sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  position: relative;
+  padding: 4px 0;
+}
+.cn-entry .entry-divider::before,
+.cn-entry .entry-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: calc(50% - 26px);
+  height: 1.5px;
+  background: var(--border);
+}
+.cn-entry .entry-divider::before {
+  left: 0;
+}
+.cn-entry .entry-divider::after {
+  right: 0;
+}
+.cn-entry .entry-error {
+  background: color-mix(in srgb, var(--team-red) 14%, transparent);
+  color: var(--team-red);
+  border: 1.5px solid color-mix(in srgb, var(--team-red) 35%, transparent);
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  font: 800 13px 'Nunito', sans-serif;
+}
+
+/* a11y / появление (переиспользуем .rise/.d0..d3 из cn-game.css, но они
+   скоупированы под .cn-table — продублируем) */
+.cn-entry a:focus-visible,
+.cn-entry button:focus-visible,
+.cn-entry .icon-btn:focus-visible,
+.cn-entry input:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+@keyframes cne-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.cn-entry .rise {
+  opacity: 1;
+  animation: cne-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.cn-entry .d0 {
+  animation-delay: 0.05s;
+}
+.cn-entry .d1 {
+  animation-delay: 0.15s;
+}
+.cn-entry .d2 {
+  animation-delay: 0.25s;
+}
+.cn-entry .d3 {
+  animation-delay: 0.35s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cn-entry .rise {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+@media (max-width: 760px) {
+  .cn-entry .entry-art {
     display: none;
+  }
+  .cn-entry .topbar {
+    gap: 10px;
+  }
+  .cn-entry .divider {
+    display: none;
+  }
+}
+@media (max-width: 520px) {
+  .cn-entry .entry-hero h1 .script {
+    white-space: normal;
+  }
+  .cn-entry {
+    padding: 0 16px 60px;
   }
 }

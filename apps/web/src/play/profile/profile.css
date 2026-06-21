@@ -1,153 +1,616 @@
+/* ===== Профиль =====
+   Тот же язык и та же ширина, что у главной/игр: контейнер 1400px,
+   общий .topbar (лого + theme-toggle + настройки),
+   бумажные панели с пунктирной рамкой, тёплая палитра из theme.css.
+   Скоуп .pf-*. */
+
 .pf-page {
-  max-width: 920px;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 24px 20px 64px;
-  font-family: "Nunito", system-ui, sans-serif;
-  color: #2c1810;
+  padding: 0 clamp(16px, 2.4vw, 40px) 80px;
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 .pf-page--center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  min-height: 60vh;
+  min-height: 70vh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 14px;
 }
-
-.pf-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 28px;
-}
-
-.pf-back {
-  font-weight: 800;
-  text-decoration: none;
-  color: #a65e2e;
-}
-
-.pf-hero {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 24px;
-  background: #fff7ef;
-  border: 1px solid #efe0d2;
-  border-radius: 18px;
-  box-shadow: 0 6px 24px rgba(166, 94, 46, 0.08);
-}
-
-.pf-hero__name {
+.pf-signin-text {
   margin: 0;
-  font-size: 26px;
+  color: var(--muted);
+  font-size: 15px;
 }
-
-.pf-hero__email {
-  margin: 2px 0 12px;
-  color: #8a7563;
-  font-size: 14px;
-}
-
-.pf-hero__actions {
-  display: flex;
-  gap: 10px;
-}
-
-.pf-btn {
-  border: none;
-  border-radius: 10px;
-  padding: 9px 16px;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  background: #d89636;
-  color: #fff;
-  text-decoration: none;
+.pf-home-link {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
+  font: 800 14px 'Nunito', sans-serif;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 12px 18px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  transition: 0.15s;
+  cursor: pointer;
+}
+.pf-home-link svg {
+  width: 17px;
+  height: 17px;
+}
+.pf-home-link:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-soft);
 }
 
-.pf-btn:disabled {
-  opacity: 0.6;
-  cursor: default;
+/* ============ topbar (повторяет .cn-entry/.bn-home) ============ */
+.pf-page .topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 0 4px;
+  flex-wrap: wrap;
 }
-
-.pf-btn--ghost {
+.pf-page .logo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  text-decoration: none;
+}
+.pf-page .logo .mark {
+  width: 34px;
+  height: 34px;
+  color: var(--accent);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pf-page .logo:hover .mark {
+  transform: rotate(120deg);
+}
+.pf-page .logo b {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 30px;
+  color: var(--accent);
+}
+.pf-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 800 14px 'Nunito', sans-serif;
+  color: var(--muted);
+  padding: 11px 15px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: 0.15s;
+}
+.pf-logout svg {
+  width: 16px;
+  height: 16px;
+}
+.pf-logout:hover {
+  color: var(--team-red);
+  border-color: color-mix(in srgb, var(--team-red) 40%, var(--border));
+  transform: translateY(-1px);
+}
+.pf-page .spacer {
+  flex: 1;
+}
+.pf-page .nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pf-page .theme-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.pf-page .theme-toggle button {
+  border: none;
   background: transparent;
-  color: #a65e2e;
-  border: 1px solid #e3cdb6;
+  color: var(--muted);
+  cursor: pointer;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-pill);
+  display: grid;
+  place-items: center;
+  transition: 0.18s;
+}
+.pf-page .theme-toggle button svg {
+  width: 18px;
+  height: 18px;
+}
+.pf-page .theme-toggle button.on {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.pf-page .icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow);
+  color: var(--accent);
+  cursor: pointer;
+  transition: 0.18s;
+}
+.pf-page .icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+.pf-page .icon-btn:hover {
+  border-color: var(--accent-soft);
+  transform: translateY(-2px);
+}
+
+/* ============ кнопки ============ */
+.pf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 20px;
+  font: 800 14px 'Nunito', sans-serif;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.14s,
+    filter 0.14s, border-color 0.14s;
+}
+.pf-btn svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+.pf-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
+.pf-btn--pri {
+  background: linear-gradient(178deg, var(--accent-soft) 0%, var(--accent) 45%);
+  color: var(--accent-text);
+  box-shadow: inset 0 1px 0 #ffffff4d, 0 4px 0 var(--accent-shadow),
+    0 6px 10px #00000030;
+}
+.pf-btn--pri:not(:disabled):hover {
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 #ffffff4d, 0 6px 0 var(--accent-shadow),
+    0 8px 14px #00000034;
+}
+.pf-btn--pri:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 #ffffff4d, 0 1px 0 var(--accent-shadow),
+    0 2px 4px #00000030;
+}
+.pf-btn--ghost {
+  background: var(--surface);
+  color: var(--accent);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.pf-btn--ghost:not(:disabled):hover {
+  border-color: var(--accent-soft);
+  transform: translateY(-2px);
 }
 
 .pf-error {
-  margin-top: 8px;
-  color: #c0392b;
+  margin-top: 10px;
+  color: var(--team-red);
   font-size: 13px;
+  font-weight: 700;
 }
 
-.pf-stats {
+/* ============ hero ============ */
+.pf-hero {
+  margin-top: 22px;
+  padding: 28px clamp(22px, 3vw, 40px);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--felt) 12%, var(--surface)) 0%,
+    var(--surface) 70%
+  );
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 0 #ffffff66 inset, var(--shadow-big);
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+}
+.pf-hero__id {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.pf-hero__avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  padding: 5px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 30%,
+    color-mix(in srgb, var(--accent) 16%, var(--surface-2)),
+    var(--surface-2)
+  );
+  border: 2px solid color-mix(in srgb, var(--gold) 55%, transparent);
+  box-shadow: inset 0 2px 6px #00000024, var(--shadow);
+}
+.pf-hero__info {
+  min-width: 0;
+}
+.pf-hero__name {
+  margin: 0;
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1.05;
+  color: var(--text-strong);
+  letter-spacing: 0.01em;
+}
+.pf-hero__email {
+  margin: 2px 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  word-break: break-all;
+}
+.pf-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.pf-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font: 700 12.5px 'Nunito', sans-serif;
+  color: var(--text);
+}
+.pf-chip--rank {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--gold) 50%, var(--border));
+}
+.pf-chip--rank-1 {
+  background: color-mix(in srgb, var(--gold) 22%, var(--surface-2));
+  border-color: var(--gold);
+  color: var(--gold-ink);
+}
+.pf-chip--rank-2 {
+  background: color-mix(in srgb, #8a8a8a 22%, var(--surface-2));
+  border-color: #8a8a8a;
+}
+.pf-chip--rank-3 {
+  background: color-mix(in srgb, var(--felt) 20%, var(--surface-2));
+  border-color: color-mix(in srgb, var(--felt) 70%, var(--border));
+}
+.pf-hero__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* правый блок статистики героя */
+.pf-hero__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px 24px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.pf-hero__stat-label {
+  font: 800 11px 'Nunito', sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pf-hero__rate {
+  font: 900 46px 'Nunito', sans-serif;
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.pf-hero__pct {
+  font-size: 22px;
+  margin-left: 2px;
+  opacity: 0.7;
+}
+.pf-hero__form {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.pf-form__empty {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  font-style: italic;
+}
+.pf-pip {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  font: 800 11px 'Nunito', sans-serif;
+  color: #fff;
+  border: 1px solid transparent;
+}
+.pf-pip--win {
+  background: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 70%, #000 12%);
+}
+.pf-pip--loss {
+  background: var(--team-red);
+  border-color: color-mix(in srgb, var(--team-red) 70%, #000 12%);
+}
+.pf-hero__nums {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.pf-hero__nums b {
+  color: var(--text-strong);
+  font-weight: 900;
+}
+.pf-win {
+  color: var(--ok);
+}
+.pf-loss {
+  color: var(--team-red);
+}
+
+/* ============ плитки: по играм + серия ============ */
+.pf-games {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
-  margin: 24px 0;
+  margin: 18px 0;
 }
-
-.pf-stat-card {
-  background: #fff;
-  border: 1px solid #efe0d2;
-  border-radius: 16px;
-  padding: 18px;
-  text-align: center;
+.pf-game {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s;
 }
-
-.pf-stat-card__title {
-  margin: 0 0 6px;
-  font-size: 14px;
-  color: #8a7563;
+.pf-game:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-soft);
 }
-
-.pf-stat-card__rate {
-  font-size: 32px;
-  font-weight: 900;
-  color: #a65e2e;
+.pf-game--streak-empty {
+  opacity: 0.7;
 }
-
-.pf-stat-card__meta {
+.pf-game__mark {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #fff;
+  box-shadow: inset 0 1px 0 #ffffff44, 0 2px 5px #00000030;
+}
+.pf-game__mark--codenames {
+  background: linear-gradient(135deg, var(--felt), var(--felt-dark));
+}
+.pf-game__mark--uno {
+  background: linear-gradient(
+    135deg,
+    var(--uno-red),
+    color-mix(in srgb, var(--uno-red), #000 25%)
+  );
+}
+.pf-game__mark--streak {
+  background: linear-gradient(135deg, var(--accent-soft), var(--accent));
+  color: var(--accent-text);
+}
+.pf-game__mark--streak svg {
+  width: 22px;
+  height: 22px;
+}
+.pf-game__main {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-top: 8px;
-  font-size: 13px;
-  color: #6b5849;
+  min-width: 0;
+  margin-right: auto;
+}
+.pf-game__name {
+  font: 800 15px 'Nunito', sans-serif;
+  color: var(--text-strong);
+}
+.pf-game__sub {
+  font: 700 12px 'Nunito', sans-serif;
+  color: var(--muted);
+}
+.pf-game__rate {
+  font: 900 26px 'Nunito', sans-serif;
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.pf-game__pct {
+  font-size: 15px;
+  margin-left: 1px;
+  opacity: 0.7;
+}
+.pf-game__rate--loss {
+  color: var(--team-red);
 }
 
-.pf-win {
-  color: #2e7d32;
-}
-
-.pf-loss {
-  color: #b1462f;
-}
-
+/* ============ колонки: история + рейтинг ============ */
 .pf-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 18px;
+  align-items: start;
 }
-
-.pf-col__title {
-  margin: 0 0 12px;
-  font-size: 18px;
+.pf-panel {
+  position: relative;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
+    var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 0 #ffffff66 inset, var(--shadow);
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
 }
-
+.pf-panel::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px dashed color-mix(in srgb, var(--gold) 40%, transparent);
+  border-radius: calc(var(--radius) - 7px);
+  pointer-events: none;
+}
+.pf-panel__title {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 16px;
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--text-strong);
+  line-height: 1;
+}
+.pf-panel__title svg {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+  flex: none;
+}
 .pf-empty {
-  color: #8a7563;
+  position: relative;
+  margin: 0;
+  padding: 6px 4px;
+  color: var(--muted);
   font-size: 14px;
+  font-weight: 600;
 }
 
-.pf-history,
+/* ---------- история ---------- */
+.pf-history {
+  position: relative;
+  padding-right: 2px;
+}
+.pf-history__group + .pf-history__group {
+  margin-top: 14px;
+}
+.pf-history__glabel {
+  font: 800 11px 'Nunito', sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+  padding: 0 2px;
+}
+.pf-history__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pf-history__row {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 4px;
+  border-bottom: 1px dashed var(--paper-line);
+  font-size: 13px;
+}
+.pf-history__row:last-child {
+  border-bottom: 0;
+}
+.pf-history__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex: none;
+}
+.pf-history__dot--codenames {
+  background: linear-gradient(135deg, var(--felt), var(--felt-dark));
+}
+.pf-history__dot--uno {
+  background: var(--uno-red);
+}
+.pf-history__game {
+  font-weight: 800;
+  color: var(--text);
+}
+.pf-history__extra {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12.5px;
+}
+.pf-history__date {
+  color: var(--muted);
+  opacity: 0.85;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.pf-badge {
+  font: 800 11px 'Nunito', sans-serif;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+}
+.pf-badge--win {
+  background: color-mix(in srgb, var(--ok) 16%, transparent);
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 35%, transparent);
+}
+.pf-badge--loss {
+  background: color-mix(in srgb, var(--team-red) 14%, transparent);
+  color: var(--team-red);
+  border-color: color-mix(in srgb, var(--team-red) 32%, transparent);
+}
+
+/* ---------- рейтинг ---------- */
 .pf-board {
+  position: relative;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -155,86 +618,173 @@
   flex-direction: column;
   gap: 8px;
 }
-
-.pf-history__row {
-  display: grid;
-  grid-template-columns: auto auto 1fr auto;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  background: #fff;
-  border: 1px solid #efe0d2;
-  border-radius: 12px;
-  font-size: 13px;
-}
-
-.pf-history__game {
-  font-weight: 700;
-}
-
-.pf-history__extra {
-  color: #8a7563;
-}
-
-.pf-history__date {
-  color: #a8978a;
-  white-space: nowrap;
-}
-
-.pf-badge {
-  font-size: 12px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-
-.pf-badge--win {
-  background: #e3f2e4;
-  color: #2e7d32;
-}
-
-.pf-badge--loss {
-  background: #fbe6e0;
-  color: #b1462f;
-}
-
 .pf-board__row {
   display: grid;
   grid-template-columns: auto auto 1fr auto;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
   padding: 8px 12px;
-  background: #fff;
-  border: 1px solid #efe0d2;
-  border-radius: 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  transition: transform 0.18s, border-color 0.18s;
 }
-
+.pf-board__row:hover {
+  border-color: var(--accent-soft);
+}
 .pf-board__row--me {
-  border-color: #d89636;
-  background: #fff7ef;
+  border-color: color-mix(in srgb, var(--gold) 60%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-2));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 30%, transparent) inset;
 }
-
 .pf-board__rank {
-  width: 22px;
-  text-align: center;
-  font-weight: 800;
-  color: #a8978a;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font: 800 13px 'Nunito', sans-serif;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
-
+.pf-board__rank--1 {
+  color: #fff;
+  background: radial-gradient(circle at 50% 32%, #e8c46a, var(--gold));
+  border-color: color-mix(in srgb, var(--gold) 70%, #000 10%);
+  box-shadow: 0 2px 5px #00000030;
+}
+.pf-board__rank--2 {
+  color: #fff;
+  background: radial-gradient(circle at 50% 32%, #c9c9c9, #8a8a8a);
+  border-color: #6f6f6f;
+}
+.pf-board__rank--3 {
+  color: #fff;
+  background: radial-gradient(circle at 50% 32%, #d99863, #9c6b3c);
+  border-color: color-mix(in srgb, var(--felt) 80%, #000 10%);
+}
 .pf-board__name {
-  font-weight: 700;
+  font-weight: 800;
   font-size: 14px;
-}
-
-.pf-board__wins {
-  font-size: 13px;
-  color: #6b5849;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
+.pf-board__wins {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.pf-board__wins b {
+  color: var(--text-strong);
+  font-weight: 900;
+}
 
-@media (max-width: 680px) {
-  .pf-stats,
+/* ============ focus / motion ============ */
+.pf-page a:focus-visible,
+.pf-page button:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@keyframes pf-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.pf-hero,
+.pf-game,
+.pf-panel {
+  animation: pf-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.pf-game:nth-child(2) {
+  animation-delay: 0.06s;
+}
+.pf-game:nth-child(3) {
+  animation-delay: 0.12s;
+}
+.pf-columns .pf-panel:nth-of-type(2) {
+  animation-delay: 0.08s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pf-hero,
+  .pf-game,
+  .pf-panel {
+    animation: none;
+  }
+  .pf-game,
+  .pf-board__row,
+  .pf-icon-btn,
+  .pf-btn,
+  .pf-home-link,
+  .pf-logout,
+  .pf-page .icon-btn {
+    transition: none;
+  }
+}
+
+/* ============ адаптив ============ */
+@media (max-width: 1000px) {
+  .pf-hero {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .pf-games {
+    grid-template-columns: 1fr 1fr;
+  }
+  .pf-game--streak {
+    grid-column: 1 / span 2;
+  }
+}
+@media (max-width: 720px) {
   .pf-columns {
     grid-template-columns: 1fr;
+  }
+  .pf-hero__name {
+    font-size: 38px;
+  }
+}
+@media (max-width: 560px) {
+  .pf-games {
+    grid-template-columns: 1fr;
+  }
+  .pf-game--streak {
+    grid-column: auto;
+  }
+  .pf-hero__id {
+    gap: 16px;
+  }
+  .pf-history__row {
+    grid-template-columns: auto auto auto;
+    grid-template-areas:
+      'dot game badge'
+      'extra extra extra'
+      'date date date';
+    row-gap: 4px;
+  }
+  .pf-history__dot {
+    grid-area: dot;
+  }
+  .pf-history__game {
+    grid-area: game;
+  }
+  .pf-history__row > .pf-badge {
+    grid-area: badge;
+    justify-self: end;
+  }
+  .pf-history__extra {
+    grid-area: extra;
+  }
+  .pf-history__date {
+    grid-area: date;
   }
 }

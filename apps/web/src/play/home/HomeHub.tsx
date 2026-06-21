@@ -1,603 +1,1083 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { SettingsModal } from "../SettingsModal";
-import "./home.css";
-import { useAuth } from "../net/useAuth";
 import { AuthModal } from "../AuthModal";
 import { Avatar } from "../components/Avatar";
+import { useAuth } from "../net/useAuth";
+import { SettingsModal } from "../SettingsModal";
+import { setSettings, type Theme, useSettings } from "../settings";
+import "./home.css";
+
+const NAV_LINKS = [
+  { href: "#games", label: "Игры" },
+  { href: "#how", label: "Как играть" },
+  { href: "#rooms", label: "Столы" },
+  { href: "#about", label: "О проекте" },
+];
 
 export function HomeHub() {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const auth = useAuth();
-  const navigate = useNavigate();
   const [authOpen, setAuthOpen] = useState(false);
+  const [burgerOpen, setBurgerOpen] = useState(false);
+  const auth = useAuth();
+  const settings = useSettings();
+  const navigate = useNavigate();
 
-  const handleEmptyClick = (e: React.MouseEvent) => {
-    const target = e.currentTarget as HTMLAnchorElement | HTMLButtonElement;
-    if (target instanceof HTMLAnchorElement && target.getAttribute("href") === "#") {
-      e.preventDefault();
-    }
+  const setTheme = (t: Theme) => setSettings({ theme: t });
+
+  const closeBurger = () => setBurgerOpen(false);
+
+  const onProfileClick = () => {
+    if (auth.user) navigate("/profile");
+    else setAuthOpen(true);
   };
 
   return (
-    <div className="bn-landing">
-      <header>
-        <div className="container">
-          <div className="header-inner">
-            <Link to="/" className="logo">
-              <div className="logo-icon">
-                <svg width="33" height="33" viewBox="0 0 33 33" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="img" aria-label="Логотип">
-                  <rect x="1" y="1" width="31" height="31" rx="4" />
-                  <circle cx="8.25" cy="8.25" r="2.97" fill="currentColor" stroke="none" />
-                  <circle cx="24.75" cy="8.25" r="2.97" fill="currentColor" stroke="none" />
-                  <circle cx="24.75" cy="24.75" r="2.97" fill="currentColor" stroke="none" />
-                  <circle cx="8.25" cy="24.75" r="2.97" fill="currentColor" stroke="none" />
-                  <circle cx="16.5" cy="16.5" r="2.97" fill="currentColor" stroke="none" />
-                </svg>
-              </div>
-              <span className="logo-text">Настолки</span>
-            </Link>
-            <nav>
-              <button type="button" className="nav-link" onClick={handleEmptyClick}>Игры</button>
-              <button type="button" className="nav-link" onClick={handleEmptyClick}>Комнаты</button>
-              <button type="button" className="nav-link" onClick={handleEmptyClick}>Друзья</button>
-            </nav>
-            <div className="header-spacer" />
-            <div className="header-actions">
-              <button type="button" className="settings-toggle" aria-label="Настройки" onClick={() => setSettingsOpen(true)}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
-              </button>
-              <div
-                className="profile-pill"
-                role="button"
-                tabIndex={0}
-                style={{ cursor: "pointer" }}
-                aria-label={auth.user ? auth.user.nickname : "Войти"}
-                title={auth.user ? auth.user.nickname : "Войти"}
-                onClick={() =>
-                  auth.user ? navigate("/profile") : setAuthOpen(true)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    if (auth.user) navigate("/profile");
-                    else setAuthOpen(true);
-                  }
-                }}
+    <div className="bn-home">
+      {/* ============ NAV ============ */}
+      <nav className="nav rise d0" aria-label="Основная навигация">
+        <Link className="logo" to="/" aria-label="Настолки — на главную">
+          <svg
+            className="mark"
+            viewBox="0 0 33 33"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="1" y="1" width="31" height="31" rx="6" />
+            <circle
+              cx="8.25"
+              cy="8.25"
+              r="2.6"
+              fill="currentColor"
+              stroke="none"
+            />
+            <circle
+              cx="24.75"
+              cy="8.25"
+              r="2.6"
+              fill="currentColor"
+              stroke="none"
+            />
+            <circle
+              cx="24.75"
+              cy="24.75"
+              r="2.6"
+              fill="currentColor"
+              stroke="none"
+            />
+            <circle
+              cx="8.25"
+              cy="24.75"
+              r="2.6"
+              fill="currentColor"
+              stroke="none"
+            />
+            <circle
+              cx="16.5"
+              cy="16.5"
+              r="2.6"
+              fill="currentColor"
+              stroke="none"
+            />
+          </svg>
+          <b>Настолки</b>
+        </Link>
+
+        <div className={`nav-links${burgerOpen ? " open" : ""}`} id="navLinks">
+          {NAV_LINKS.map(l => (
+            <a key={l.href} href={l.href} onClick={closeBurger}>
+              {l.label}
+            </a>
+          ))}
+        </div>
+
+        <div className="nav-actions">
+          <button
+            className={`nav-burger${burgerOpen ? " open" : ""}`}
+            type="button"
+            aria-label="Меню"
+            aria-expanded={burgerOpen}
+            aria-controls="navLinks"
+            onClick={() => setBurgerOpen(v => !v)}
+          >
+            <svg
+              className="bars"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+            <svg
+              className="x"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+
+          <div className="theme-toggle" role="group" aria-label="Тема">
+            <button
+              type="button"
+              data-set="light"
+              aria-label="Светлая тема"
+              className={settings.theme === "light" ? "on" : ""}
+              onClick={() => setTheme("light")}
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                {auth.user ? (
-                  <Avatar
-                    nickname={auth.user.nickname}
-                    avatarUrl={auth.user.avatarUrl}
-                    size={36}
-                    className="user-avatar"
-                  />
-                ) : (
-                  <div className="user-avatar" aria-hidden="true" />
-                )}
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </div>
+                <circle cx="12" cy="12" r="4.2" />
+                <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              data-set="dark"
+              aria-label="Тёмная тема"
+              className={settings.theme === "dark" ? "on" : ""}
+              onClick={() => setTheme("dark")}
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+              </svg>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Настройки"
+            onClick={() => setSettingsOpen(true)}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
+
+          {auth.user ? (
+            <div
+              className="profile-pill"
+              role="button"
+              tabIndex={0}
+              aria-label={auth.user.nickname}
+              title={auth.user.nickname}
+              onClick={onProfileClick}
+              onKeyDown={e => {
+                if (e.key === "Enter" || e.key === " ") onProfileClick();
+              }}
+            >
+              <Avatar
+                nickname={auth.user.nickname}
+                avatarUrl={auth.user.avatarUrl}
+                size={32}
+              />
+              <span className="pill-name">{auth.user.nickname}</span>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="signin"
+              onClick={() => setAuthOpen(true)}
+            >
+              Войти
+            </button>
+          )}
+        </div>
+      </nav>
+
+      {/* ============ HERO ============ */}
+      <section className="hero">
+        <div className="hero-art" aria-hidden="true">
+          <div className="art art-1 art-card">
+            <span className="word">ЗВЕЗДА</span>
+            <span className="pip" />
+          </div>
+          <div className="art art-2 art-uno">
+            <div className="oval">
+              <b>7</b>
             </div>
           </div>
+          <div className="art art-3 art-die">
+            <i />
+            <i className="hide" />
+            <i />
+            <i className="hide" />
+            <i />
+            <i className="hide" />
+            <i />
+            <i className="hide" />
+            <i />
+          </div>
+          <div className="art art-4 art-card">
+            <span className="word">КОШКА</span>
+            <span className="pip" style={{ background: "var(--team-blue)" }} />
+          </div>
         </div>
-      </header>
 
-      <main>
-        <div className="container">
-          <section className="hero">
-            <div className="hero-card">
-              <div className="hero-content">
-                <h1>
-                  Играй в
-                  <br />
-                  настолки онлайн
-                </h1>
-                <p>
-                  Создавай комнаты, зови друзей
-                  <br />
-                  и играй без установки.
-                </p>
-                <div className="hero-buttons">
-                  <Link to="/codenames" className="btn btn-primary">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    Создать комнату
-                  </Link>
-                  <a href="#games" className="btn btn-secondary">
-                    <svg width="20" height="20" viewBox="0 0 33 33" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <rect x="1" y="1" width="31" height="31" rx="4" />
-                      <circle cx="8.25" cy="8.25" r="2.97" fill="currentColor" stroke="none" />
-                      <circle cx="24.75" cy="8.25" r="2.97" fill="currentColor" stroke="none" />
-                      <circle cx="24.75" cy="24.75" r="2.97" fill="currentColor" stroke="none" />
-                      <circle cx="8.25" cy="24.75" r="2.97" fill="currentColor" stroke="none" />
-                      <circle cx="16.5" cy="16.5" r="2.97" fill="currentColor" stroke="none" />
-                    </svg>
-                    Выбрать игру
-                  </a>
-                </div>
-              </div>
-              <div className="active-room">
-                <div className="active-room-header">
-                  <span className="active-room-title">Активная комната</span>
-                  <span className="status">
-                    <span className="status-dot" />
-                    В игре
-                  </span>
-                </div>
-                <div className="room-info">
-                  <div className="room-thumb" style={{ backgroundImage: "url('/game-thumb.jpg')" }} />
-                  <div className="room-meta">
-                    <div className="room-meta-main">
-                      <h4>Коднеймс</h4>
-                      <p>Комната: Секретный штаб</p>
-                      <div className="room-avatars">
-                        <div className="room-avatar">М</div>
-                        <div className="room-avatar" style={{ background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" }}>К</div>
-                        <div className="room-avatar" style={{ background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" }}>С</div>
-                        <div className="room-avatar" style={{ background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)" }}>Л</div>
-                        <div className="room-avatar more">+2</div>
-                      </div>
-                    </div>
-                    <div className="room-stats">
-                      <span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                          <circle cx="9" cy="7" r="4" />
-                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                        </svg>
-                        6 / 10 игроков
-                      </span>
-                      <span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <circle cx="12" cy="12" r="10" />
-                          <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                        12:45
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <Link to="/codenames" className="btn btn-room">
-                  Перейти в комнату
-                </Link>
-              </div>
+        <div className="kicker rise d0">
+          <svg
+            className="spark"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M12 2c.5 4.5 2.5 6.5 7 7-4.5.5-6.5 2.5-7 7-.5-4.5-2.5-6.5-7-7 4.5-.5 6.5-2.5 7-7z" />
+          </svg>
+          Вечерние настолки онлайн
+          <svg
+            className="spark"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M12 2c.5 4.5 2.5 6.5 7 7-4.5.5-6.5 2.5-7 7-.5-4.5-2.5-6.5-7-7 4.5-.5 6.5-2.5 7-7z" />
+          </svg>
+        </div>
+
+        <h1 className="rise d1">
+          Уютные настолки
+          <br />
+          <span className="script">
+            на вечер с друзьями
+            <svg
+              className="underline"
+              viewBox="0 0 200 16"
+              fill="none"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M3 11 C40 4, 80 4, 118 8 S170 13, 197 6"
+                stroke="currentColor"
+                strokeWidth="3.2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+        </h1>
+
+        <p className="lead rise d2">
+          Создай комнату по короткому коду, позови своих и играй прямо в
+          браузере. Боты дополнят стол, таймеры не дадут затянуть, а сервер
+          честно считает каждое слово и карту.
+        </p>
+
+        <div className="cta-row rise d3">
+          <Link className="btn btn-pri" to="/codenames">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Создать комнату
+          </Link>
+          <a className="btn btn-sec" href="#rooms">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M7 14a4 4 0 0 1 0-8 4 4 0 0 1 0 8zM7 14v6M7 14h3" />
+              <path d="M3 7h4M3 11h4M3 9.5h4M3 12.5h4" />
+            </svg>
+            Войти по коду
+          </a>
+        </div>
+
+        <div className="hero-meta rise d4">
+          <span>
+            <b>Codenames</b>, <b>Uno</b> и <b>Alias</b> уже играются
+          </span>
+          <span className="dot" />
+          <span>
+            <b>больше игр</b> — в планах
+          </span>
+        </div>
+      </section>
+
+      <hr className="sec-rule rise d2" />
+
+      {/* ============ ИГРЫ ============ */}
+      <section id="games">
+        <div className="sec-head">
+          <h2 className="rise d2">
+            Игры <span className="script">за столом</span>
+          </h2>
+          <p className="lead-r rise d2">
+            Две уже живые, третья на подходе. Каждая — со своим настроением и
+            правилами.
+          </p>
+        </div>
+
+        <div className="tiles">
+          {/* Codenames */}
+          <Link className="tile rise d2" to="/codenames">
+            <span className="status ok">Играбельно</span>
+            <div className="art-wrap">
+              <svg
+                width="96"
+                height="84"
+                viewBox="0 0 96 84"
+                fill="none"
+                aria-hidden="true"
+              >
+                <rect
+                  x="6"
+                  y="6"
+                  width="84"
+                  height="72"
+                  rx="12"
+                  fill="var(--felt)"
+                  opacity=".18"
+                />
+                <g stroke="var(--border)" strokeWidth="2">
+                  <rect
+                    x="16"
+                    y="14"
+                    width="20"
+                    height="18"
+                    rx="5"
+                    fill="var(--card-face)"
+                  />
+                  <rect
+                    x="38"
+                    y="14"
+                    width="20"
+                    height="18"
+                    rx="5"
+                    fill="var(--card-face)"
+                  />
+                  <rect
+                    x="60"
+                    y="14"
+                    width="20"
+                    height="18"
+                    rx="5"
+                    fill="var(--card-face)"
+                  />
+                  <rect
+                    x="16"
+                    y="34"
+                    width="20"
+                    height="18"
+                    rx="5"
+                    fill="var(--card-face)"
+                  />
+                  <rect
+                    x="38"
+                    y="34"
+                    width="20"
+                    height="18"
+                    rx="5"
+                    fill="var(--card-face)"
+                  />
+                  <rect
+                    x="60"
+                    y="34"
+                    width="20"
+                    height="18"
+                    rx="5"
+                    fill="var(--card-face)"
+                  />
+                  <rect
+                    x="16"
+                    y="54"
+                    width="20"
+                    height="18"
+                    rx="5"
+                    fill="var(--card-face)"
+                  />
+                  <rect
+                    x="38"
+                    y="54"
+                    width="20"
+                    height="18"
+                    rx="5"
+                    fill="var(--card-face)"
+                  />
+                  <rect
+                    x="60"
+                    y="54"
+                    width="20"
+                    height="18"
+                    rx="5"
+                    fill="var(--card-face)"
+                  />
+                </g>
+                <circle cx="26" cy="23" r="3.4" fill="var(--team-red)" />
+                <circle cx="48" cy="23" r="3.4" fill="var(--team-blue)" />
+                <circle cx="70" cy="43" r="3.4" fill="var(--team-red)" />
+                <circle cx="26" cy="63" r="3.4" fill="var(--team-blue)" />
+                <circle cx="70" cy="63" r="3.4" fill="var(--neutral)" />
+              </svg>
             </div>
-          </section>
-
-          <div className="content-section">
-          <section id="games" className="popular-games">
-            <div className="section-header">
-              <h2 className="section-title">Популярные игры</h2>
-              <a href="#" onClick={handleEmptyClick} className="link-arrow">
-                Смотреть все игры
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <polyline points="2 3 6 7 10 3" />
+            <h3>Codenames</h3>
+            <p className="desc">
+              Две команды, поле из 25 слов и капитаны, что связывают их одной
+              подсказкой. Угадывай своих, береги чужих, держись подальше от
+              киллера.
+            </p>
+            <div className="tags">
+              <span className="tag">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="8" r="3.4" />
+                  <path d="M20 8.5a4 4 0 0 1 0 7" />
                 </svg>
-              </a>
+                2–10
+              </span>
+              <span className="tag">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3.5 2" />
+                </svg>
+                15–30 мин
+              </span>
             </div>
-            <div className="games-grid">
-              <div className="game-card">
-                <div className="game-card-inner">
-                  <div
-                    className="game-thumb"
-                    style={{ background: "linear-gradient(135deg, #A65E2E 0%, #5D3A24 100%)", position: "relative" }}
-                  >
-                    <svg width="60" height="60" viewBox="0 0 60 60" fill="none" style={{ position: "absolute", left: "-2px", bottom: "-4px" }}>
-                      <circle cx="22" cy="18" r="8" fill="#2C1810" />
-                      <path d="M12 32 C12 25 17 20 22 20 C27 20 32 25 32 32 L32 54 L12 54 Z" fill="#2C1810" />
-                      <ellipse cx="22" cy="12" rx="10" ry="6" fill="#2C1810" />
-                      <rect x="12" y="28" width="20" height="3" fill="#D4A373" />
-                    </svg>
-                    <svg width="60" height="60" viewBox="0 0 60 60" fill="none" style={{ position: "absolute", right: "-6px", bottom: "-4px" }}>
-                      <circle cx="26" cy="18" r="8" fill="#1A100C" />
-                      <path d="M16 32 C16 25 21 20 26 20 C31 20 36 25 36 32 L36 54 L16 54 Z" fill="#1A100C" />
-                      <ellipse cx="26" cy="12" rx="10" ry="6" fill="#1A100C" />
-                      <rect x="16" y="28" width="20" height="3" fill="#D4A373" />
-                    </svg>
-                  </div>
-                  <div className="game-info">
-                    <h3>Коднеймс</h3>
-                    <p>Две команды агентов, одно поле с кодовыми словами.</p>
-                    <div className="game-tags">
-                      <span className="tag">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                          <circle cx="9" cy="7" r="4" />
-                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                        </svg>
-                        2 – 10 игроков
-                      </span>
-                      <span className="tag">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10" />
-                          <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                        15–30 мин
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <Link to="/codenames" className="btn btn-game">Играть</Link>
-              </div>
+          </Link>
 
-              <div className="game-card">
-                <div className="game-card-inner">
-                  <div
-                    className="game-thumb"
-                    style={{ background: "#F5EDE4", position: "relative" }}
+          {/* Uno */}
+          <Link className="tile rise d3" to="/uno">
+            <span className="status ok">Играбельно</span>
+            <div className="art-wrap">
+              <svg
+                width="110"
+                height="84"
+                viewBox="0 0 110 84"
+                fill="none"
+                aria-hidden="true"
+              >
+                <g transform="rotate(-13 30 44)">
+                  <rect
+                    x="12"
+                    y="14"
+                    width="40"
+                    height="60"
+                    rx="8"
+                    fill="var(--uno-blue)"
+                    stroke="#ffffff33"
+                    strokeWidth="2"
+                  />
+                  <ellipse
+                    cx="32"
+                    cy="44"
+                    rx="15"
+                    ry="19"
+                    fill="var(--bg)"
+                    transform="rotate(18 32 44)"
+                  />
+                  <text
+                    x="32"
+                    y="52"
+                    textAnchor="middle"
+                    fontFamily="Nunito"
+                    fontWeight="900"
+                    fontSize="20"
+                    fill="var(--uno-blue)"
+                    transform="rotate(-18 32 44)"
                   >
-                    <div
-                      style={{
-                        position: "absolute",
-                        width: "42px",
-                        height: "58px",
-                        background: "#D94E41",
-                        borderRadius: "8px",
-                        left: "6px",
-                        top: "14px",
-                        transform: "rotate(-12deg)",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-                        border: "2px solid rgba(255,255,255,0.3)",
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        width: "42px",
-                        height: "58px",
-                        background: "#3B8D99",
-                        borderRadius: "8px",
-                        left: "18px",
-                        top: "12px",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-                        border: "2px solid rgba(255,255,255,0.3)",
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        width: "42px",
-                        height: "58px",
-                        background: "#E6B84A",
-                        borderRadius: "8px",
-                        left: "30px",
-                        top: "10px",
-                        transform: "rotate(12deg)",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-                        border: "2px solid rgba(255,255,255,0.3)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: 900,
-                        fontSize: "12px",
-                        color: "#2C1810",
-                        letterSpacing: "-0.5px",
-                      }}
-                    >
-                      UNO
-                    </div>
-                  </div>
-                  <div className="game-info">
-                    <h3>УНО</h3>
-                    <p>Классическая карточная игра для весёлой компании.</p>
-                    <div className="game-tags">
-                      <span className="tag">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                          <circle cx="9" cy="7" r="4" />
-                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                        </svg>
-                        2 – 10 игроков
-                      </span>
-                      <span className="tag">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10" />
-                          <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                        10–20 мин
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <Link to="/uno" className="btn btn-game">Играть</Link>
-              </div>
-
-              <div className="game-card">
-                <div className="game-card-inner">
-                  <div
-                    className="game-thumb"
-                    style={{ background: "#F5EDE4", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    5
+                  </text>
+                </g>
+                <g transform="rotate(8 60 44)">
+                  <rect
+                    x="42"
+                    y="12"
+                    width="40"
+                    height="60"
+                    rx="8"
+                    fill="var(--uno-red)"
+                    stroke="#ffffff33"
+                    strokeWidth="2"
+                  />
+                  <ellipse
+                    cx="62"
+                    cy="42"
+                    rx="15"
+                    ry="19"
+                    fill="var(--bg)"
+                    transform="rotate(18 62 42)"
+                  />
+                  <text
+                    x="62"
+                    y="50"
+                    textAnchor="middle"
+                    fontFamily="Nunito"
+                    fontWeight="900"
+                    fontSize="20"
+                    fill="var(--uno-red)"
+                    transform="rotate(-18 62 42)"
                   >
-                    <svg width="70" height="70" viewBox="0 0 70 70" fill="none">
-                      <path d="M15 35 C15 20 28 12 35 12 C42 12 55 20 55 35 C55 45 48 52 40 55 L32 62 L34 55 C24 52 15 45 15 35Z" fill="#E8D5C4" stroke="#C4A884" strokeWidth="2.5" />
-                      <text x="35" y="38" textAnchor="middle" fontFamily="'Nunito', sans-serif" fontWeight="700" fontSize="13" fill="#A67B5B">Alias</text>
-                    </svg>
-                  </div>
-                  <div className="game-info">
-                    <h3>Alias</h3>
-                    <p>Объясняй слова своей команде на время.</p>
-                    <div className="game-tags">
-                      <span className="tag">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                          <circle cx="9" cy="7" r="4" />
-                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                        </svg>
-                        2 + команды
-                      </span>
-                      <span className="tag">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10" />
-                          <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                        30–60 мин
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <a href="#" onClick={handleEmptyClick} className="btn btn-game">Играть</a>
-              </div>
-
-              <div className="game-card">
-                <div className="game-card-inner">
-                  <div
-                    className="game-thumb"
-                    style={{ background: "#F5EDE4", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    7
+                  </text>
+                </g>
+                <g transform="rotate(20 88 46)">
+                  <rect
+                    x="68"
+                    y="16"
+                    width="40"
+                    height="60"
+                    rx="8"
+                    fill="var(--uno-yellow)"
+                    stroke="#ffffff33"
+                    strokeWidth="2"
+                  />
+                  <ellipse
+                    cx="88"
+                    cy="46"
+                    rx="15"
+                    ry="19"
+                    fill="var(--card-ink)"
+                    transform="rotate(18 88 46)"
+                  />
+                  <text
+                    x="88"
+                    y="54"
+                    textAnchor="middle"
+                    fontFamily="Nunito"
+                    fontWeight="900"
+                    fontSize="18"
+                    fill="var(--uno-yellow)"
+                    transform="rotate(-18 88 46)"
                   >
-                    <svg width="68" height="68" viewBox="0 0 68 68" fill="none">
-                      <path d="M34 6 C30 6 28 10 28 14 L26 50 L34 56 L42 50 L40 14 C40 10 38 6 34 6Z" fill="#2C1810" />
-                      <circle cx="34" cy="12" r="6" fill="#2C1810" />
-                      <path d="M48 10 C44 10 42 14 42 18 L40 46 L48 52 L56 46 L54 18 C54 14 52 10 48 10Z" fill="#D4A373" />
-                      <circle cx="48" cy="16" r="5" fill="#D4A373" />
-                      <path d="M20 12 C16 12 14 16 14 20 L12 46 L20 52 L28 46 L26 20 C26 16 24 12 20 12Z" fill="#A67B5B" />
-                      <circle cx="20" cy="18" r="4.5" fill="#A67B5B" />
-                    </svg>
-                  </div>
-                  <div className="game-info">
-                    <h3>Шахматы</h3>
-                    <p>Классика, которая всегда актуальна.</p>
-                    <div className="game-tags">
-                      <span className="tag">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                          <circle cx="9" cy="7" r="4" />
-                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                        </svg>
-                        2 игрока
-                      </span>
-                      <span className="tag">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10" />
-                          <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                        10–60 мин
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <a href="#" onClick={handleEmptyClick} className="btn btn-game">Играть</a>
-              </div>
+                    +2
+                  </text>
+                </g>
+              </svg>
             </div>
-        </section>
-
-          <section className="bottom-section">
-            <div className="bottom-grid">
-              <div className="bottom-card">
-                <div className="bottom-card-header">
-                  <h3 className="bottom-card-title">Сейчас играют</h3>
-                  <a href="#" onClick={handleEmptyClick} className="link-arrow">
-                    Все комнаты
-                    <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <polyline points="2 3 6 7 10 3" />
-                    </svg>
-                  </a>
-                </div>
-                <div className="room-list">
-                  <div className="room-list-item">
-                    <div className="room-list-icon" style={{ background: "#5D4037" }}>К</div>
-                    <div className="room-list-meta">
-                      <h4>Коднеймс — Вечерний штаб</h4>
-                      <div className="room-list-stats">
-                        <span>
-                          <div style={{ display: "flex", marginRight: "4px" }}>
-                            <div className="room-avatar" style={{ width: "18px", height: "18px", fontSize: "8px", marginLeft: "0" }}>М</div>
-                            <div className="room-avatar" style={{ width: "18px", height: "18px", fontSize: "8px", background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" }}>К</div>
-                            <div className="room-avatar" style={{ width: "18px", height: "18px", fontSize: "8px", background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" }}>С</div>
-                            <div className="room-avatar" style={{ width: "18px", height: "18px", fontSize: "8px", background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)" }}>Л</div>
-                          </div>
-                          8 / 10
-                        </span>
-                        <span>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 6 12 12 16 14" />
-                          </svg>
-                          10:32
-                        </span>
-                      </div>
-                    </div>
-                    <button type="button" className="btn-join" onClick={handleEmptyClick}>Присоединиться</button>
-                  </div>
-                  <div className="room-list-item">
-                    <div className="room-list-icon" style={{ background: "#D94E41" }}>У</div>
-                    <div className="room-list-meta">
-                      <h4>УНО — Без правил</h4>
-                      <div className="room-list-stats">
-                        <span>
-                          <div style={{ display: "flex", marginRight: "4px" }}>
-                            <div className="room-avatar" style={{ width: "18px", height: "18px", fontSize: "8px", marginLeft: "0", background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)" }}>А</div>
-                            <div className="room-avatar" style={{ width: "18px", height: "18px", fontSize: "8px", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}>Д</div>
-                            <div className="room-avatar" style={{ width: "18px", height: "18px", fontSize: "8px", background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)" }}>Н</div>
-                            <div className="room-avatar" style={{ width: "18px", height: "18px", fontSize: "8px", background: "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)" }}>Е</div>
-                          </div>
-                          5 / 8
-                        </span>
-                        <span>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 6 12 12 16 14" />
-                          </svg>
-                          06:15
-                        </span>
-                      </div>
-                    </div>
-                    <button type="button" className="btn-join" onClick={handleEmptyClick}>Присоединиться</button>
-                  </div>
-                  <div className="room-list-item">
-                    <div className="room-list-icon" style={{ background: "#A67B5B" }}>A</div>
-                    <div className="room-list-meta">
-                      <h4>Alias — На скорость</h4>
-                      <div className="room-list-stats">
-                        <span>
-                          <div style={{ display: "flex", marginRight: "4px" }}>
-                            <div className="room-avatar" style={{ width: "18px", height: "18px", fontSize: "8px", marginLeft: "0", background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)" }}>О</div>
-                            <div className="room-avatar" style={{ width: "18px", height: "18px", fontSize: "8px", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}>И</div>
-                            <div className="room-avatar" style={{ width: "18px", height: "18px", fontSize: "8px", background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" }}>Р</div>
-                            <div className="room-avatar" style={{ width: "18px", height: "18px", fontSize: "8px", background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)" }}>В</div>
-                          </div>
-                          6 / 12
-                        </span>
-                        <span>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 6 12 12 16 14" />
-                          </svg>
-                          15:40
-                        </span>
-                      </div>
-                    </div>
-                    <button type="button" className="btn-join" onClick={handleEmptyClick}>Присоединиться</button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bottom-card">
-                <div className="bottom-card-header">
-                  <h3 className="bottom-card-title">Друзья онлайн</h3>
-                  <a href="#" onClick={handleEmptyClick} className="link-arrow">
-                    Все друзья
-                    <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <polyline points="2 3 6 7 10 3" />
-                    </svg>
-                  </a>
-                </div>
-                <div className="friend-list">
-                  <div className="friend-item">
-                    <div className="friend-left">
-                      <div className="friend-avatar">М</div>
-                      <span className="friend-name">Маша</span>
-                    </div>
-                    <span className="friend-state online">В игре</span>
-                  </div>
-                  <div className="friend-item">
-                    <div className="friend-left">
-                      <div className="friend-avatar">С</div>
-                      <span className="friend-name">Сергей</span>
-                    </div>
-                    <span className="friend-state online">В игре</span>
-                  </div>
-                  <div className="friend-item">
-                    <div className="friend-left">
-                      <div className="friend-avatar">И</div>
-                      <span className="friend-name">Илья</span>
-                    </div>
-                    <span className="friend-state inroom">В комнате</span>
-                  </div>
-                  <div className="friend-item">
-                    <div className="friend-left">
-                      <div className="friend-avatar">К</div>
-                      <span className="friend-name">Катя</span>
-                    </div>
-                    <span className="friend-state online">Онлайн</span>
-                  </div>
-                  <div className="friend-item">
-                    <div className="friend-left">
-                      <div className="friend-avatar">Д</div>
-                      <span className="friend-name">Дима</span>
-                    </div>
-                    <span className="friend-state offline">Отошёл</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bottom-card">
-                <div className="bottom-card-header">
-                  <h3 className="bottom-card-title">Быстрый старт</h3>
-                </div>
-                <div className="quick-list">
-                  <div className="quick-item" onClick={handleEmptyClick} role="button" tabIndex={0}>
-                    <div className="quick-icon" style={{ background: "#FFF0E3" }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19" />
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                      </svg>
-                    </div>
-                    <div className="quick-text">
-                      <strong>Создать комнату</strong>
-                      <span>Создайте комнату и пригласите друзей</span>
-                    </div>
-                    <div className="quick-arrow">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="quick-item" onClick={handleEmptyClick} role="button" tabIndex={0}>
-                    <div className="quick-icon" style={{ background: "#DBF0EB" }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="4" y1="9" x2="20" y2="9" />
-                        <line x1="4" y1="15" x2="20" y2="15" />
-                        <line x1="10" y1="3" x2="8" y2="21" />
-                        <line x1="16" y1="3" x2="14" y2="21" />
-                      </svg>
-                    </div>
-                    <div className="quick-text">
-                      <strong>Присоединиться по коду</strong>
-                      <span>Введите код комнаты и присоединитесь</span>
-                    </div>
-                    <div className="quick-arrow">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="quick-item" onClick={handleEmptyClick} role="button" tabIndex={0}>
-                    <div className="quick-icon" style={{ background: "#D89636", color: "white" }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="3" width="7" height="7" rx="1.5" />
-                        <rect x="14" y="3" width="7" height="7" rx="1.5" />
-                        <rect x="14" y="14" width="7" height="7" rx="1.5" />
-                        <rect x="3" y="14" width="7" height="7" rx="1.5" />
-                      </svg>
-                    </div>
-                    <div className="quick-text">
-                      <strong>Случайная игра</strong>
-                      <span>Мы найдём игру и соперников для вас</span>
-                    </div>
-                    <div className="quick-arrow">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <h3>Uno</h3>
+            <p className="desc">
+              Классическая карточная гонка на 108 карт. Семь вариаций правил,
+              кнопка «UNO!» со штрафом, стэкинг +2 и честный челлендж на +4.
+            </p>
+            <div className="tags">
+              <span className="tag">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="8" r="3.4" />
+                  <path d="M20 8.5a4 4 0 0 1 0 7" />
+                </svg>
+                2–10
+              </span>
+              <span className="tag">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3.5 2" />
+                </svg>
+                10–20 мин
+              </span>
             </div>
-          </section>
+          </Link>
+
+          {/* Alias — игра готова */}
+          <Link
+            className="tile rise d4"
+            to="/alias"
+            aria-label="Alias — играть"
+          >
+            <span className="status ok">Играбельно</span>
+            <div className="art-wrap">
+              <svg
+                width="104"
+                height="84"
+                viewBox="0 0 104 84"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M14 16h76a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H52l-16 14v-14H14a6 6 0 0 1-6-6V22a6 6 0 0 1 6-6z"
+                  fill="var(--surface-2)"
+                  stroke="var(--accent)"
+                  strokeWidth="2.4"
+                />
+                <text
+                  x="52"
+                  y="42"
+                  textAnchor="middle"
+                  fontFamily="Caveat"
+                  fontWeight="700"
+                  fontSize="26"
+                  fill="var(--accent)"
+                >
+                  слово!
+                </text>
+                <g
+                  transform="translate(82 60)"
+                  stroke="var(--muted)"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  fill="none"
+                >
+                  <circle cx="8" cy="9" r="7.5" />
+                  <path d="M8 5v4l2.6 2.2" />
+                  <path d="M8 1.5v-1M15.5 9h1M8 16.5v1M.5 9h-1" />
+                </g>
+              </svg>
+            </div>
+            <h3>Alias</h3>
+            <p className="desc">
+              Объясняй слова своей команде на время, не называя самого слова и
+              его корня. Словари по сложности, раунды на скорость.
+            </p>
+            <div className="tags">
+              <span className="tag">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="8" r="3.4" />
+                  <path d="M20 8.5a4 4 0 0 1 0 7" />
+                </svg>
+                2+ команды
+              </span>
+              <span className="tag">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3.5 2" />
+                </svg>
+                30–60 мин
+              </span>
+            </div>
+          </Link>
         </div>
-      </div>
-      </main>
+      </section>
+
+      {/* ============ КАК УСТРОЕНО — bento ============ */}
+      <section id="how">
+        <div className="sec-head">
+          <h2 className="rise d3">
+            Как это <span className="script">устроено</span>
+          </h2>
+          <p className="lead-r rise d3">
+            Без установки, без регистраций для гостей. Заходишь по коду — и за
+            стол.
+          </p>
+        </div>
+        <div className="how">
+          <div className="how-card rise d3">
+            <span className="num">раз</span>
+            <h4>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 21V5a2 2 0 0 1 2-2h9l5 5v13a2 2 0 0 1-2 2z" />
+                <path d="M15 3v5h5M8 12h8M8 16h6" />
+              </svg>
+              Комната по коду
+            </h4>
+            <p>
+              Создал комнату — получил короткий код. Пошли его друзьям, они
+              заходят без аккаунта. Один код — один стол, без установки и
+              регистрации для гостей.
+            </p>
+          </div>
+          <div className="how-card rise d3">
+            <span className="num">два</span>
+            <h4>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="5" y="7" width="14" height="12" rx="3" />
+                <path d="M9 7V5.5a3 3 0 0 1 6 0V7M9 13a3 3 0 0 0 6 0" />
+              </svg>
+              Боты за столом
+            </h4>
+            <p>
+              Не хватает людей — добавь ботов. Они ходят, отгадывают и честно
+              доигрывают партию до конца.
+            </p>
+          </div>
+          <div className="how-card rise d4">
+            <span className="num">три</span>
+            <h4>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="13" r="8" />
+                <path d="M12 8v5l3.2 2M9 2h6M12 5V2" />
+              </svg>
+              Таймеры хода
+            </h4>
+            <p>
+              У каждого хода свой лимит. Никто не зависнет вечно — партия
+              двигается ровно.
+            </p>
+          </div>
+          <div className="how-card rise d4">
+            <span className="num">четыре</span>
+            <h4>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 3c-2 4-2 6 0 9 2-3 2-5 0-9z" />
+                <path d="M5 11c2 1 4 1 5 3-2 3-5 3-7 0-1-2 0-3 2-3z" />
+                <path d="M19 11c-2 1-4 1-5 3 2 3 5 3 7 0 1-2 0-3-2-3z" />
+                <path d="M9 20c1-1.5 2-2 3-2s2 .5 3 2" />
+              </svg>
+              Бот-капитан
+            </h4>
+            <p>
+              В Codenames капитан-бот подбирает подсказки по смыслу слов через
+              эмбеддинги — ход мысли настоящий, не случайный. Связывает слова в
+              осмысленные группы и считает риск.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ============ ОТКРЫТЫЕ СТОЛЫ ============ */}
+      <section id="rooms">
+        <div className="sec-head">
+          <h2 className="rise d4">
+            Открытые <span className="script">столы</span>
+          </h2>
+          <p className="lead-r rise d4">
+            Зайди в чужую комнату или подними свою — кодом или ссылкой.
+          </p>
+        </div>
+        <div className="rooms">
+          <div className="room rise d4">
+            <div className="room-top">
+              <div className="room-badge cn">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 33 33"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                >
+                  <rect x="2" y="2" width="29" height="29" rx="5" />
+                  <circle
+                    cx="9"
+                    cy="9"
+                    r="2.4"
+                    fill="currentColor"
+                    stroke="none"
+                  />
+                  <circle
+                    cx="24"
+                    cy="9"
+                    r="2.4"
+                    fill="currentColor"
+                    stroke="none"
+                  />
+                  <circle
+                    cx="24"
+                    cy="24"
+                    r="2.4"
+                    fill="currentColor"
+                    stroke="none"
+                  />
+                  <circle
+                    cx="9"
+                    cy="24"
+                    r="2.4"
+                    fill="currentColor"
+                    stroke="none"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h4>Вечерний штаб</h4>
+                <div className="who">Codenames · ждут капитана синих</div>
+              </div>
+            </div>
+            <div className="room-foot">
+              <div className="avatars">
+                <span className="av" style={{ background: "var(--av-1)" }}>
+                  М
+                </span>
+                <span className="av" style={{ background: "var(--av-3)" }}>
+                  С
+                </span>
+                <span className="av" style={{ background: "var(--av-2)" }}>
+                  К
+                </span>
+                <span className="av" style={{ background: "var(--av-4)" }}>
+                  Л
+                </span>
+              </div>
+              <span className="room-meta">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="8" r="3.2" />
+                </svg>
+                4/8
+              </span>
+            </div>
+            <Link className="join" to="/codenames">
+              Присоединиться
+            </Link>
+          </div>
+
+          <div className="room rise d4">
+            <div className="room-top">
+              <div className="room-badge un">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="6" width="18" height="13" rx="2.5" />
+                  <path d="M3 10h18" />
+                </svg>
+              </div>
+              <div>
+                <h4>Без правил</h4>
+                <div className="who">Uno · стэкинг +2 включён</div>
+              </div>
+            </div>
+            <div className="room-foot">
+              <div className="avatars">
+                <span className="av" style={{ background: "var(--av-5)" }}>
+                  А
+                </span>
+                <span className="av" style={{ background: "var(--av-6)" }}>
+                  Д
+                </span>
+                <span className="av" style={{ background: "var(--av-3)" }}>
+                  Н
+                </span>
+              </div>
+              <span className="room-meta">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="8" r="3.2" />
+                </svg>
+                3/8
+              </span>
+            </div>
+            <Link className="join" to="/uno">
+              Присоединиться
+            </Link>
+          </div>
+
+          <a className="room-create rise d4" href="#games">
+            <span className="plus">
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </span>
+            <b>Поднять свой стол</b>
+            <span>Выбери игру, задай правила и позови друзей</span>
+          </a>
+        </div>
+      </section>
+
+      {/* ============ FOOTER ============ */}
+      <footer id="about" className="rise d4">
+        <h2 className="visually-hidden">О проекте</h2>
+        <Link className="logo" to="/" aria-label="Настолки">
+          <svg
+            className="mark"
+            viewBox="0 0 33 33"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            style={{ width: "28px", height: "28px" }}
+          >
+            <rect x="1" y="1" width="31" height="31" rx="6" />
+            <circle
+              cx="8.25"
+              cy="8.25"
+              r="2.6"
+              fill="currentColor"
+              stroke="none"
+            />
+            <circle
+              cx="24.75"
+              cy="8.25"
+              r="2.6"
+              fill="currentColor"
+              stroke="none"
+            />
+            <circle
+              cx="24.75"
+              cy="24.75"
+              r="2.6"
+              fill="currentColor"
+              stroke="none"
+            />
+            <circle
+              cx="8.25"
+              cy="24.75"
+              r="2.6"
+              fill="currentColor"
+              stroke="none"
+            />
+            <circle
+              cx="16.5"
+              cy="16.5"
+              r="2.6"
+              fill="currentColor"
+              stroke="none"
+            />
+          </svg>
+          <b>Настолки</b>
+        </Link>
+        <p>
+          Уютный уголок для вечерних игр с друзьями — где бы вы ни были.
+          Self-hosted, без установки, с ботами и честным счётом.
+        </p>
+        <div className="sig">сделано с уютом</div>
+        <div className="flinks">
+          <a href="#about">О проекте</a>
+          <a href="#games">Игры</a>
+          <a href="#rooms">Столы</a>
+        </div>
+      </footer>
 
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
       {authOpen && <AuthModal api={auth} onClose={() => setAuthOpen(false)} />}

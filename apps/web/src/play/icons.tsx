@@ -210,6 +210,207 @@ export function IconChevron({
   );
 }
 
+/** Листок-журнал — история партий. */
+export function IconScroll(props: P) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable={false}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...base(props)}
+    >
+      <path d="M5 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4Z" />
+      <path d="M18 6h1.5a1.5 1.5 0 0 1 0 3H18" />
+      <path d="M8 8h6M8 12h6M8 16h4" />
+    </svg>
+  );
+}
+
+/** Кубок — лидерборд. */
+export function IconTrophy(props: P) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable={false}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...base(props)}
+    >
+      <path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" />
+      <path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3" />
+      <path d="M12 13v4M9 21h6M10 17h4l.5 4h-5l.5-4Z" />
+    </svg>
+  );
+}
+
+/** Стрелка вверх в лоток — загрузить. */
+export function IconUpload(props: P) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable={false}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...base(props)}
+    >
+      <path d="M12 16V5M8 9l4-4 4 4" />
+      <path d="M5 19h14" />
+    </svg>
+  );
+}
+
+/** Дверь со стрелкой — выйти. */
+export function IconLogout(props: P) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable={false}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...base(props)}
+    >
+      <path d="M14 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
+      <path d="M10 12h9M16 8l4 4-4 4" />
+    </svg>
+  );
+}
+
+/** Пламя — серия побед. */
+export function IconFlame(props: P) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable={false}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...base(props)}
+    >
+      <path d="M12 3c2 3 4 4.5 4 8a4 4 0 0 1-8 0c0-1.3.4-2.2 1-3 .3 1 1 1.5 1.5 1.5C10.2 8 11 5.5 12 3Z" />
+      <path d="M8 14a4 4 0 0 0 8 0c0-1-.3-1.8-.7-2.5" />
+    </svg>
+  );
+}
+
+/** Печать-звезда — веха/достижение. */
+export function IconStar(props: P) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable={false}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...base(props)}
+    >
+      <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 17.9 6.8 19.6l1-5.8-4.3-4.1 5.9-.9L12 3.5Z" />
+    </svg>
+  );
+}
+
+/** Календарь — дата регистрации. */
+export function IconCalendar(props: P) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable={false}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...base(props)}
+    >
+      <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+      <path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" />
+    </svg>
+  );
+}
+
+/** Галочка — «угадано». */
+export function IconCheck(props: P) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable={false}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...base(props)}
+    >
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
+  );
+}
+
+/** Книга/страница — игра Alias (объясни слово). */
+export function IconBook(props: P) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable={false}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...base(props)}
+    >
+      <path d="M5 4h9a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H5z" />
+      <path d="M5 4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9" />
+      <path d="M8 8h5M8 11h5" />
+    </svg>
+  );
+}
+
+/** Часы — таймер раунда. */
+export function IconClock(props: P) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable={false}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...base(props)}
+    >
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </svg>
+  );
+}
+
 /** Стрелка вправо — «играть». */
 export function IconArrowRight(props: P) {
   return (

@@ -1,53 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { UnoColor, UnoRules } from "@shared/uno/types";
+import type {
+  ChatMessage,
+  UnoAction,
+  UnoRoomView,
+  UnoSettingsPatch,
+} from "@shared";
 import type { UnoView } from "@shared/uno/view";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Socket } from "socket.io-client";
+import { readRoomSession } from "../net/session";
 import { getUnoSocket } from "../net/socket";
-
-export interface UnoRoomPlayerView {
-  id: string;
-  nickname: string;
-  connected: boolean;
-  isBot: boolean;
-}
-
-export interface UnoRoomSettingsView {
-  game: "uno";
-  rules: UnoRules;
-  maxPlayers: number;
-  timer: { enabled: boolean; turnSec: number };
-}
-
-export interface UnoRoomView {
-  code: string;
-  hostId: string;
-  phase: "lobby" | "playing" | "finished";
-  settings: UnoRoomSettingsView;
-  players: UnoRoomPlayerView[];
-}
-
-export interface ChatMessage {
-  authorId: string;
-  authorName: string;
-  text: string;
-  sentAt: number;
-}
-
-export type UnoAction =
-  | { type: "play"; cardId: number; declareUno?: boolean }
-  | { type: "draw" }
-  | { type: "pass" }
-  | { type: "chooseColor"; color: UnoColor }
-  | { type: "choosePlayer"; targetId: string }
-  | { type: "challenge"; accept: boolean }
-  | { type: "uno" }
-  | { type: "catch" };
-
-export interface UnoSettingsPatch {
-  rules?: Partial<UnoRules>;
-  maxPlayers?: number;
-  timer?: Partial<{ enabled: boolean; turnSec: number }>;
-}
 
 export interface UnoRoomApi {
   room: UnoRoomView | null;
@@ -155,7 +116,7 @@ export function useUnoRoom(): UnoRoomApi {
     const onRoom = (r: UnoRoomView) => setRoom(r);
     const onGame = (g: UnoView) => setGame(g);
     const onTimer = (d: number | null) => setTurnDeadline(d);
-    const onMsg = (m: ChatMessage) => setChat((c) => [...c.slice(-99), m]);
+    const onMsg = (m: ChatMessage) => setChat(c => [...c.slice(-99), m]);
     const onHistory = (msgs: ChatMessage[]) => setChat(msgs);
     const onError = (message: string) => setError(message);
     const onClosed = () => reset();
@@ -179,10 +140,10 @@ export function useUnoRoom(): UnoRoomApi {
 
   // восстановление сессии после перезагрузки страницы
   useEffect(() => {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return;
-    const { code, token } = JSON.parse(raw) as { code: string; token: string };
-    socket.emit("room:rejoin", code, token, (ack) => {
+    const session = readRoomSession(SESSION_KEY);
+    if (!session) return;
+    const { code, token } = session;
+    socket.emit("room:rejoin", code, token, ack => {
       if (ack.ok) applyAck(ack);
       else localStorage.removeItem(SESSION_KEY);
     });
@@ -192,7 +153,7 @@ export function useUnoRoom(): UnoRoomApi {
     (emit: (done: (a: UnoJoinAck) => void) => void) => {
       setBusy(true);
       setError(null);
-      emit((ack) => {
+      emit(ack => {
         setBusy(false);
         if (ack.ok) applyAck(ack);
         else setError(ack.error ?? "Ошибка");
@@ -209,24 +170,24 @@ export function useUnoRoom(): UnoRoomApi {
     playerId,
     busy,
     turnDeadline,
-    create: (nickname) =>
-      withAck((done) => socket.emit("room:create", nickname, {}, done)),
+    create: nickname =>
+      withAck(done => socket.emit("room:create", nickname, {}, done)),
     join: (code, nickname) =>
-      withAck((done) =>
+      withAck(done =>
         socket.emit("room:join", code.trim().toUpperCase(), nickname, done),
       ),
     leave: () => {
       socket.emit("room:leave");
       reset();
     },
-    updateSettings: (patch) => socket.emit("room:settings", patch),
+    updateSettings: patch => socket.emit("room:settings", patch),
     addBot: () => socket.emit("room:addBot"),
-    removeBot: (botId) => socket.emit("room:removeBot", botId),
+    removeBot: botId => socket.emit("room:removeBot", botId),
     start: () => socket.emit("room:start"),
     nextRound: () => socket.emit("room:nextRound"),
     newGame: () => socket.emit("room:newGame"),
-    act: (action) => socket.emit("game:act", action),
-    sendChat: (text) => socket.emit("chat:send", text),
+    act: action => socket.emit("game:act", action),
+    sendChat: text => socket.emit("chat:send", text),
     clearError: () => setError(null),
   };
 }

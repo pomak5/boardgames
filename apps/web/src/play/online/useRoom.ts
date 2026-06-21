@@ -9,6 +9,7 @@ import type {
   RoomView,
   Team,
 } from "@shared";
+import { readRoomSession } from "../net/session";
 import { getCodenamesSocket } from "../net/socket";
 
 export interface RoomApi {
@@ -94,9 +95,9 @@ export function useRoom(): RoomApi {
 
   // восстановление сессии после перезагрузки страницы
   useEffect(() => {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return;
-    const { code, token } = JSON.parse(raw) as { code: string; token: string };
+    const session = readRoomSession(SESSION_KEY);
+    if (!session) return;
+    const { code, token } = session;
     socket.emit("room:rejoin", code, token, (ack) => {
       if (ack.ok) applyAck(ack);
       else localStorage.removeItem(SESSION_KEY);

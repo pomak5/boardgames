@@ -3,8 +3,8 @@ import {
   type AuthStats,
   type AuthUser,
   fetchMe,
-  getToken,
   loginAccount,
+  logoutAccount,
   registerAccount,
   setToken,
   uploadAvatar,
@@ -46,10 +46,8 @@ export function useAuth(): AuthApi {
   }, []);
 
   useEffect(() => {
-    if (!getToken()) {
-      setLoading(false);
-      return;
-    }
+    // Не требуем localStorage-токен: HttpOnly-кука может авторизовать запрос
+    // даже если localStorage пуст (§5). fetchMe сам вернёт null при 401.
     void refresh();
   }, [refresh]);
 
@@ -81,6 +79,7 @@ export function useAuth(): AuthApi {
     register: (email, nickname, password) =>
       handle(registerAccount(email, nickname, password)),
     logout: () => {
+      void logoutAccount();
       setToken(null);
       setUser(null);
       setStats(null);

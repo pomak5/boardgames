@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
 import type { UnoCard, UnoColor } from "@shared/uno/types";
+import { useEffect, useRef, useState } from "react";
 import { Avatar } from "../components/Avatar";
 import { IconBot } from "../icons";
 import { Chat } from "../online/Chat";
@@ -48,7 +48,11 @@ function seatPos(i: number, n: number): { x: number; y: number } {
 /** Детерминированный «неровный» сдвиг/поворот карты в стопке сброса по её id. */
 function scatter(id: number): { x: number; y: number; rot: number } {
   const h = (id * 2654435761) >>> 0;
-  return { x: (h % 25) - 12, y: ((h >> 4) % 21) - 10, rot: ((h >> 9) % 37) - 18 };
+  return {
+    x: (h % 25) - 12,
+    y: ((h >> 4) % 21) - 10,
+    rot: ((h >> 9) % 37) - 18,
+  };
 }
 
 export function PlayCard({
@@ -185,7 +189,9 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
   const tableRef = useRef<HTMLDivElement>(null);
   const discardRef = useRef<HTMLDivElement>(null);
   const left = useCountdown(api.turnDeadline);
-  const [burst, setBurst] = useState<{ id: number; color: string } | null>(null);
+  const [burst, setBurst] = useState<{ id: number; color: string } | null>(
+    null,
+  );
   const prevColor = useRef<string | null>(null);
   const drag = useRef<{
     id: number;
@@ -228,9 +234,13 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
       const s = scatter(card.id);
       const id = ++flyId.current;
       // разная скорость/замах — бросок ощущается «живым»
-      const spin = (pid === meId ? -8 : (pos.x - 50) * 0.7) + (Math.random() * 12 - 6);
+      const spin =
+        (pid === meId ? -8 : (pos.x - 50) * 0.7) + (Math.random() * 12 - 6);
       const dur = 440 + Math.random() * 340;
-      setFlies(f => [...f, { id, card, dx, dy, spin, ex: s.x, ey: s.y, erot: s.rot, dur }]);
+      setFlies(f => [
+        ...f,
+        { id, card, dx, dy, spin, ex: s.x, ey: s.y, erot: s.rot, dur },
+      ]);
       setTimeout(() => setFlies(f => f.filter(c => c.id !== id)), dur + 80);
     };
 
@@ -352,7 +362,13 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
     if (!playableSet.has(cardId)) return;
     const el = e.currentTarget as HTMLElement;
     el.setPointerCapture(e.pointerId);
-    drag.current = { id: cardId, sx: e.clientX, sy: e.clientY, el, moved: false };
+    drag.current = {
+      id: cardId,
+      sx: e.clientX,
+      sy: e.clientY,
+      el,
+      moved: false,
+    };
   };
   const onCardMove = (e: React.PointerEvent) => {
     const d = drag.current;
@@ -407,7 +423,11 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
                 {rp?.isBot ? (
                   <IconBot />
                 ) : (
-                  <Avatar nickname={nickOf(p.id)} avatarUrl={rp?.avatarUrl} size={44} />
+                  <Avatar
+                    nickname={nickOf(p.id)}
+                    avatarUrl={rp?.avatarUrl}
+                    size={44}
+                  />
                 )}
                 {p.saidUno && p.handCount === 1 && (
                   <span className="uno-seat__uno">UNO!</span>
@@ -572,7 +592,7 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
                     <button
                       key={p.id}
                       type="button"
-                      className="cn-btn cn-btn--ghost"
+                      className="un-btn un-btn--ghost"
                       onClick={() =>
                         api.act({ type: "choosePlayer", targetId: p.id })
                       }
@@ -596,14 +616,14 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
               <div className="row">
                 <button
                   type="button"
-                  className="cn-btn"
+                  className="un-btn"
                   onClick={() => api.act({ type: "challenge", accept: true })}
                 >
                   Блефует!
                 </button>
                 <button
                   type="button"
-                  className="cn-btn cn-btn--ghost"
+                  className="un-btn un-btn--ghost"
                   onClick={() => api.act({ type: "challenge", accept: false })}
                 >
                   Беру карты
@@ -633,14 +653,14 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
               {isHost ? (
                 <button
                   type="button"
-                  className="cn-btn"
+                  className="un-btn"
                   onClick={api.nextRound}
                   disabled={api.busy}
                 >
                   Следующий раунд
                 </button>
               ) : (
-                <div className="on-hint">Ждём, когда хост раздаст карты…</div>
+                <div className="un-hint">Ждём, когда хост раздаст карты…</div>
               )}
             </div>
           </div>
@@ -669,7 +689,7 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
                 {isHost && (
                   <button
                     type="button"
-                    className="cn-btn"
+                    className="un-btn"
                     onClick={api.newGame}
                     disabled={api.busy}
                   >
@@ -678,7 +698,7 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
                 )}
                 <button
                   type="button"
-                  className="cn-btn cn-btn--ghost"
+                  className="un-btn un-btn--ghost"
                   onClick={api.leave}
                 >
                   Выйти
@@ -694,7 +714,7 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
         {game.canPass && (
           <button
             type="button"
-            className="cn-btn cn-btn--ghost"
+            className="un-btn un-btn--ghost"
             onClick={() => api.act({ type: "pass" })}
           >
             Пас
@@ -705,24 +725,13 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
             {left} сек
           </span>
         )}
-        {api.error && <span className="on-error">{api.error}</span>}
+        {api.error && <span className="un-error">{api.error}</span>}
       </div>
 
       <div className="uno-below">
         <Chat messages={api.chat} meId={api.playerId} onSend={api.sendChat} />
         <div className="uno-panel">
           <h4>Комната</h4>
-          <div className="uno-room-line">
-            <span>Код</span>
-            <button
-              type="button"
-              className="code-chip"
-              onClick={() => void navigator.clipboard.writeText(room.code)}
-              title="Скопировать код"
-            >
-              {room.code}
-            </button>
-          </div>
           {me && (
             <div className="uno-room-line">
               <span>Вы</span>
@@ -735,16 +744,6 @@ export function UnoTable({ api }: { api: UnoRoomApi }) {
           <div className="uno-room-line">
             <span>Игроков</span>
             <span>{game.players.length}</span>
-          </div>
-          <div className="uno-room-line">
-            <span />
-            <button
-              type="button"
-              className="cn-btn cn-btn--ghost"
-              onClick={api.leave}
-            >
-              Покинуть комнату
-            </button>
           </div>
         </div>
       </div>

@@ -1,10 +1,17 @@
-/** REST-клиент аккаунтов (/auth/*). Токен хранится в localStorage. */
-const SERVER_URL =
-  (import.meta.env.VITE_SERVER_URL as string | undefined) ??
-  "http://localhost:3001";
+/** REST-клиент аккаунтов (/auth/*). HttpOnly-кука с JWT — основной путь авторизации
+ *  (same-origin через Vite/реверс-прокси, credentials: 'include'). Токен в localStorage
+ *  остаётся как fallback для socket.io handshake и legacy Bearer-авторизации —
+ *  сервер всё ещё возвращает { token, user } в JSON, и мы пишем его в localStorage. */
 const TOKEN_KEY = "auth-token";
 
-export type GameId = "codenames" | "uno";
+/** Same-origin по умолчанию: относительные '/api/...' идут через Vite-прокси (dev,
+ *  rewrite срезает /api → сервер слушает /auth/* без /api) или реверс-прокси (prod).
+ *  Кука с SameSite=Lax ходит только same-origin, поэтому cross-origin не поддерживаем. */
+function apiUrl(path: string): string {
+  return `/api${path}`;
+}
+
+export type GameId = "codenames" | "uno" | "alias";
 
 export interface AuthUser {
   id: string;
@@ -56,8 +63,9 @@ function authHeaders(): Record<string, string> {
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${SERVER_URL}${path}`, {
+  const res = await fetch(apiUrl(path), {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(body),
   });
@@ -85,9 +93,10 @@ export async function fetchMe(): Promise<{
   user: AuthUser;
   stats: AuthStats;
 } | null> {
-  const token = getToken();
-  if (!token) return null;
-  const res = await fetch(`${SERVER_URL}/auth/me`, {
+  // Не требуем localStorage-токен: HttpOnly-кука может авторизовать запрос
+  // даже без Bearer-хедера (credentials: 'include' шлёт куку same-origin).
+  const res = await fetch(apiUrl("/auth/me"), {
+    credentials: "include",
     headers: { ...authHeaders() },
   });
   if (!res.ok) return null;
@@ -95,9 +104,9 @@ export async function fetchMe(): Promise<{
 }
 
 export async function fetchHistory(): Promise<RecentResult[]> {
-  const token = getToken();
-  if (!token) return [];
-  const res = await fetch(`${SERVER_URL}/auth/history`, {
+  // Кука может авторизовать запрос без localStorage-токена (§5).
+  const res = await fetch(apiUrl("/auth/history"), {
+    credentials: "include",
     headers: { ...authHeaders() },
   });
   if (!res.ok) return [];
@@ -106,7 +115,7 @@ export async function fetchHistory(): Promise<RecentResult[]> {
 }
 
 export async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
-  const res = await fetch(`${SERVER_URL}/leaderboard`);
+  const res = await fetch(apiUrl("/leaderboard"), { credentials: "include" });
   if (!res.ok) return [];
   const data = (await res.json()) as { entries: LeaderboardEntry[] };
   return data.entries;
@@ -120,4 +129,14 @@ export async function uploadAvatar(
     avatarUrl,
   });
   return data.user;
+}
+
+/** Сбрасывает серверную HttpOnly-куку (POST /auth/logout). Локальный токен в
+ *  localStorage чистит вызывающий (useAuth) — здесь только серверная сторона. */
+export async function logoutAccount(): Promise<void> {
+  try {
+    await fetch(apiUrl("/auth/logout"), { method: "POST", credentials: "include" });
+  } catch {
+    // сервер недоступен — локальный logout всё равно отработает в useAuth
+  }
 }

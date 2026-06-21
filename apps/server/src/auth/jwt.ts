@@ -12,6 +12,31 @@ export interface TokenPayload {
   nickname: string;
 }
 
+/** Имя HttpOnly-куки, в которую кладём JWT. */
+export const AUTH_COOKIE_NAME = 'token';
+/** 30 дней — совпадает с дефолтной экспирацией signToken. */
+export const AUTH_COOKIE_MAX_AGE_SEC = 30 * 24 * 60 * 60;
+
+export interface AuthCookieOptions {
+  httpOnly: boolean;
+  sameSite: 'lax' | 'strict' | 'none';
+  secure: boolean;
+  path: string;
+  maxAge: number;
+}
+
+/** Опции HttpOnly-куки для JWT. SameSite=Lax работает same-origin (через прокси);
+ *  Secure=true только в проде (за HTTPS). Кука не подписана — JWT самоверифицируется. */
+export function authCookieOptions(): AuthCookieOptions {
+  return {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: AUTH_COOKIE_MAX_AGE_SEC,
+  };
+}
+
 export async function signToken(p: TokenPayload, expiresIn = '30d'): Promise<string> {
   return new SignJWT({ nickname: p.nickname })
     .setProtectedHeader({ alg: 'HS256' })
@@ -31,10 +56,27 @@ export async function verifyToken(token: string): Promise<TokenPayload | null> {
   }
 }
 
-/** Достаёт payload из заголовка Authorization: Bearer <token>. */
+/** Достаёт payload из заголовка Authorization: Bearer *** */
 export async function payloadFromHeader(
   authorization: string | undefined,
 ): Promise<TokenPayload | null> {
   if (!authorization?.startsWith('Bearer ')) return null;
   return verifyToken(authorization.slice(7));
+}
+
+/**
+ * Достаёт payload: сначала HttpOnly-кука (приоритет, same-origin), затем
+ * Authorization: Bearer *** (fallback). Значения вызывающий достаёт сам из
+ * req.cookies / req.headers — так хелпер не завязан на типы Fastify и легко
+ * тестируется. Если куки нет или она невалидна — fallback на Bearer.
+ */
+export async function payloadFromRequest(
+  cookieToken: string | undefined,
+  authorization: string | undefined,
+): Promise<TokenPayload | null> {
+  if (cookieToken) {
+    const payload = await verifyToken(cookieToken);
+    if (payload) return payload;
+  }
+  return payloadFromHeader(authorization);
 }

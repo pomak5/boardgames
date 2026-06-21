@@ -1,48 +1,620 @@
-/* Стол Уно — по design/final.html, всё под .uno-screen. */
+/* Уно — перенос нового дизайна (дом/коднеймс) под .un-app.
+   Токены — из play/theme.css («Уютный вечер»). */
 
-.uno-screen {
-  max-width: 880px;
+.un-app {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 14px 40px;
-}
-
-/* ===== лобби ===== */
-.uno-lobby {
+  padding: 0 clamp(16px, 2.4vw, 40px) 24px;
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
-.uno-set {
-  border-top: 1px solid var(--border);
-  padding-top: 16px;
+
+/* в комнате — на всю ширину экрана, как игровой стол Коднеймс */
+.un-app--wide {
+  max-width: none;
+  margin: 0;
 }
-.uno-set:first-of-type {
-  border-top: none;
-  padding-top: 0;
-}
-.uno-set__title {
+
+/* ============ topbar ============ */
+.un-app .topbar {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 0 4px;
+  flex-wrap: wrap;
+}
+.un-app .logo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  text-decoration: none;
+}
+.un-app .logo .mark {
+  width: 34px;
+  height: 34px;
+  color: var(--accent);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.un-app .logo:hover .mark {
+  transform: rotate(120deg);
+}
+.un-app .logo b {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 30px;
+  color: var(--accent);
+}
+/* код-чип комнаты в шапке (как в Коднеймс) */
+.un-app .room-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font: 800 13px 'Nunito', sans-serif;
+  color: var(--text-strong);
+  padding: 7px 10px 7px 13px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.un-app .room-code:hover {
+  border-color: var(--accent-soft);
+}
+.un-app .room-code__code {
+  font: 800 15px 'Nunito', sans-serif;
+  letter-spacing: 0.18em;
+  color: var(--text-strong);
+}
+.un-app .room-code .copy-ic {
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+  flex: none;
+  transition: color 0.15s;
+}
+.un-app .room-code:hover .copy-ic {
+  color: var(--accent);
+}
+.un-app .room-code.copied {
+  border-color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 12%, var(--surface-2));
+}
+.un-app .room-code.copied .copy-ic,
+.un-app .room-code.copied .room-code__code {
+  color: var(--ok);
+}
+.un-app .room-copied {
+  font: 800 11px 'Nunito', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ok);
+  padding: 5px 10px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--ok) 16%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--ok) 38%, transparent);
+  white-space: nowrap;
+  animation: un-pop 0.18s ease-out;
+}
+
+/* статус-пилюля хода */
+.un-app .turn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  font: 800 15px 'Nunito', sans-serif;
+  padding: 10px 18px;
+  border-radius: var(--r-pill);
+  color: #fff;
+  box-shadow: var(--shadow);
+  white-space: nowrap;
+}
+.un-app .turn-pill.neutral {
+  background: var(--neutral);
+}
+.un-app .turn-pill .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0.85;
+}
+
+/* пилюля игрока */
+.un-app .me-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 4px 12px 4px 4px;
+  box-shadow: var(--shadow);
+  transition: 0.18s;
+}
+.un-app .me-pill:hover {
+  border-color: var(--accent-soft);
+}
+.un-app .me-pill .me-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  max-width: 110px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.un-app .spacer {
+  flex: 1;
+  min-width: 8px;
+}
+.un-app .nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.un-app .theme-toggle {
+  display: flex;
+  gap: 5px;
+  padding: 5px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.un-app .theme-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-pill);
+  display: grid;
+  place-items: center;
+  transition: 0.18s;
+}
+.un-app .theme-toggle button svg {
+  width: 18px;
+  height: 18px;
+}
+.un-app .theme-toggle button.on {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.un-app .icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow);
+  color: var(--accent);
+  cursor: pointer;
+  transition: 0.18s;
+}
+.un-app .icon-btn:hover {
+  border-color: var(--accent-soft);
+  transform: translateY(-2px);
+}
+.un-app .icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ============ кнопка «выйти» в topbar ============ */
+.un-app .leave-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 800 14px 'Nunito', sans-serif;
+  color: var(--muted);
+  padding: 10px 16px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s,
+    transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.un-app .leave-btn .leave-ic {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+.un-app .leave-btn:hover {
+  color: var(--team-red);
+  border-color: color-mix(in srgb, var(--team-red) 45%, transparent);
+  background: color-mix(in srgb, var(--team-red) 8%, var(--surface));
+  transform: translateY(-2px);
+}
+.un-app .leave-btn:active {
+  transform: translateY(1px);
+}
+
+/* ============ hero (экран входа) ============ */
+.un-app .entry-hero {
+  position: relative;
+  text-align: center;
+  padding: 54px 0 30px;
+}
+.un-app .entry-art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+.un-app .art {
+  position: absolute;
+  filter: drop-shadow(0 14px 22px #8a5a2b33);
+  will-change: transform;
+}
+[data-theme='dark'] .un-app .art {
+  filter: drop-shadow(0 14px 26px #00000099);
+}
+.un-app .art-uno {
+  width: 78px;
+  height: 114px;
+  border-radius: 12px;
+  background: var(--uno-red);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow);
+  border: 2px solid #ffffff26;
+}
+.un-app .art-uno--blue {
+  background: var(--uno-blue);
+}
+.un-app .art-uno--yellow {
+  background: var(--uno-yellow);
+}
+.un-app .art-uno .oval {
+  width: 48px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--bg);
+  transform: rotate(18deg);
+  display: grid;
+  place-items: center;
+}
+.un-app .art-uno .oval b {
+  font: 900 22px 'Nunito', sans-serif;
+  color: var(--uno-red);
+  transform: rotate(-18deg);
+}
+.un-app .art-uno--blue .oval b {
+  color: var(--uno-blue);
+}
+.un-app .art-uno--yellow .oval b {
+  color: var(--uno-yellow);
+  font-size: 18px;
+}
+.un-app .art-1 {
+  top: 8%;
+  left: 12%;
+  --r: -12deg;
+}
+.un-app .art-2 {
+  top: 14%;
+  right: 14%;
+  --r: 9deg;
+}
+.un-app .art-3 {
+  bottom: 12%;
+  left: 50%;
+  margin-left: -39px;
+  --r: -5deg;
+}
+@keyframes un-floaty {
+  0%, 100% {
+    transform: translateY(0) rotate(var(--r, 0deg));
+  }
+  50% {
+    transform: translateY(-10px) rotate(var(--r, 0deg));
+  }
+}
+.un-app .art {
+  animation: un-floaty 6s ease-in-out infinite;
+}
+.un-app .art-2 {
+  animation-duration: 7.5s;
+  animation-delay: 0.5s;
+}
+.un-app .art-3 {
+  animation-duration: 6.8s;
+  animation-delay: 0.3s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .un-app .art {
+    animation: none;
+  }
+}
+
+.un-app .kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 800 12px 'Nunito', sans-serif;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.un-app .kicker .spark {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+  opacity: 0.8;
+}
+.un-app .entry-hero h1 {
+  font-size: clamp(34px, 6.4vw, 60px);
+  font-weight: 900;
+  color: var(--text-strong);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.un-app .entry-hero h1 .script {
+  position: relative;
+  display: inline-block;
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 1.16em;
+  padding: 0 0.06em;
+  white-space: nowrap;
+}
+.un-app .entry-hero h1 .script .underline {
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  bottom: -12px;
+  width: 108%;
+  height: 16px;
+  color: var(--accent);
+  opacity: 0.85;
+}
+.un-app .entry-hero .lead {
+  font-size: 17px;
+  color: var(--muted);
+  max-width: 540px;
+  margin: 26px auto 30px;
+}
+
+/* карточка с формой */
+.un-app .entry-card {
+  width: min(420px, 100%);
+  margin: 0 auto;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-big);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+.un-app .entry-me {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--r);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--gold) 14%, var(--surface-2)) 0%,
+    var(--surface-2) 100%
+  );
+  border: 1.5px solid color-mix(in srgb, var(--gold) 45%, transparent);
+}
+.un-app .entry-me__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.un-app .entry-me__label {
+  font: 700 11px 'Nunito', sans-serif;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.un-app .entry-me__nick {
+  font: 800 17px 'Nunito', sans-serif;
+  color: var(--text-strong);
+}
+.un-app .entry-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font: 700 12px 'Nunito', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.un-app .entry-field input {
+  font: 800 16px 'Nunito', sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 13px 16px;
+  border-radius: var(--r-sm);
+  border: 2px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-strong);
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.un-app .entry-field input::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+}
+.un-app .entry-field input:focus {
+  border-color: var(--accent-soft);
+  background: var(--surface);
+}
+.un-app .entry-error {
+  background: color-mix(in srgb, var(--team-red) 14%, transparent);
+  color: var(--team-red);
+  border: 1.5px solid color-mix(in srgb, var(--team-red) 35%, transparent);
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  font: 800 13px 'Nunito', sans-serif;
+}
+
+/* ============ кнопки ============ */
+.un-app .btn,
+.un-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 13px 22px;
+  font: 800 15px 'Nunito', sans-serif;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--r);
+  transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.16s, border-color 0.16s, filter 0.16s, opacity 0.16s;
+  text-decoration: none;
+}
+.un-app .btn {
+  width: 100%;
+}
+.un-btn {
+  width: auto;
+}
+.un-app .btn svg,
+.un-btn svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+.un-app .btn:active,
+.un-btn:active {
+  transform: translateY(2px);
+}
+.un-app .btn:disabled,
+.un-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.un-app .btn-pri,
+.un-btn {
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow: 0 5px 0 var(--accent-shadow);
+}
+.un-app .btn-pri:hover:not(:disabled),
+.un-btn:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 var(--accent-shadow);
+}
+.un-app .btn-sec,
+.un-btn--ghost {
+  background: var(--surface);
+  color: var(--accent);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.un-btn--ghost {
+  color: var(--text);
+}
+.un-app .btn-sec:hover:not(:disabled),
+.un-btn--ghost:hover:not(:disabled) {
+  border-color: var(--accent-soft);
+  transform: translateY(-2px);
+}
+
+/* ============ лобби ============ */
+.un-lobby {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-areas: 'main chat';
+  gap: 18px;
+  align-items: start;
+}
+.un-lobby__main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.un-lobby > .on-chat {
+  grid-area: chat;
+  position: sticky;
+  top: 16px;
+}
+
+@keyframes un-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-3px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* карточки-секции */
+.un-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.un-set__title {
+  display: flex;
+  align-items: center;
   gap: 10px;
   font-size: 15px;
   font-weight: 800;
   color: var(--text-strong);
-  margin-bottom: 12px;
+  margin-bottom: 2px;
+}
+.un-set__title svg {
+  width: 19px;
+  height: 19px;
+  color: var(--accent);
+  flex: none;
 }
 .uno-count {
+  margin-left: auto;
   font-size: 12px;
   color: var(--muted);
   font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 /* список игроков */
 .uno-players {
   list-style: none;
   padding: 0;
-  margin: 0 0 12px;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 .uno-players li {
   display: flex;
@@ -50,13 +622,19 @@
   gap: 10px;
   font-size: 14px;
   font-weight: 700;
+  color: var(--text-strong);
   background: var(--surface-2);
-  border-radius: 12px;
-  padding: 7px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 8px 12px;
+  transition: border-color 0.15s;
+}
+.uno-players li:hover {
+  border-color: var(--accent-soft);
 }
 .uno-players__ava {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--surface);
   border: 2px solid var(--border);
@@ -69,8 +647,8 @@
   flex: none;
 }
 .uno-players__ava svg {
-  width: 17px;
-  height: 17px;
+  width: 20px;
+  height: 20px;
   color: var(--accent);
 }
 .uno-players__name {
@@ -95,20 +673,26 @@
   cursor: pointer;
   padding: 2px;
   display: inline-flex;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
 }
 .uno-kick:hover {
   color: var(--uno-red);
+  background: color-mix(in srgb, var(--uno-red) 12%, transparent);
 }
 .uno-kick svg {
   width: 15px;
   height: 15px;
 }
+.on-player--away {
+  opacity: 0.55;
+}
 
 /* поля-параметры */
 .uno-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
 }
 .uno-field {
   display: flex;
@@ -123,16 +707,16 @@
 .uno-field select {
   appearance: none;
   width: 100%;
-  padding: 9px 30px 9px 12px;
-  border-radius: 11px;
-  border: 1.5px solid var(--border);
-  background: var(--surface);
+  padding: 10px 30px 10px 13px;
+  border-radius: var(--r-sm);
+  border: 2px solid var(--border);
+  background: var(--surface-2);
   color: var(--text-strong);
-  font: 700 14px "Nunito", sans-serif;
+  font: 700 14px 'Nunito', sans-serif;
   cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%239a8c79' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%238a7560' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 11px center;
+  background-position: right 12px center;
   transition: 0.15s;
 }
 .uno-field select:hover {
@@ -157,7 +741,7 @@
   padding: 12px 14px;
   border-radius: 14px;
   border: 1.5px solid var(--border);
-  background: var(--surface);
+  background: var(--surface-2);
   cursor: pointer;
   transition: 0.16s;
 }
@@ -179,7 +763,7 @@
   width: 38px;
   height: 22px;
   border-radius: 99px;
-  background: var(--surface-2);
+  background: var(--surface);
   border: 1.5px solid var(--border);
   transition: 0.18s;
   margin-top: 1px;
@@ -192,7 +776,7 @@
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: var(--muted, #b3a692);
+  background: var(--muted);
   transition: 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .uno-toggle-card.is-on .uno-switch {
@@ -220,6 +804,109 @@
   font-weight: 600;
 }
 
+/* подсказки / футер лобби */
+.un-hint {
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.un-hint--center {
+  text-align: center;
+  padding: 6px 0;
+}
+.un-error {
+  background: color-mix(in srgb, var(--team-red) 14%, transparent);
+  color: var(--team-red);
+  border: 1.5px solid color-mix(in srgb, var(--team-red) 35%, transparent);
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+  font: 800 13px 'Nunito', sans-serif;
+}
+.un-lobby__footer {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+.un-lobby__start {
+  min-width: 220px;
+}
+
+/* ===== экран-стол ===== */
+.uno-screen {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* появление */
+@keyframes un-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.un-app .rise {
+  opacity: 1;
+  animation: un-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.un-app .d0 {
+  animation-delay: 0.05s;
+}
+.un-app .d1 {
+  animation-delay: 0.15s;
+}
+.un-app .d2 {
+  animation-delay: 0.25s;
+}
+.un-app .d3 {
+  animation-delay: 0.35s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .un-app .rise {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* a11y */
+.un-app a:focus-visible,
+.un-app button:focus-visible,
+.un-app input:focus-visible,
+.un-app select:focus-visible,
+.un-app .icon-btn:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* адаптив лобби */
+@media (max-width: 980px) {
+  .un-lobby {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'main' 'chat';
+  }
+  .un-lobby > .on-chat {
+    position: static;
+  }
+}
+@media (max-width: 760px) {
+  .un-app .entry-art {
+    display: none;
+  }
+}
+@media (max-width: 520px) {
+  .un-app {
+    padding: 0 16px 60px;
+  }
+  .un-app .entry-hero h1 .script {
+    white-space: normal;
+  }
+}
 /* ===== стол ===== */
 .uno-table {
   position: relative;
