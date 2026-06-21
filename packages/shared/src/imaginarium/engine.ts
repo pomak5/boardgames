@@ -3,7 +3,7 @@
  * БД, арты карт) — колода CardId подставляется менеджером, random инжектируется.
  *
  * В этой задаче реализован только createImaginariumGame — остальные переходы
- * (submitLeader, submitCard, revealTable, vote, scoreRound, finishGame) будут
+ * (submitLeader, submitCard, revealTable, vote, scoreRound, finishImaginariumGame) будут
  * добавлены позже.
  */
 import type { CardId, ImaginariumLogEntry, ImaginariumRound, ImaginariumState } from './types';
@@ -319,7 +319,7 @@ export function tallyRound(state: ImaginariumState): ImaginariumState {
  * выставляет phase 'finished', обнуляет раунд, пишет в лог 'gameover'.
  * players, scores, hands, deck, handSize, leaderIndex, roundNumber не меняются.
  */
-export function finishGame(state: ImaginariumState): ImaginariumState {
+export function finishImaginariumGame(state: ImaginariumState): ImaginariumState {
   if (state.phase === 'finished') {
     throw new ImaginariumError('GAME_FINISHED', 'Игра уже завершена');
   }
@@ -340,7 +340,7 @@ export function finishGame(state: ImaginariumState): ImaginariumState {
 /**
  * Добор карт после подсчёта раунда (round.phase 'scoring'): раздаёт по 1 карте
  * каждому игроку из начала колоды. Если колоды не хватает на всех — игра
- * завершается через finishGame (частичный добор не делается).
+ * завершается через finishImaginariumGame (частичный добор не делается).
  * Без лога: 'round-start' добавит advanceLeader. round остаётся 'scoring'.
  */
 export function refillHands(state: ImaginariumState): ImaginariumState {
@@ -352,7 +352,7 @@ export function refillHands(state: ImaginariumState): ImaginariumState {
   }
 
   if (state.deck.length < state.players.length) {
-    return finishGame(state);
+    return finishImaginariumGame(state);
   }
 
   const hands: Record<string, CardId[]> = {};

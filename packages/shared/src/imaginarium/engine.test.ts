@@ -5,7 +5,7 @@ import {
   advanceLeader,
   castVote,
   createImaginariumGame,
-  finishGame,
+  finishImaginariumGame,
   refillHands,
   revealTable,
   submitCard,
@@ -524,7 +524,7 @@ describe('tallyRound', () => {
   });
 });
 
-// --- Хелперы для refillHands / advanceLeader / finishGame ---
+// --- Хелперы для refillHands / advanceLeader / finishImaginariumGame ---
 
 /** Состояние в round.phase 'scoring' (после tallyRound) — финальная фаза раунда.
  *  Меняем только то, что нужно тестам (round.phase, deck, scores, players, leaderIndex). */
@@ -537,10 +537,10 @@ const inScoring = (overrides?: Partial<ImaginariumState>): ImaginariumState => {
   };
 };
 
-describe('finishGame', () => {
+describe('finishImaginariumGame', () => {
   test('один победитель → phase=finished, winner, round=null, лог gameover', () => {
     const state = inScoring({ scores: { a: 5, b: 3, c: 3, d: 0 } });
-    const next = finishGame(state);
+    const next = finishImaginariumGame(state);
     expect(next.phase).toBe('finished');
     expect(next.winner).toEqual(['a']);
     expect(next.round).toBeNull();
@@ -549,12 +549,12 @@ describe('finishGame', () => {
 
   test('ничья → winner содержит всех с максимальным счётом в порядке players', () => {
     const state = inScoring({ scores: { a: 5, b: 5, c: 3, d: 0 } });
-    const next = finishGame(state);
+    const next = finishImaginariumGame(state);
     expect(next.winner).toEqual(['a', 'b']);
   });
 
   test('игра уже завершена → GAME_FINISHED', () => {
-    expectErrorCode(() => finishGame(finished()), 'GAME_FINISHED');
+    expectErrorCode(() => finishImaginariumGame(finished()), 'GAME_FINISHED');
   });
 });
 
@@ -585,7 +585,7 @@ describe('refillHands', () => {
     expect(state.hands).toEqual(handsBefore);
   });
 
-  test('колоды недостаточно (deck<players) → finishGame: phase=finished, winner=max, round=null', () => {
+  test('колоды недостаточно (deck<players) → finishImaginariumGame: phase=finished, winner=max, round=null', () => {
     const state = inScoring({ deck: deck(2), scores: { a: 5, b: 3, c: 3, d: 0 } });
     const next = refillHands(state);
     expect(next.phase).toBe('finished');
