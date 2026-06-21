@@ -1,7 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 import { DEFAULT_HAND_SIZE, ImaginariumError } from './types';
 import type { ImaginariumErrorCode, ImaginariumState } from './types';
-import { castVote, createImaginariumGame, revealTable, submitCard, submitLeader } from './engine';
+import {
+  castVote,
+  createImaginariumGame,
+  revealTable,
+  submitCard,
+  submitLeader,
+  tallyRound,
+} from './engine';
 
 /** Удобный хелпер: вызывает fn и проверяет, что бросает ImaginariumError с нужным code. */
 function expectErrorCode(fn: () => unknown, code: ImaginariumErrorCode): void {
@@ -433,5 +440,83 @@ describe('castVote', () => {
     castVote(state, voter, slot);
     expect(state.round!.votes).toEqual(votesBefore);
     expect(state.log).toHaveLength(logBefore);
+  });
+});
+
+describe('tallyRound', () => {
+  /** Строит состояние голосования и прогоняет указанные голоса.
+   *  votesToCast: Record<voterId, targetPlayerId> — голосует за слот, где лежит
+   *  карта targetPlayerId. Проверяет, что voter ≠ target (castVote это валидирует). */
+  const votingWithVotes = (seed: number, votesToCast: Record<string, string>): ImaginariumState => {
+    let s = inVoting(seed);
+    for (const [voter, target] of Object.entries(votesToCast)) {
+      const slot = s.round!.slots!.indexOf(target);
+      s = castVote(s, voter, slot);
+    }
+    return s;
+  };
+
+  test('частичный: b,c угадали ведущего, d голосует за b → дельты 5/4/3/0', () => {
+    const state = votingWithVotes(42, { b: 'a', c: 'a', d: 'b' });
+    const initial = { ...state.scores };
+    const next = tallyRound(state);
+    expect(next.scores['a']).toBe(initial['a']! + 5);
+    expect(next.scores['b']).toBe(initial['b']! + 4);
+    expect(next.scores['c']).toBe(initial['c']! + 3);
+    expect(next.scores['d']).toBe(initial['d']! + 0);
+  });
+
+  test('все угадали: b,c,d → leaderSlot → allOrNone, дельты 3/2/2/2', () => {
+    const state = votingWithVotes(42, { b: 'a', c: 'a', d: 'a' });
+    const initial = { ...state.scores };
+    const next = tallyRound(state);
+    expect(next.scores['a']).toBe(initial['a']! + 3);
+    expect(next.scores['b']).toBe(initial['b']! + 2);
+    expect(next.scores['c']).toBe(initial['c']! + 2);
+    expect(next.scores['d']).toBe(initial['d']! + 2);
+  });
+
+  test('никто не угадал: b→c, c→d, d→b → allOrNone, дельты 0/3/3/3', () => {
+    const state = votingWithVotes(42, { b: 'c', c: 'd', d: 'b' });
+    const initial = { ...state.scores };
+    const next = tallyRound(state);
+    expect(next.scores['a']).toBe(initial['a']! + 0);
+    expect(next.scores['b']).toBe(initial['b']! + 3);
+    expect(next.scores['c']).toBe(initial['c']! + 3);
+    expect(next.scores['d']).toBe(initial['d']! + 3);
+  });
+
+  test('переходы: round.phase→scoring, outer phase→association, лог scored', () => {
+    const state = votingWithVotes(11, { b: 'a', c: 'a', d: 'b' });
+    const expectedDeltas: Record<string, number> = { a: 5, b: 4, c: 3, d: 0 };
+    const next = tallyRound(state);
+    expect(next.round!.phase).toBe('scoring');
+    expect(next.phase).toBe('association');
+    expect(next.log[next.log.length - 1]).toEqual({
+      type: 'scored',
+      round: state.roundNumber,
+      deltas: expectedDeltas,
+    });
+  });
+
+  test('иммутабельность: входное состояние не мутируется', () => {
+    const state = votingWithVotes(33, { b: 'a', c: 'a', d: 'b' });
+    const scoresBefore = { ...state.scores };
+    const votesBefore = { ...state.round!.votes };
+    const phaseBefore = state.round!.phase;
+    const logBefore = state.log.length;
+    tallyRound(state);
+    expect(state.scores).toEqual(scoresBefore);
+    expect(state.round!.votes).toEqual(votesBefore);
+    expect(state.round!.phase).toBe(phaseBefore);
+    expect(state.log).toHaveLength(logBefore);
+  });
+
+  test('неправильная фаза (round.phase=choosing) → WRONG_PHASE', () => {
+    expectErrorCode(() => tallyRound(inChoosing(42)), 'WRONG_PHASE');
+  });
+
+  test('игра завершена → GAME_FINISHED', () => {
+    expectErrorCode(() => tallyRound(finished()), 'GAME_FINISHED');
   });
 });

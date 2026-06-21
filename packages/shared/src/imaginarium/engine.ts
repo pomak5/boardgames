@@ -6,7 +6,7 @@
  * (submitLeader, submitCard, revealTable, vote, scoreRound, finishGame) будут
  * добавлены позже.
  */
-import type { CardId, ImaginariumLogEntry, ImaginariumState } from './types';
+import type { CardId, ImaginariumLogEntry, ImaginariumRound, ImaginariumState } from './types';
 import { DEFAULT_HAND_SIZE, ImaginariumError, MAX_PLAYERS, MIN_PLAYERS } from './types';
 
 export interface CreateImaginariumOptions {
@@ -244,6 +244,72 @@ export function castVote(state: ImaginariumState, voterId: string, slot: number)
       ...state.round,
       votes,
     },
+    log: [...state.log, entry],
+  };
+}
+
+/**
+ * Подсчёт очков раунда (Dixit-скоринг). Вызывается менеджером по завершении
+ * голосования (все не-ведущие проголосовали, либо таймаут с частичными
+ * голосами). Вычисляет дельты очков, обновляет scores и переводит round.phase
+ * из 'voting' в 'scoring'. Внешний state.phase остаётся 'association'.
+ *
+ * Правила подсчёта:
+ * - Если все не-ведущие угадали карту ведущего, или никто не угадал
+ *   (allOrNone): ведущий получает 0, каждый не-ведущий +2 (утешительные).
+ * - Иначе: ведущий +3, каждый угадавший +3.
+ * - В обоих случаях: +1 за каждый голос автору проголосованной карты
+ *   (включая голоса за карту ведущего).
+ */
+export function tallyRound(state: ImaginariumState): ImaginariumState {
+  if (state.phase === 'finished') {
+    throw new ImaginariumError('GAME_FINISHED', 'Игра завершена');
+  }
+  if (state.phase !== 'association' || state.round == null || state.round.phase !== 'voting') {
+    throw new ImaginariumError('WRONG_PHASE', 'Сейчас нельзя подсчитать раунд');
+  }
+
+  const round: ImaginariumRound = state.round;
+  if (round.slots == null) {
+    throw new ImaginariumError('WRONG_PHASE', 'Слоты стола не открыты');
+  }
+
+  const slots: string[] = round.slots;
+  const votes = round.votes;
+  const leader = round.leader;
+  const voters = Object.keys(votes);
+  const leaderSlot = slots.indexOf(leader);
+  const votersForLeader = voters.filter((v) => votes[v] === leaderSlot);
+  const allOrNone = votersForLeader.length === 0 || votersForLeader.length === voters.length;
+
+  const deltas: Record<string, number> = {};
+  for (const p of state.players) deltas[p] = 0;
+
+  if (allOrNone) {
+    // ведущий получает 0; каждый не-ведущий +2 (утешительные)
+    for (const p of state.players) if (p !== leader) deltas[p] = (deltas[p] ?? 0) + 2;
+  } else {
+    // ведущий +3; каждый угадавший +3
+    deltas[leader] = (deltas[leader] ?? 0) + 3;
+    for (const v of votersForLeader) deltas[v] = (deltas[v] ?? 0) + 3;
+  }
+
+  // +1 за каждый голос автору проголосованной карты (в обоих случаях,
+  // включая голоса за карту ведущего)
+  for (const v of voters) {
+    const author = slots[votes[v]!]!;
+    deltas[author] = (deltas[author] ?? 0) + 1;
+  }
+
+  const newScores: Record<string, number> = {};
+  for (const p of state.players) newScores[p] = (state.scores[p] ?? 0) + (deltas[p] ?? 0);
+
+  const entry: ImaginariumLogEntry = { type: 'scored', round: state.roundNumber, deltas };
+
+  return {
+    ...state,
+    scores: newScores,
+    round: { ...round, phase: 'scoring' },
     log: [...state.log, entry],
   };
 }
