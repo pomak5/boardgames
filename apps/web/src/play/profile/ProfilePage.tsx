@@ -28,6 +28,7 @@ const GAME_LABEL: Record<GameId, string> = {
   codenames: "Коднеймс",
   uno: "УНО",
   alias: "Элиас",
+  imaginarium: "Имаджинариум",
 };
 
 function winRate(s: GameStats): number {
@@ -134,6 +135,7 @@ const EMPTY_STATS: AuthStats = {
     codenames: { total: 0, wins: 0, losses: 0 },
     uno: { total: 0, wins: 0, losses: 0 },
     alias: { total: 0, wins: 0, losses: 0 },
+    imaginarium: { total: 0, wins: 0, losses: 0 },
   },
 };
 
@@ -416,7 +418,7 @@ export function ProfilePage() {
 
       {/* ============ ПО ИГРАМ ============ */}
       <section className="pf-games">
-        {(["codenames", "uno", "alias"] as const).map(g => {
+        {(["codenames", "uno", "alias", "imaginarium"] as const).map(g => {
           const s = stats.byGame[g];
           return (
             <div key={g} className={`pf-game pf-game--${g}`}>

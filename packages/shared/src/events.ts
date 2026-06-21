@@ -8,7 +8,7 @@ import type {
   ImaginariumRoundPhase,
 } from './imaginarium';
 
-export type GameId = 'codenames' | 'uno' | 'alias';
+export type GameId = 'codenames' | 'uno' | 'alias' | 'imaginarium';
 
 export type PlayerRole = 'captain' | 'guesser';
 
@@ -325,4 +325,82 @@ export interface ImaginariumView {
   phase: ImaginariumPhase;
   winner: string[] | null;
   log: ImaginariumLogEntry[];
+}
+
+export interface ImaginariumRoomSettings {
+  game: 'imaginarium';
+  /** Длительность фазы ведущего (карта + ассоциация), сек. */
+  associationSec: number;
+  /** Длительность фазы выбора карт, сек. */
+  choosingSec: number;
+  /** Длительность голосования, сек. */
+  votingSec: number;
+  /** Ранний финиш по целевому счёту (null — только по исчерпанию колоды). */
+  targetScore: number | null;
+  /** Размер руки (канон 6). */
+  handSize: number;
+}
+
+export interface ImaginariumRoomPlayerView {
+  id: string;
+  nickname: string;
+  /** data:image/* URL аватара из профиля (null у гостей). */
+  avatarUrl: string | null;
+  connected: boolean;
+}
+
+export interface ImaginariumRoomView {
+  code: string;
+  hostId: string;
+  phase: RoomPhase;
+  settings: ImaginariumRoomSettings;
+  players: ImaginariumRoomPlayerView[];
+  startedAt?: number | null;
+}
+
+export interface ImaginariumJoinAck {
+  ok: boolean;
+  error?: string;
+  room?: ImaginariumRoomView;
+  playerId?: string;
+  token?: string;
+}
+
+/** Настройки комнаты, которые хост может менять (все поля опциональны). */
+export interface ImaginariumSettingsPatch {
+  associationSec?: number;
+  choosingSec?: number;
+  votingSec?: number;
+  targetScore?: number | null;
+  handSize?: number;
+}
+
+export interface ImaginariumServerToClientEvents {
+  'room:state': (room: ImaginariumRoomView) => void;
+  'room:closed': (reason: string) => void;
+  'chat:message': (msg: ChatMessage) => void;
+  'chat:history': (msgs: ChatMessage[]) => void;
+  'game:state': (view: ImaginariumView) => void;
+  /** Дедлайн текущей фазы (ms, Date.now()) или null. */
+  'game:timer': (deadline: number | null) => void;
+  'game:error': (message: string) => void;
+}
+
+export interface ImaginariumClientToServerEvents {
+  'room:create': (
+    nickname: string,
+    settings: ImaginariumSettingsPatch,
+    ack: (a: ImaginariumJoinAck) => void,
+  ) => void;
+  'room:join': (code: string, nickname: string, ack: (a: ImaginariumJoinAck) => void) => void;
+  'room:rejoin': (code: string, token: string, ack: (a: ImaginariumJoinAck) => void) => void;
+  'room:leave': () => void;
+  'room:settings': (settings: ImaginariumSettingsPatch) => void;
+  'room:start': () => void;
+  'room:newRound': () => void;
+  'chat:send': (text: string) => void;
+  'game:leader': (cardId: CardId, association: string) => void;
+  'game:submit': (cardId: CardId) => void;
+  'game:vote': (slot: number) => void;
+  'game:advance': () => void;
 }

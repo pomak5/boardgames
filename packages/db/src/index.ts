@@ -11,7 +11,7 @@ import { PrismaClient } from '@prisma/client';
 // таково API Prisma 6.
 export const prisma = new PrismaClient({ log: ['warn', 'error'] });
 
-export type GameId = 'codenames' | 'uno' | 'alias';
+export type GameId = 'codenames' | 'uno' | 'alias' | 'imaginarium';
 
 export interface UserPublic {
   id: string;
@@ -131,6 +131,7 @@ export async function getUserStats(userId: string): Promise<UserStats> {
     codenames: emptyStats(),
     uno: emptyStats(),
     alias: emptyStats(),
+    imaginarium: emptyStats(),
   };
   const overall = emptyStats();
   for (const r of rows) {

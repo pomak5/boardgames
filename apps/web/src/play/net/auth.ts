@@ -11,7 +11,7 @@ function apiUrl(path: string): string {
   return `/api${path}`;
 }
 
-export type GameId = "codenames" | "uno" | "alias";
+export type GameId = "codenames" | "uno" | "alias" | "imaginarium";
 
 export interface AuthUser {
   id: string;
@@ -135,7 +135,10 @@ export async function uploadAvatar(
  *  localStorage чистит вызывающий (useAuth) — здесь только серверная сторона. */
 export async function logoutAccount(): Promise<void> {
   try {
-    await fetch(apiUrl("/auth/logout"), { method: "POST", credentials: "include" });
+    await fetch(apiUrl("/auth/logout"), {
+      method: "POST",
+      credentials: "include",
+    });
   } catch {
     // сервер недоступен — локальный logout всё равно отработает в useAuth
   }
