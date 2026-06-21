@@ -1,38 +1,16 @@
 import type { CardId, ImaginariumView } from "@shared";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Chat } from "../online/Chat";
-import { svgCard } from "./art/svgCard";
 import type { ImaginariumRoomApi } from "./useImaginariumRoom";
 import "./imaginarium.css";
 import "./table.css";
 
-/** Карта лицом вверх (арт из svgCard). */
-function CardFace({ cardId, size }: { cardId: CardId; size?: number }) {
-  const s = size ?? 140;
-  return (
-    <img
-      className="im-card-face"
-      src={svgCard(cardId)}
-      alt=""
-      width={s}
-      height={s}
-      draggable={false}
-    />
-  );
-}
-
-/** Рубашка карты (лицом вниз). */
-function CardBack({ size }: { size?: number }) {
-  const s = size ?? 140;
-  return (
-    <div
-      className="im-card-back"
-      style={{ width: s, height: s }}
-      aria-hidden="true"
-    />
-  );
-}
+// R3F-сцена грузится лениво — трёхмерный код (three/drei/fiber) живёт в
+// отдельном чанке и не раздувает основной бандл. Импорт только на роуте стола.
+const Table3D = lazy(() =>
+  import("./three/Table3D").then(m => ({ default: m.Table3D })),
+);
 
 /** Пилюля таймера: показывает секунды до дедлайна. Тикает раз в секунду. */
 function TimerPill({ deadline }: { deadline: number | null }) {
@@ -108,20 +86,41 @@ export function ImaginariumTable({ api }: { api: ImaginariumRoomApi }) {
         {!game && <div className="im-hint">Ожидание состояния игры…</div>}
 
         {game && (
-          <PhaseScreen
-            api={api}
-            game={game}
-            meId={meId}
-            isLeader={isLeader}
-            isHost={isHost}
-            nick={nick}
-            selCard={selCard}
-            setSelCard={setSelCard}
-            selSlot={selSlot}
-            setSelSlot={setSelSlot}
-            assoc={assoc}
-            setAssoc={setAssoc}
-          />
+          <div className="im-3d-stage">
+            <Suspense
+              fallback={<div className="im-3d-fallback">Загрузка стола…</div>}
+            >
+              <Table3D
+                game={game}
+                viewerId={meId}
+                phase={
+                  game.phase === "finished"
+                    ? "finished"
+                    : (round?.phase ?? "association")
+                }
+                selectedCard={selCard}
+                onSelectCard={c => setSelCard(c === selCard ? null : c)}
+                selectedSlot={selSlot}
+                onSelectSlot={s => setSelSlot(s === selSlot ? null : s)}
+              />
+            </Suspense>
+            <div className="im-3d-overlay">
+              <PhaseScreen
+                api={api}
+                game={game}
+                meId={meId}
+                isLeader={isLeader}
+                isHost={isHost}
+                nick={nick}
+                selCard={selCard}
+                setSelCard={setSelCard}
+                selSlot={selSlot}
+                setSelSlot={setSelSlot}
+                assoc={assoc}
+                setAssoc={setAssoc}
+              />
+            </div>
+          </div>
         )}
 
         {game && <ScoreSidebar game={game} meId={meId} nick={nick} />}
@@ -218,7 +217,6 @@ function AssociationScreen({
   isLeader,
   nick,
   selCard,
-  setSelCard,
   assoc,
   setAssoc,
   api,
@@ -231,14 +229,8 @@ function AssociationScreen({
       <section className="im-phase rise d1">
         <h2 className="im-phase__title">Вы ведущий</h2>
         <p className="im-hint">
-          Выберите карту из руки и придумайте ассоциацию.
+          Выберите карту из руки (на столе) и придумайте ассоциацию.
         </p>
-        <Hand
-          hand={game.hand}
-          selected={selCard}
-          onSelect={setSelCard}
-          interactive
-        />
         <div className="im-assoc-form">
           <input
             className="im-assoc-input"
@@ -264,24 +256,12 @@ function AssociationScreen({
     <section className="im-phase rise d1">
       <h2 className="im-phase__title">Ведущий придумывает ассоциацию…</h2>
       <p className="im-hint">Ведущий: {nick(round.leader)}.</p>
-      <Hand
-        hand={game.hand}
-        selected={null}
-        onSelect={() => {}}
-        interactive={false}
-      />
     </section>
   );
 }
 
 /* ---------- 3. Choosing ---------- */
-function ChoosingScreen({
-  game,
-  isLeader,
-  selCard,
-  setSelCard,
-  api,
-}: PhaseProps) {
+function ChoosingScreen({ game, isLeader, selCard, api }: PhaseProps) {
   const round = game.round;
   if (!round) return null;
   const total = game.players.length;
@@ -292,12 +272,6 @@ function ChoosingScreen({
         <h2 className="im-phase__title">Ждём, пока все выберут карты…</h2>
         <Association association={round.association} />
         <p className="im-progress">Сдано: {progress}</p>
-        <Hand
-          hand={game.hand}
-          selected={null}
-          onSelect={() => {}}
-          interactive={false}
-        />
       </section>
     );
   }
@@ -315,12 +289,6 @@ function ChoosingScreen({
       <h2 className="im-phase__title">Выберите карту под ассоциацию</h2>
       <Association association={round.association} />
       <p className="im-progress">Сдано: {progress}</p>
-      <Hand
-        hand={game.hand}
-        selected={selCard}
-        onSelect={setSelCard}
-        interactive
-      />
       <div className="im-phase__actions">
         <button
           type="button"
@@ -336,17 +304,9 @@ function ChoosingScreen({
 }
 
 /* ---------- 4. Voting ---------- */
-function VotingScreen({
-  game,
-  meId,
-  isLeader,
-  selSlot,
-  setSelSlot,
-  api,
-}: PhaseProps) {
+function VotingScreen({ game, meId, isLeader, selSlot, api }: PhaseProps) {
   const round = game.round;
   if (!round) return null;
-  const n = round.submittedCount;
   const myVote = round.votes[meId];
   if (isLeader) {
     return (
@@ -354,13 +314,6 @@ function VotingScreen({
         <h2 className="im-phase__title">Идёт голосование</h2>
         <Association association={round.association} />
         <p className="im-hint">Вы ведущий — вы не голосуете.</p>
-        <Slots
-          n={n}
-          tableCards={round.tableCards}
-          interactive={false}
-          selected={null}
-          onSelect={() => {}}
-        />
       </section>
     );
   }
@@ -372,13 +325,6 @@ function VotingScreen({
         {myVote != null && (
           <p className="im-hint">Ваш голос: карта №{myVote + 1}.</p>
         )}
-        <Slots
-          n={n}
-          tableCards={round.tableCards}
-          interactive={false}
-          selected={myVote ?? null}
-          onSelect={() => {}}
-        />
       </section>
     );
   }
@@ -390,13 +336,6 @@ function VotingScreen({
         Выберите карту, которая по-вашему соответствует ассоциации ведущего. Не
         голосуйте за свою.
       </p>
-      <Slots
-        n={n}
-        tableCards={round.tableCards}
-        interactive
-        selected={selSlot}
-        onSelect={setSelSlot}
-      />
       <div className="im-phase__actions">
         <button
           type="button"
@@ -433,17 +372,9 @@ function ScoringScreen({ game, nick, api }: PhaseProps) {
               key={i}
               className={`im-reveal__slot${isLeaderSlot ? " im-reveal__slot--leader" : ""}`}
             >
-              <div className="im-reveal__card">
-                {round.tableCards ? (
-                  <CardFace cardId={round.tableCards[i] ?? ""} size={120} />
-                ) : (
-                  <CardBack size={120} />
-                )}
-                <span className="im-reveal__num">№{i + 1}</span>
-              </div>
               <div className="im-reveal__meta">
                 <span className="im-reveal__owner">
-                  {nick(owner)}
+                  №{i + 1} · {nick(owner)}
                   {isLeaderSlot && (
                     <span className="im-tag im-tag--me">ведущий</span>
                   )}
@@ -479,75 +410,6 @@ function ScoringScreen({ game, nick, api }: PhaseProps) {
 function Association({ association }: { association: string | null }) {
   if (!association) return null;
   return <p className="im-association">«{association}»</p>;
-}
-
-function Hand({
-  hand,
-  selected,
-  onSelect,
-  interactive,
-}: {
-  hand: CardId[];
-  selected: CardId | null;
-  onSelect: (c: CardId | null) => void;
-  interactive: boolean;
-}) {
-  if (hand.length === 0) {
-    return <p className="im-hint">В руке нет карт.</p>;
-  }
-  return (
-    <div className={`im-hand${interactive ? " im-hand--interactive" : ""}`}>
-      {hand.map(c => (
-        <button
-          key={c}
-          type="button"
-          className={`im-hand__card${selected === c ? " im-hand__card--selected" : ""}`}
-          disabled={!interactive}
-          onClick={() => interactive && onSelect(selected === c ? null : c)}
-        >
-          <CardFace cardId={c} />
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function Slots({
-  n,
-  tableCards,
-  interactive,
-  selected,
-  onSelect,
-}: {
-  n: number;
-  tableCards: CardId[] | null;
-  interactive: boolean;
-  selected: number | null;
-  onSelect: (s: number | null) => void;
-}) {
-  if (n === 0) {
-    return <p className="im-hint">На столе пока нет карт.</p>;
-  }
-  return (
-    <div className={`im-slots${interactive ? " im-slots--interactive" : ""}`}>
-      {Array.from({ length: n }, (_, i) => (
-        <button
-          key={i}
-          type="button"
-          className={`im-slot${selected === i ? " im-slot--selected" : ""}`}
-          disabled={!interactive}
-          onClick={() => interactive && onSelect(selected === i ? null : i)}
-        >
-          {tableCards ? (
-            <CardFace cardId={tableCards[i] ?? ""} size={120} />
-          ) : (
-            <CardBack size={120} />
-          )}
-          <span className="im-slot__num">{i + 1}</span>
-        </button>
-      ))}
-    </div>
-  );
 }
 
 function ScoreSidebar({

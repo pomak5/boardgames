@@ -388,6 +388,62 @@
   line-height: 1.4;
 }
 
+/* ============ 3D стол (Phase 5B) ============ */
+.im-3d-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 52vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: #5c3922;
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.im-3d-canvas {
+  touch-action: none;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+.im-3d-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--accent-soft);
+  font: 800 16px "Nunito", sans-serif;
+}
+/* DOM-оверлеи поверх/под канвасом: обёртка не перехватывает клики,
+   реальные контролы (кнопки/инпуты) включают pointer-events. */
+.im-3d-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 14px;
+}
+.im-3d-overlay .im-phase {
+  pointer-events: auto;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(3px);
+  padding: 14px 18px;
+  gap: 10px;
+}
+.im-3d-overlay .im-phase__title {
+  font-size: 18px;
+}
+.im-3d-overlay .im-phase__actions,
+.im-3d-overlay .im-assoc-form {
+  pointer-events: auto;
+}
+
 /* ============ адаптив ============ */
 @media (max-width: 620px) {
   .im-assoc-form {
@@ -399,5 +455,11 @@
   .im-reveal__slot {
     flex-direction: column;
     align-items: flex-start;
+  }
+  .im-3d-stage {
+    min-height: 46vh;
+  }
+  .im-3d-overlay {
+    padding: 8px 8px 10px;
   }
 }
