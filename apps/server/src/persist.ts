@@ -48,7 +48,7 @@ function key(prefix: string, code: string): string {
  * Вызывайте ТОЛЬКО на смысловых сменах состояния (не на каждом чате).
  */
 export async function snapshotRoom(
-  prefix: 'codenames' | 'uno' | 'alias',
+  prefix: 'codenames' | 'uno' | 'alias' | 'imaginarium',
   code: string,
   state: unknown,
   ttlSec = DEFAULT_TTL_SEC,
@@ -68,7 +68,7 @@ export async function snapshotRoom(
  * Best-effort: ошибки логируются, не бросают.
  */
 export async function deleteRoom(
-  prefix: 'codenames' | 'uno' | 'alias',
+  prefix: 'codenames' | 'uno' | 'alias' | 'imaginarium',
   code: string,
 ): Promise<void> {
   if (!REDIS_URL) return;
@@ -85,7 +85,7 @@ export async function deleteRoom(
  * KEYS persist:<prefix>:* → MGET → parse. Не используется в hot-path.
  */
 export async function loadAllRooms(
-  prefix: 'codenames' | 'uno' | 'alias',
+  prefix: 'codenames' | 'uno' | 'alias' | 'imaginarium',
 ): Promise<Array<{ code: string; state: unknown }>> {
   if (!REDIS_URL) return [];
   const c = await getClient();
