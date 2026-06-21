@@ -401,3 +401,44 @@ export function advanceLeader(state: ImaginariumState): ImaginariumState {
     log: [...state.log, entry],
   };
 }
+
+/**
+ * Пропуск раунда (таймаут): отказывается от текущего раунда без подсчёта очков
+ * и добора карт, начинает свежий раунд со следующим ведущим. Вызывается
+ * менеджером при таймауте ассоциации (ведущий не подал) или выбора карт
+ * (никто из не-ведущих не сдал). Допускается только в round.phase 'association'
+ * или 'choosing' ('voting' разруливается через tallyRound, 'scoring' — advanceLeader).
+ * Внешний state.phase остаётся 'association'. players/scores/hands/deck/handSize/winner
+ * не меняются (иммутабельно).
+ */
+export function skipRound(state: ImaginariumState): ImaginariumState {
+  if (state.phase === 'finished') {
+    throw new ImaginariumError('GAME_FINISHED', 'Игра окончена');
+  }
+  if (
+    state.round == null ||
+    (state.round.phase !== 'association' && state.round.phase !== 'choosing')
+  ) {
+    throw new ImaginariumError('WRONG_PHASE', 'Раунд нельзя пропустить в этой фазе');
+  }
+
+  const newLeaderIndex = (state.leaderIndex + 1) % state.players.length;
+  const newRoundNumber = state.roundNumber + 1;
+  const leader = state.players[newLeaderIndex]!;
+  const entry: ImaginariumLogEntry = { type: 'round-start', leader, roundNumber: newRoundNumber };
+
+  return {
+    ...state,
+    leaderIndex: newLeaderIndex,
+    roundNumber: newRoundNumber,
+    round: {
+      leader,
+      association: null,
+      submissions: {},
+      slots: null,
+      votes: {},
+      phase: 'association',
+    },
+    log: [...state.log, entry],
+  };
+}

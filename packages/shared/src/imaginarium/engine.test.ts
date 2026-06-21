@@ -8,6 +8,7 @@ import {
   finishImaginariumGame,
   refillHands,
   revealTable,
+  skipRound,
   submitCard,
   submitLeader,
   tallyRound,
@@ -648,5 +649,100 @@ describe('advanceLeader', () => {
   test('неправильная фаза (round.phase=voting) → WRONG_PHASE', () => {
     const state = inScoring({ round: { ...newGame().round!, phase: 'voting' } });
     expectErrorCode(() => advanceLeader(state), 'WRONG_PHASE');
+  });
+});
+
+describe('skipRound', () => {
+  test('skip из association: leaderIndex 0→1, roundNumber+1, fresh round, лог round-start, outer association', () => {
+    const state = newGame();
+    const beforeLog = state.log.length;
+    const beforeRoundNumber = state.roundNumber;
+    const beforeLeaderIndex = state.leaderIndex;
+    const next = skipRound(state);
+
+    expect(next.leaderIndex).toBe(1);
+    expect(next.roundNumber).toBe(beforeRoundNumber + 1);
+    expect(next.round!.leader).toBe('b');
+    expect(next.round!.phase).toBe('association');
+    expect(next.round!.association).toBeNull();
+    expect(next.round!.submissions).toEqual({});
+    expect(next.round!.slots).toBeNull();
+    expect(next.round!.votes).toEqual({});
+    expect(next.phase).toBe('association');
+    expect(next.log[next.log.length - 1]).toEqual({
+      type: 'round-start',
+      leader: 'b',
+      roundNumber: beforeRoundNumber + 1,
+    });
+    expect(next.log).toHaveLength(beforeLog + 1);
+
+    // иммутабельность: входное состояние не мутируется
+    expect(state.leaderIndex).toBe(beforeLeaderIndex);
+    expect(state.roundNumber).toBe(beforeRoundNumber);
+    expect(state.log).toHaveLength(beforeLog);
+    expect(state.round!.phase).toBe('association');
+  });
+
+  test('skip из choosing: fresh round association, empty submissions/slots/votes', () => {
+    const state = inChoosing(42);
+    const beforeLog = state.log.length;
+    const next = skipRound(state);
+
+    expect(next.leaderIndex).toBe(1);
+    expect(next.roundNumber).toBe(2);
+    expect(next.round!.leader).toBe('b');
+    expect(next.round!.phase).toBe('association');
+    expect(next.round!.association).toBeNull();
+    expect(next.round!.submissions).toEqual({});
+    expect(next.round!.slots).toBeNull();
+    expect(next.round!.votes).toEqual({});
+    expect(next.phase).toBe('association');
+    expect(next.log[next.log.length - 1]).toEqual({
+      type: 'round-start',
+      leader: 'b',
+      roundNumber: 2,
+    });
+    expect(next.log).toHaveLength(beforeLog + 1);
+
+    // иммутабельность: вход не мутируется
+    expect(state.round!.phase).toBe('choosing');
+    expect(state.leaderIndex).toBe(0);
+    expect(state.roundNumber).toBe(1);
+    expect(state.log).toHaveLength(beforeLog);
+  });
+
+  test('обратный переход (index 3→0 для 4 игроков): leaderIndex=0, round.leader=a', () => {
+    const base = newGame();
+    const state: ImaginariumState = {
+      ...base,
+      leaderIndex: 3,
+      round: { ...base.round!, leader: 'd' },
+    };
+    const next = skipRound(state);
+    expect(next.leaderIndex).toBe(0);
+    expect(next.round!.leader).toBe('a');
+    expect(next.roundNumber).toBe(2);
+  });
+
+  test('неправильная фаза (voting) → WRONG_PHASE', () => {
+    const state = inVoting(42);
+    expectErrorCode(() => skipRound(state), 'WRONG_PHASE');
+  });
+
+  test('неправильная фаза (scoring) → WRONG_PHASE (scoring должен использовать advanceLeader)', () => {
+    const state = inScoring();
+    expectErrorCode(() => skipRound(state), 'WRONG_PHASE');
+  });
+
+  test('игра завершена → GAME_FINISHED', () => {
+    expectErrorCode(() => skipRound(finished()), 'GAME_FINISHED');
+  });
+
+  test('hands/scores/deck не меняются (skip не добирает и не считает очки)', () => {
+    const state = newGame();
+    const next = skipRound(state);
+    expect(next.hands).toEqual(state.hands);
+    expect(next.scores).toEqual(state.scores);
+    expect(next.deck).toEqual(state.deck);
   });
 });
