@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { hashPassword, verifyPassword } from './password';
-import { payloadFromHeader, payloadFromRequest, signToken, verifyToken, AUTH_COOKIE_NAME } from './jwt';
+import {
+  payloadFromHeader,
+  payloadFromRequest,
+  signToken,
+  verifyToken,
+  AUTH_COOKIE_NAME,
+} from './jwt';
 
 describe('password', () => {
   test('hash + verify round-trip', async () => {

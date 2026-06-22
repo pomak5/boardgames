@@ -267,7 +267,6 @@ export function registerAlias(nsp: AliasNamespace): Janitable {
   });
   return {
     cleanupStale: manager.cleanupStale.bind(manager),
-    restore: (snapshots) =>
-      snapshots.filter((s) => manager.restoreFromSnapshot(s.state)).length,
+    restore: (snapshots) => snapshots.filter((s) => manager.restoreFromSnapshot(s.state)).length,
   };
 }

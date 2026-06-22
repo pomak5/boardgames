@@ -6,16 +6,16 @@ Vite (`apps/web/dist` после `bun run build`), отдаётся nginx'ом (
 
 ## Окружение (env)
 
-| Переменная           | Где        | Обязательно | Назначение                                      |
-| -------------------- | ---------- | ----------- | ----------------------------------------------- |
-| `DATABASE_URL`       | server     | да (auth)   | Postgres URL. Без неё — guest-only (auth выкл.) |
-| `JWT_SECRET`         | server     | да (auth)   | Секрет JWT/кук. Длинная случайная строка.        |
-| `WEB_ORIGIN`         | server     | да (prod)   | Origin фронта для CORS (через запятую если неск.). Дефолт localhost — warning |
-| `PORT`               | server     | нет         | Порт сервера (по умолч. 3001)                    |
-| `REDIS_URL`          | server     | нет         | Redis для socket.io-адаптера (multi-node) + persist-снапшотов. Без — single-node |
-| `PERSIST_RESTORE`    | server     | нет         | `true` — восстановление комнат из Redis при старте |
-| `S3_*`               | server     | нет         | Object storage аватаров (см. `apps/server/src/storage.ts`). Без — data-URL в БД |
-| `LEADERBOARD_REFRESH_MS` | server | нет         | Интервал refresh materialized view лидерборда (по умолч. 300000 = 5 мин) |
+| Переменная               | Где    | Обязательно | Назначение                                                                       |
+| ------------------------ | ------ | ----------- | -------------------------------------------------------------------------------- |
+| `DATABASE_URL`           | server | да (auth)   | Postgres URL. Без неё — guest-only (auth выкл.)                                  |
+| `JWT_SECRET`             | server | да (auth)   | Секрет JWT/кук. Длинная случайная строка.                                        |
+| `WEB_ORIGIN`             | server | да (prod)   | Origin фронта для CORS (через запятую если неск.). Дефолт localhost — warning    |
+| `PORT`                   | server | нет         | Порт сервера (по умолч. 3001)                                                    |
+| `REDIS_URL`              | server | нет         | Redis для socket.io-адаптера (multi-node) + persist-снапшотов. Без — single-node |
+| `PERSIST_RESTORE`        | server | нет         | `true` — восстановление комнат из Redis при старте                               |
+| `S3_*`                   | server | нет         | Object storage аватаров (см. `apps/server/src/storage.ts`). Без — data-URL в БД  |
+| `LEADERBOARD_REFRESH_MS` | server | нет         | Интервал refresh materialized view лидерборда (по умолч. 300000 = 5 мин)         |
 
 См. также `docs/database.md` (Connection pool / PgBouncer URL-params) и
 `apps/server/.env` (dev-значения).
