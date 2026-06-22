@@ -117,3 +117,25 @@ S3_PUBLIC_BASE=http://localhost:9000       # база URLов; в проде —
 Если env не задан — `POST /auth/avatar` fallback'ит на data-URL прямо в БД
 (старый путь, медленнее на leaderboard). `storageAvailable()` определяет режим.
 Object key: `avatars/<userId>.<ext>`; при смене/сбросе аватара старый object удаляется.
+
+## Лидерборд (materialized view)
+
+`getLeaderboard` (`packages/db/src/index.ts`) раньше делал 2 full-table `groupBy`
+по всей `GameResult` без `where` — деградировало с ростом таблицы. Теперь читает
+из materialized view `leaderboard_mv` (аудит §6):
+
+- **Миграция** `20260621120000_leaderboard_matview` — `CREATE MATERIALIZED VIEW
+  leaderboard_mv AS SELECT userId, count(*) total, count(*) FILTER (WHERE won) wins
+  FROM "GameResult" GROUP BY userId` + unique index `leaderboard_mv_userId_key`
+  (нужен для `REFRESH ... CONCURRENTLY`).
+- **Чтение** — `getLeaderboard` делает `SELECT ... FROM leaderboard_mv JOIN "User"
+  ORDER BY wins DESC, total DESC LIMIT N` через `prisma.$queryRaw`. Один SELECT
+  вместо двух groupBy + отдельного `user.findMany`.
+- **Refresh** — серверный job `apps/server/src/leaderboard-refresh.ts`: один refresh
+  при старте + по интервалу `LEADERBOARD_REFRESH_MS` (по умолч. 300000 = 5 мин) через
+  `REFRESH MATERIALIZED VIEW CONCURRENTLY` (не блокирует чтение). Wiring в
+  `apps/server/src/index.ts` под `DATABASE_URL` (lazy import Prisma), graceful
+  shutdown. Без БД (guest-only) — job не стартует.
+
+Matview пуста до первого refresh (или если БД пуста) — `getLeaderboard` вернёт `[]`,
+как и раньше на пустой таблице.

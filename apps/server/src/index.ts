@@ -41,6 +41,10 @@ app.setErrorHandler((err, _req, reply) => {
 });
 app.get('/health', () => ({ ok: true, ts: Date.now() }));
 
+// Leaderboard refresh job (аудит §6): periodic REFRESH MATERIALIZED VIEW.
+// Стартует только под DATABASE_URL (lazy import Prisma); см. leaderboard-refresh.ts.
+let stopLeaderboardRefresh: (() => void) | undefined;
+
 if (process.env.DATABASE_URL) {
   if (!process.env.JWT_SECRET) {
     throw new Error(
@@ -50,6 +54,8 @@ if (process.env.DATABASE_URL) {
   const { registerAuthRoutes } = await import('./auth/routes');
   const authPaths = await registerAuthRoutes(app);
   app.log.info(`auth routes mounted: ${authPaths.join(', ')}`);
+  const { startLeaderboardRefresh } = await import('./leaderboard-refresh');
+  stopLeaderboardRefresh = startLeaderboardRefresh(app.log);
 } else {
   app.log.info('DATABASE_URL not set — guest-only mode, auth disabled');
 }
@@ -126,6 +132,7 @@ app.log.info(
 const shutdown = async (sig: string): Promise<void> => {
   app.log.info(`${sig} received — shutting down`);
   stopJanitor();
+  stopLeaderboardRefresh?.();
   await app.close();
   io.close();
   if (redisClients) {

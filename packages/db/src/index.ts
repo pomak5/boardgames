@@ -165,40 +165,35 @@ export async function getRecentResults(userId: string, limit = 30): Promise<Rece
   }));
 }
 
+/**
+ * Лидерборд из materialized view `leaderboard_mv` (аудит §6) — pre-aggregated
+ * wins/total по userId. Раньше: 2 full-table `groupBy` по всей `GameResult`
+ * без `where` — деградировало с ростом таблицы. Теперь: один SELECT из matview
+ * + JOIN User, сортировка и лимит на стороне БД.
+ *
+ * Matview наполняется/обновляется серверным refresh-job
+ * (`apps/server/src/leaderboard-refresh.ts`): один раз при старте + по интервалу
+ * (LEADERBOARD_REFRESH_MS, по умолчанию 5 мин) через `REFRESH MATERIALIZED VIEW
+ * CONCURRENTLY`. До первого refresh (или если БД пуста) возвращает [].
+ */
 export async function getLeaderboard(limit = 20): Promise<LeaderboardEntry[]> {
-  const [totals, wins] = await Promise.all([
-    prisma.gameResult.groupBy({ by: ['userId'], _count: { _all: true } }),
-    prisma.gameResult.groupBy({
-      by: ['userId'],
-      where: { won: true },
-      _count: { _all: true },
-    }),
-  ]);
-  const winMap = new Map(wins.map((w) => [w.userId, w._count._all]));
-  const ranked = totals
-    .map((t) => ({
-      userId: t.userId,
-      total: t._count._all,
-      wins: winMap.get(t.userId) ?? 0,
-    }))
-    .sort((a, b) => b.wins - a.wins || b.total - a.total)
-    .slice(0, limit);
-  if (ranked.length === 0) return [];
-  const users = await prisma.user.findMany({
-    where: { id: { in: ranked.map((r) => r.userId) } },
-    select: { id: true, nickname: true, avatarUrl: true },
-  });
-  const userMap = new Map(users.map((u) => [u.id, u]));
-  return ranked.map((r) => {
-    const u = userMap.get(r.userId);
-    return {
-      userId: r.userId,
-      nickname: u?.nickname ?? '—',
-      avatarUrl: u?.avatarUrl ?? null,
-      wins: r.wins,
-      total: r.total,
-    };
-  });
+  const rows = await prisma.$queryRaw<
+    { userId: string; nickname: string; avatarUrl: string | null; wins: number; total: number }[]
+  >`
+    SELECT mv."userId", mv."wins", mv."total",
+           u."nickname", u."avatarUrl"
+    FROM "leaderboard_mv" mv
+    JOIN "User" u ON u."id" = mv."userId"
+    ORDER BY mv."wins" DESC, mv."total" DESC
+    LIMIT ${limit}
+  `;
+  return rows.map((r) => ({
+    userId: r.userId,
+    nickname: r.nickname ?? '—',
+    avatarUrl: r.avatarUrl ?? null,
+    wins: r.wins,
+    total: r.total,
+  }));
 }
 
 export async function seedAliasWords(
