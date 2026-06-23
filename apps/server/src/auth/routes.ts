@@ -14,6 +14,7 @@ import { AUTH_COOKIE_NAME, authCookieOptions, payloadFromRequest, signToken } fr
 import { mapPrismaError } from './prismaErrors';
 import { AvatarSchema, LoginSchema, RegisterSchema } from './schemas';
 import { deleteAvatar, extFromAvatarUrl, storageAvailable, uploadAvatar } from '../storage';
+import { originAllowed, parseAllowedOrigins } from './origin';
 /**
  * Простейший in-memory лимитер «N попыток за окно» по ключу (IP+маршрут).
  * Без внешних зависимостей; защищает от брутфорса и спам-регистрации.
@@ -37,7 +38,23 @@ function rateLimited(key: string): boolean {
 }
 
 export async function registerAuthRoutes(app: FastifyInstance): Promise<string[]> {
+  // Origin-CSRF: разрешённые источники для state-changing запросов (аудит).
+  const allowedOrigins = parseAllowedOrigins(process.env.WEB_ORIGIN);
+  const hdr = (v: string | string[] | undefined): string | undefined =>
+    typeof v === 'string' ? v : undefined;
+  /** true — источник разрешён; иначе шлёт 403 и возвращает false. */
+  const csrfOk = (
+    req: { headers: { origin?: string | string[]; referer?: string | string[] } },
+    reply: { code: (n: number) => { send: (b: unknown) => unknown } },
+  ): boolean => {
+    if (originAllowed(hdr(req.headers.origin), hdr(req.headers.referer), allowedOrigins))
+      return true;
+    reply.code(403).send({ error: 'Запрещённый источник запроса' });
+    return false;
+  };
+
   app.post('/auth/register', async (req, reply) => {
+    if (!csrfOk(req, reply)) return;
     if (rateLimited(`register:${req.ip}`))
       return reply.code(429).send({ error: 'Слишком много попыток, попробуйте позже' });
     const body = req.body ?? {};
@@ -72,6 +89,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<string[]
   });
 
   app.post('/auth/login', async (req, reply) => {
+    if (!csrfOk(req, reply)) return;
     if (rateLimited(`login:${req.ip}`))
       return reply.code(429).send({ error: 'Слишком много попыток, попробуйте позже' });
     const body = req.body ?? {};
@@ -114,6 +132,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<string[]
   });
 
   app.post('/auth/avatar', async (req, reply) => {
+    if (!csrfOk(req, reply)) return;
     const payload = await payloadFromRequest(
       req.cookies[AUTH_COOKIE_NAME],
       req.headers.authorization,
@@ -183,7 +202,8 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<string[]
   });
 
   // Logout: сбрасываем HttpOnly-куку. Локальный токен (localStorage) чистит клиент.
-  app.post('/auth/logout', async (_req, reply) => {
+  app.post('/auth/logout', async (req, reply) => {
+    if (!csrfOk(req, reply)) return;
     reply.clearCookie(AUTH_COOKIE_NAME, { path: '/' });
     return reply.send({ ok: true });
   });
