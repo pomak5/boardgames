@@ -15,29 +15,47 @@ import { mapPrismaError } from './prismaErrors';
 import { AvatarSchema, LoginSchema, RegisterSchema } from './schemas';
 import { deleteAvatar, extFromAvatarUrl, storageAvailable, uploadAvatar } from '../storage';
 import { originAllowed, parseAllowedOrigins } from './origin';
+import { createRateLimiter, type RedisLike } from '../rateLimit';
+import { createClient, type RedisClientType } from 'redis';
 /**
- * Простейший in-memory лимитер «N попыток за окно» по ключу (IP+маршрут).
- * Без внешних зависимостей; защищает от брутфорса и спам-регистрации.
+ * Лимитер «N попыток за окно» по ключу (IP+маршрут) — защита от брутфорса и
+ * спам-регистрации. При заданном REDIS_URL счётчик общий для всех инстансов
+ * (multi-node), иначе in-memory (single-node/dev). См. ../rateLimit.ts.
  */
 const RATE_LIMIT = 10;
 const RATE_WINDOW_MS = 60_000;
-const rateHits = new Map<string, { count: number; resetAt: number }>();
 
-function rateLimited(key: string): boolean {
-  const now = Date.now();
-  if (rateHits.size > 5000) {
-    for (const [k, v] of rateHits) if (now > v.resetAt) rateHits.delete(k);
-  }
-  const entry = rateHits.get(key);
-  if (!entry || now > entry.resetAt) {
-    rateHits.set(key, { count: 1, resetAt: now + RATE_WINDOW_MS });
-    return false;
-  }
-  entry.count += 1;
-  return entry.count > RATE_LIMIT;
+/** Лениво подключаемый redis-клиент в виде RedisLike для лимитера. */
+function redisLikeFactory(log: { warn: (m: string) => void }) {
+  return (url: string): RedisLike => {
+    const client = createClient({ url }) as RedisClientType;
+    client.on('error', (e) => log.warn(`rate-limit redis: ${(e as Error).message}`));
+    let connected = false;
+    const ensure = async (): Promise<void> => {
+      if (!connected) {
+        await client.connect();
+        connected = true;
+      }
+    };
+    return {
+      incr: async (k) => {
+        await ensure();
+        return client.incr(k);
+      },
+      pExpire: async (k, ms) => {
+        await ensure();
+        return client.pExpire(k, ms);
+      },
+    };
+  };
 }
 
 export async function registerAuthRoutes(app: FastifyInstance): Promise<string[]> {
+  // Rate-limiter: Redis при REDIS_URL (общий счётчик), иначе in-memory.
+  const limiter = createRateLimiter(RATE_LIMIT, RATE_WINDOW_MS, {
+    log: app.log,
+    connectRedis: redisLikeFactory(app.log),
+  });
   // Origin-CSRF: разрешённые источники для state-changing запросов (аудит).
   const allowedOrigins = parseAllowedOrigins(process.env.WEB_ORIGIN);
   const hdr = (v: string | string[] | undefined): string | undefined =>
@@ -55,7 +73,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<string[]
 
   app.post('/auth/register', async (req, reply) => {
     if (!csrfOk(req, reply)) return;
-    if (rateLimited(`register:${req.ip}`))
+    if (await limiter.limited(`register:${req.ip}`))
       return reply.code(429).send({ error: 'Слишком много попыток, попробуйте позже' });
     const body = req.body ?? {};
     const parsed = RegisterSchema.safeParse(body);
@@ -90,7 +108,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<string[]
 
   app.post('/auth/login', async (req, reply) => {
     if (!csrfOk(req, reply)) return;
-    if (rateLimited(`login:${req.ip}`))
+    if (await limiter.limited(`login:${req.ip}`))
       return reply.code(429).send({ error: 'Слишком много попыток, попробуйте позже' });
     const body = req.body ?? {};
     const parsed = LoginSchema.safeParse(body);
