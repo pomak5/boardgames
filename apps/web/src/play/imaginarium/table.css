@@ -1,155 +1,529 @@
-/* Imaginarium — стол (Phase 4D). Скоуп .im-app изолирует от других игр.
-   Токены — из play/theme.css («Уютный вечер»). Mobile-first. */
+/* Imaginarium — стол UI-оверлеев в стиле ночного сказочного референса.
+   3D-сцена не трогается. Тёмные полупрозрачные панели, золотые акценты. */
 
 /* ============ layout ============ */
 .im-table__main {
-  grid-area: main;
   display: flex;
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
-.im-table__top {
+/* Chat — fixed overlay bottom-right, compact */
+.im-app > .on-chat {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  top: auto;
+  width: 300px;
+  max-height: 320px;
+  height: auto;
+  z-index: 10;
+  border-color: rgba(58, 74, 90, 0.85);
+  background: rgba(26, 31, 42, 0.82);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  overflow: hidden;
+  color: #f5f1e6;
+}
+.im-app > .on-chat .on-chat__toggle {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+.im-app > .on-chat .on-chat__msg {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f1e6;
+}
+.im-app > .on-chat .on-chat__msg--me {
+  background: rgba(245, 216, 154, 0.16);
+  color: #ffffff;
+}
+.im-app > .on-chat .on-chat__author {
+  color: #a8b4c4;
+}
+.im-app > .on-chat .on-chat__form {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+.im-app > .on-chat .on-chat__form input {
+  background: rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+.im-app > .on-chat .on-chat__form input::placeholder {
+  color: #8a94a8;
+}
+
+@media (max-width: 760px) {
+  .im-app > .on-chat {
+    right: 8px;
+    bottom: 8px;
+    width: calc(100% - 16px);
+    max-height: 260px;
+  }
+}
+
+/* ============ 3D стол — fills remaining space ============ */
+.im-3d-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+  overflow: hidden;
+  background: #05070a;
+  border: none;
+  box-shadow: none;
+}
+.im-3d-stage--island {
+  background: #05070a;
+}
+.im-3d-stage--island .im-island-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.im-3d-canvas,
+.im-island-canvas {
+  touch-action: none;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+.im-3d-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #f5d89a;
+  font: 800 16px "Nunito", sans-serif;
+  z-index: 2;
+}
+
+/* ============ боковые панели референса ============ */
+.im-panel {
+  position: absolute;
+  z-index: 4;
+  background: rgba(26, 31, 42, 0.82);
+  border: 1px solid rgba(58, 74, 90, 0.85);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  color: #f5f1e6;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: auto;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.im-panel__title {
+  font: 800 16px "Nunito", sans-serif;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.im-panel__subtitle {
+  font: 700 12px "Nunito", sans-serif;
+  color: #b8c4d4;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.im-panel__hint {
+  font: 600 13px "Nunito", sans-serif;
+  color: #a8b4c4;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* ============ верхняя панель раунда ============ */
+.im-round-panel {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  min-width: 220px;
+  max-width: 360px;
+  padding: 12px 22px;
+  text-align: center;
+  border-radius: 999px;
+}
+
+.im-round-panel__text {
+  font: 900 17px "Nunito", sans-serif;
+  color: #ffffff;
+  letter-spacing: 0.01em;
+}
+
+.im-round-panel__dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.im-round-panel__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(245, 216, 154, 0.25);
+  border: 1px solid rgba(245, 216, 154, 0.35);
+  transition: background 0.2s ease;
+}
+.im-round-panel__dot--active {
+  background: #f5d89a;
+  box-shadow: 0 0 8px #f5d89a66;
+  border-color: #f5d89a;
+}
+.im-round-panel__dot--moon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: inset -5px -2px 0 0 #f5d89a;
+  border: none;
+  transform: rotate(-18deg);
+}
+
+/* ============ левая панель (игроки) ============ */
+.im-left-panel {
+  top: 76px;
+  left: 14px;
+  width: min(260px, 22vw);
+  min-width: 200px;
+  padding: 16px;
+  max-height: calc(100dvh - 100px);
+  overflow-y: auto;
+}
+
+.im-players-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.im-player-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font: 800 14px "Nunito", sans-serif;
+  transition: background 0.15s ease;
+}
+.im-player-row:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.im-player-row--me {
+  border-color: rgba(245, 216, 154, 0.45);
+  background: rgba(245, 216, 154, 0.1);
+}
+.im-player-row--leader {
+  box-shadow: 0 0 0 1px rgba(245, 216, 154, 0.55);
 }
 
-.im-timer {
-  display: inline-flex;
-  align-items: center;
+.im-player-row__color {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex: none;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35), 0 0 6px rgba(255, 255, 255, 0.25);
+}
+
+.im-player-row__nick {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #ffffff;
+}
+
+.im-player-row__score {
+  flex: none;
   font: 900 15px "Nunito", sans-serif;
-  color: var(--accent-text);
-  background: var(--accent);
-  border-radius: var(--r-pill);
-  padding: 7px 16px;
-  box-shadow: var(--shadow);
-  letter-spacing: 0.02em;
+  color: #f5d89a;
+  min-width: 28px;
+  text-align: right;
 }
 
-.im-round-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font: 800 13px "Nunito", sans-serif;
-  color: var(--muted);
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--r-pill);
-  padding: 7px 14px;
-  box-shadow: var(--shadow);
+.im-player-row__badge {
+  flex: none;
+  font: 800 10px "Nunito", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #f5d89a;
+  background: rgba(245, 216, 154, 0.14);
+  border: 1px solid rgba(245, 216, 154, 0.35);
+  border-radius: 999px;
+  padding: 2px 7px;
 }
 
-/* ============ фазовая секция ============ */
-.im-phase {
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow);
-  padding: 22px;
+/* ============ правая панель (колода, токены, чат) ============ */
+.im-right-panel {
+  top: 76px;
+  right: 14px;
+  width: min(260px, 22vw);
+  min-width: 200px;
+  padding: 16px;
+  max-height: calc(100dvh - 100px);
+  overflow-y: auto;
+}
+
+.im-deck-stack {
+  position: relative;
+  width: 86px;
+  height: 116px;
+  margin: 0 auto;
+  flex: none;
+}
+
+.im-deck-stack__card {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1a2336 0%, #0f141d 100%);
+  border: 1.5px solid rgba(245, 216, 154, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+}
+.im-deck-stack__card::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(245, 216, 154, 0.25);
+  border-radius: 6px;
+}
+
+.im-deck-stack__label {
+  font-family: "Caveat", cursive;
+  font-weight: 700;
+  font-size: 18px;
+  color: #f5d89a;
+  text-align: center;
+  line-height: 1;
+  z-index: 1;
+  opacity: 0.9;
+}
+
+.im-deck-stack__count {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font: 900 12px "Nunito", sans-serif;
+  color: #f5d89a;
+  z-index: 1;
+}
+
+.im-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.im-token {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(245, 216, 154, 0.12);
+  border: 1.5px solid rgba(245, 216, 154, 0.45);
+  color: #f5d89a;
+  font: 900 14px "Nunito", sans-serif;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.im-players-avatars {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 6px;
+}
+
+.im-mini-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 700 12px "Nunito", sans-serif;
+  color: #e8e4da;
+}
+.im-mini-player__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+
+/* ============ нижняя фазовая панель ============ */
+.im-bottom-panel {
+  position: absolute;
+  left: 50%;
+  bottom: 132px;
+  transform: translateX(-50%);
+  z-index: 5;
+  min-width: min(640px, 92vw);
+  max-width: 900px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  align-items: stretch;
+}
+
+.im-phase {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   align-items: flex-start;
+  width: 100%;
 }
 .im-phase__title {
-  font: 900 22px "Nunito", sans-serif;
-  color: var(--text-strong);
+  font: 900 17px "Nunito", sans-serif;
+  color: #ffffff;
   margin: 0;
 }
 .im-phase__actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
+  width: 100%;
+  align-items: center;
 }
 .im-phase__actions .btn {
   width: auto;
-  min-width: 180px;
+  min-width: 140px;
 }
 
 .im-association {
   font: 800 20px "Caveat", cursive;
-  color: var(--accent);
+  color: #f5d89a;
   margin: 0;
-  padding: 10px 18px;
-  background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
-  border-left: 4px solid var(--accent);
-  border-radius: var(--r-sm);
+  padding: 6px 14px;
+  background: rgba(245, 216, 154, 0.1);
+  border-left: 3px solid #f5d89a;
+  border-radius: 0 10px 10px 0;
   align-self: stretch;
 }
 
 .im-progress {
-  font: 700 13px "Nunito", sans-serif;
-  color: var(--muted);
+  font: 700 12px "Nunito", sans-serif;
+  color: #a8b4c4;
   margin: 0;
 }
 
 .im-assoc-form {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   flex-wrap: wrap;
 }
 .im-assoc-input {
-  flex: 1 1 240px;
-  font: 800 16px "Nunito", sans-serif;
-  padding: 12px 16px;
-  border-radius: var(--r-sm);
-  border: 2px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text-strong);
+  flex: 1 1 220px;
+  font: 800 15px "Nunito", sans-serif;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.25);
+  color: #ffffff;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .im-assoc-input::placeholder {
-  color: var(--muted);
-  opacity: 0.6;
+  color: #8a94a8;
+  opacity: 0.8;
 }
 .im-assoc-input:focus {
-  border-color: var(--accent-soft);
+  border-color: #f5d89a;
+  box-shadow: 0 0 0 2px rgba(245, 216, 154, 0.25);
 }
 .im-assoc-form .btn {
   width: auto;
 }
 
-/* ============ карта (лицо / рубашка) ============ */
+.im-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 900 14px "Nunito", sans-serif;
+  color: #f5d89a;
+  background: rgba(245, 216, 154, 0.12);
+  border: 1px solid rgba(245, 216, 154, 0.45);
+  border-radius: 999px;
+  padding: 6px 12px;
+  letter-spacing: 0.02em;
+}
+.im-timer svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* ============ кнопки в тёмной панели ============ */
+.im-bottom-panel .btn-pri {
+  background: #f5d89a;
+  color: #1a1410;
+  box-shadow: 0 4px 0 #9a7a44;
+}
+.im-bottom-panel .btn-pri:hover:not(:disabled) {
+  filter: brightness(1.05);
+  box-shadow: 0 6px 0 #9a7a44;
+}
+.im-bottom-panel .btn-sec {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5d89a;
+  border: 1px solid rgba(245, 216, 154, 0.45);
+}
+.im-bottom-panel .btn-sec:hover:not(:disabled) {
+  background: rgba(245, 216, 154, 0.12);
+}
+
+/* ============ карта (лицо / рубашка) — DOM-варианты ============ */
 .im-card-face {
   display: block;
   width: 100%;
   height: auto;
   border-radius: 10px;
-  box-shadow: 0 4px 12px #8a5a2b33;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
   user-select: none;
   pointer-events: none;
 }
 .im-card-back {
   border-radius: 10px;
-  background: linear-gradient(
-    135deg,
-    var(--felt) 0%,
-    var(--felt-dark) 100%
-  );
-  border: 2px solid color-mix(in srgb, var(--accent) 40%, var(--felt-dark));
-  box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--surface) 18%, transparent),
-    0 4px 12px #8a5a2b33;
+  background: linear-gradient(135deg, #1a2336 0%, #0f141d 100%);
+  border: 1.5px solid rgba(245, 216, 154, 0.35);
+  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.05),
+    0 4px 14px rgba(0, 0, 0, 0.45);
   position: relative;
 }
 .im-card-back::after {
   content: "";
   position: absolute;
   inset: 8px;
-  border: 1.5px solid color-mix(in srgb, var(--accent-soft) 45%, transparent);
+  border: 1.5px solid rgba(245, 216, 154, 0.25);
   border-radius: 6px;
 }
 
-/* ============ рука ============ */
+/* ============ рука (DOM) ============ */
 .im-hand {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   width: 100%;
+  justify-content: center;
 }
 .im-hand__card {
   background: transparent;
@@ -157,8 +531,7 @@
   padding: 0;
   cursor: default;
   width: clamp(96px, 18vw, 150px);
-  transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1),
-    filter 0.16s;
+  transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1), filter 0.16s;
 }
 .im-hand__card:disabled {
   cursor: default;
@@ -168,26 +541,24 @@
 }
 .im-hand--interactive .im-hand__card:hover:not(:disabled) {
   transform: translateY(-6px) rotate(-1.5deg);
-  filter: drop-shadow(0 10px 16px #8a5a2b55);
+  filter: drop-shadow(0 10px 16px rgba(245, 216, 154, 0.35));
 }
 .im-hand__card--selected {
   transform: translateY(-10px) rotate(-2deg);
-  filter: drop-shadow(0 12px 18px var(--accent));
-}
-.im-hand__card--selected::after {
-  /* обводка выбранной карты */
+  filter: drop-shadow(0 12px 18px rgba(245, 216, 154, 0.55));
 }
 .im-hand__card--selected .im-card-face {
-  outline: 3px solid var(--accent);
+  outline: 3px solid #f5d89a;
   outline-offset: 2px;
 }
 
-/* ============ слоты на столе (голосование) ============ */
+/* ============ слоты на столе (DOM) ============ */
 .im-slots {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
   width: 100%;
+  justify-content: center;
 }
 .im-slot {
   position: relative;
@@ -208,23 +579,23 @@
   transform: translateY(-5px);
 }
 .im-slot--selected .im-card-back {
-  outline: 3px solid var(--accent);
+  outline: 3px solid #f5d89a;
   outline-offset: 3px;
-  box-shadow: 0 8px 18px var(--accent);
+  box-shadow: 0 8px 18px rgba(245, 216, 154, 0.45);
 }
 .im-slot__num {
   position: absolute;
   top: -8px;
   left: -8px;
   font: 900 14px "Nunito", sans-serif;
-  color: var(--accent-text);
-  background: var(--accent);
-  border-radius: var(--r-pill);
+  color: #1a1410;
+  background: #f5d89a;
+  border-radius: 999px;
   width: 26px;
   height: 26px;
   display: grid;
   place-items: center;
-  box-shadow: var(--shadow);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 /* ============ scoring reveal ============ */
@@ -234,60 +605,73 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
+  max-height: 220px;
+  overflow-y: auto;
 }
 .im-reveal__slot {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   align-items: center;
-  padding: 12px 14px;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
-  border: 1.5px solid var(--border);
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .im-reveal__slot--leader {
-  border-color: color-mix(in srgb, var(--gold) 55%, var(--border));
-  background: color-mix(in srgb, var(--gold) 10%, var(--surface-2));
+  border-color: rgba(245, 216, 154, 0.55);
+  background: rgba(245, 216, 154, 0.12);
 }
 .im-reveal__card {
   position: relative;
   flex: none;
-  width: 120px;
+  width: 80px;
+}
+.im-reveal__card img,
+.im-reveal__card svg {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
 }
 .im-reveal__num {
   position: absolute;
-  top: -8px;
-  left: -8px;
-  font: 900 14px "Nunito", sans-serif;
-  color: var(--accent-text);
-  background: var(--accent);
-  border-radius: var(--r-pill);
-  width: 26px;
-  height: 26px;
+  top: -6px;
+  left: -6px;
+  font: 900 12px "Nunito", sans-serif;
+  color: #1a1410;
+  background: #f5d89a;
+  border-radius: 999px;
+  width: 22px;
+  height: 22px;
   display: grid;
   place-items: center;
 }
 .im-reveal__meta {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
+  flex: 1;
 }
 .im-reveal__owner {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font: 800 15px "Nunito", sans-serif;
-  color: var(--text-strong);
+  gap: 6px;
+  font: 800 14px "Nunito", sans-serif;
+  color: #ffffff;
 }
 .im-reveal__votes {
-  font: 700 13px "Nunito", sans-serif;
-  color: var(--muted);
+  font: 700 12px "Nunito", sans-serif;
+  color: #a8b4c4;
 }
 .im-reveal__delta {
   font: 900 14px "Nunito", sans-serif;
-  color: var(--ok);
+  color: #7ed68a;
+}
+.im-reveal__delta--neg {
+  color: #e88a8a;
 }
 
 /* ============ finished ============ */
@@ -301,165 +685,158 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
 }
 .im-final-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 9px 14px;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   font: 800 15px "Nunito", sans-serif;
+  color: #ffffff;
 }
 .im-final-row--me {
-  border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  border-color: rgba(245, 216, 154, 0.45);
+  background: rgba(245, 216, 154, 0.1);
 }
 .im-final-row--win {
-  background: color-mix(in srgb, var(--gold) 16%, var(--surface-2));
-  color: var(--gold-ink, var(--text-strong));
+  background: rgba(245, 216, 154, 0.18);
+  color: #f5d89a;
 }
 .im-final-row__score {
   font-weight: 900;
+  color: #f5d89a;
 }
 
-/* ============ scoreboard ============ */
-.im-scoreboard {
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow);
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.im-scoreboard__title {
-  font: 800 15px "Nunito", sans-serif;
-  color: var(--text-strong);
-  margin: 0;
-}
-.im-scoreboard__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.im-score-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
-  font: 800 14px "Nunito", sans-serif;
-}
-.im-score-row--me {
-  border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--border));
-}
-.im-score-row--leader {
-  background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
-}
-.im-score-row__nick {
-  margin-right: auto;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.im-score-row__score {
-  font-weight: 900;
-  color: var(--text-strong);
-}
-
-/* ============ recent log ============ */
-.im-recentlog {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 10px 14px;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
-  border: 1px dashed var(--border);
-}
-.im-recentlog__entry {
-  font: 600 12px "Nunito", sans-serif;
-  color: var(--muted);
-  line-height: 1.4;
-}
-
-/* ============ 3D стол (Phase 5B) ============ */
-.im-3d-stage {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 52vh;
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  background: #5c3922;
-  border: 2px solid var(--border);
-  box-shadow: var(--shadow);
-}
-.im-3d-canvas {
-  touch-action: none;
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
-}
-.im-3d-fallback {
+/* ============ DOM-рука карт внизу экрана ============ */
+.im-hand-panel {
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: var(--accent-soft);
-  font: 800 16px "Nunito", sans-serif;
-}
-/* DOM-оверлеи поверх/под канвасом: обёртка не перехватывает клики,
-   реальные контролы (кнопки/инпуты) включают pointer-events. */
-.im-3d-overlay {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  z-index: 6;
+  width: min(760px, 96vw);
+  padding: 6px 10px;
   pointer-events: none;
+}
+
+.im-hand-panel .im-hand {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px 14px;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 6px 4px 2px;
+  scrollbar-width: thin;
 }
-.im-3d-overlay .im-phase {
+
+.im-hand-panel .im-hand__card {
+  flex: 0 0 auto;
+  width: clamp(68px, 9vw, 108px);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: default;
+  border-radius: 8px;
+  transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1), filter 0.16s;
   pointer-events: auto;
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  backdrop-filter: blur(3px);
-  padding: 14px 18px;
-  gap: 10px;
 }
-.im-3d-overlay .im-phase__title {
-  font-size: 18px;
+
+.im-hand-panel .im-hand__card img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
 }
-.im-3d-overlay .im-phase__actions,
-.im-3d-overlay .im-assoc-form {
-  pointer-events: auto;
+
+.im-hand-panel .im-hand--interactive .im-hand__card {
+  cursor: pointer;
+}
+
+.im-hand-panel .im-hand--interactive .im-hand__card:hover:not(:disabled) {
+  transform: translateY(-8px) rotate(-1.5deg);
+  filter: drop-shadow(0 10px 14px rgba(245, 216, 154, 0.45));
+}
+
+.im-hand-panel .im-hand__card--selected {
+  transform: translateY(-12px) rotate(-2deg);
+  filter: drop-shadow(0 12px 18px rgba(245, 216, 154, 0.65));
+}
+
+.im-hand-panel .im-hand__card--selected img {
+  outline: 3px solid #f5d89a;
+  outline-offset: 2px;
+}
+
+/* ============ старые scoreboard/recentlog — скрыты, заменены панелями ============ */
+.im-scoreboard,
+.im-recentlog {
+  display: none;
 }
 
 /* ============ адаптив ============ */
-@media (max-width: 620px) {
+@media (max-width: 980px) {
+  .im-left-panel {
+    width: min(220px, 26vw);
+    min-width: 180px;
+    padding: 12px;
+  }
+  .im-bottom-panel {
+    min-width: 92vw;
+    padding: 12px 14px;
+    bottom: 120px;
+  }
+  .im-hand-panel {
+    width: 96vw;
+  }
+  .im-hand-panel .im-hand__card {
+    width: clamp(64px, 13vw, 100px);
+  }
+  .im-reveal__card {
+    width: 64px;
+  }
+}
+
+@media (max-width: 760px) {
+  .im-left-panel {
+    display: none;
+  }
+  .im-bottom-panel {
+    left: 8px;
+    right: 8px;
+    transform: none;
+    min-width: auto;
+    max-width: none;
+    bottom: 110px;
+    padding: 10px 12px;
+  }
+  .im-hand-panel {
+    width: calc(100% - 16px);
+    left: 8px;
+    right: 8px;
+    transform: none;
+  }
+  .im-hand-panel .im-hand__card {
+    width: 72px;
+  }
+  .im-round-panel {
+    top: 68px;
+    min-width: 180px;
+    padding: 10px 16px;
+  }
+}
+
+@media (max-width: 880px) {
   .im-assoc-form {
     flex-direction: column;
   }
   .im-assoc-form .btn {
     width: 100%;
-  }
-  .im-reveal__slot {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .im-3d-stage {
-    min-height: 46vh;
-  }
-  .im-3d-overlay {
-    padding: 8px 8px 10px;
   }
 }

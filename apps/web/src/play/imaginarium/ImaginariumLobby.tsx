@@ -13,6 +13,16 @@ const TARGET_OPTIONS: { value: string; label: string }[] = [
   { value: "100", label: "до 100" },
 ];
 
+/** Палитра цветов фигурок (совпадает с IMAGINARIUM_COLORS из @shared). */
+const MEEPLE_COLORS = [
+  "#d94a32", // красный
+  "#5c8a3a", // зелёный
+  "#3a6ea5", // синий
+  "#8a5a9c", // фиолетовый
+  "#d9982f", // оранжевый
+  "#e8d24a", // жёлтый
+];
+
 export function ImaginariumLobby({ api }: { api: ImaginariumRoomApi }) {
   const room = api.room;
   if (!room) return null;
@@ -23,6 +33,13 @@ export function ImaginariumLobby({ api }: { api: ImaginariumRoomApi }) {
   const tooFew = room.players.length < 3;
 
   const targetValue = s.targetScore == null ? "deck" : String(s.targetScore);
+
+  // Цвета, занятые другими игроками.
+  const takenColors = new Set<number>();
+  for (const p of room.players) {
+    if (p.id !== meId && p.color != null) takenColors.add(p.color);
+  }
+  const myColor = room.players.find(p => p.id === meId)?.color ?? null;
 
   return (
     <div className="im-lobby">
@@ -45,6 +62,12 @@ export function ImaginariumLobby({ api }: { api: ImaginariumRoomApi }) {
                   size={32}
                 />
                 <span className="im-player__nick">{p.nickname}</span>
+                {p.color != null && (
+                  <span
+                    className="im-player__color"
+                    style={{ background: MEEPLE_COLORS[p.color] }}
+                  />
+                )}
                 {p.id === room.hostId && <span className="im-tag">хост</span>}
                 {p.id === meId && <span className="im-tag im-tag--me">вы</span>}
               </li>
@@ -53,6 +76,32 @@ export function ImaginariumLobby({ api }: { api: ImaginariumRoomApi }) {
               <li className="im-players__empty">никого</li>
             )}
           </ul>
+
+          {/* Выбор цвета фигурки */}
+          <div className="im-colorpick">
+            <span className="im-colorpick__label">Ваш цвет:</span>
+            <div className="im-colorpick__row">
+              {MEEPLE_COLORS.map((c, i) => {
+                const taken = takenColors.has(i);
+                const mine = myColor === i;
+                const disabled = taken && !mine;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`im-colorpick__dot${mine ? " im-colorpick__dot--me" : ""}${disabled ? " im-colorpick__dot--taken" : ""}`}
+                    style={{ background: c }}
+                    disabled={disabled}
+                    aria-label={`цвет ${i + 1}${disabled ? " (занят)" : ""}`}
+                    onClick={() => api.setColor(i)}
+                  />
+                );
+              })}
+            </div>
+            {myColor == null && (
+              <span className="im-colorpick__hint">Выберите цвет фигурки</span>
+            )}
+          </div>
         </div>
 
         {/* настройки */}
@@ -189,7 +238,7 @@ export function ImaginariumLobby({ api }: { api: ImaginariumRoomApi }) {
             <button
               type="button"
               className="btn btn-pri im-lobby__start"
-              disabled={tooFew || api.busy}
+              disabled={tooFew || api.busy || myColor == null}
               onClick={api.start}
             >
               <svg
@@ -213,6 +262,11 @@ export function ImaginariumLobby({ api }: { api: ImaginariumRoomApi }) {
           {tooFew && (
             <div className="im-hint im-hint--center">
               Нужно минимум 3 игрока.
+            </div>
+          )}
+          {isHost && !tooFew && myColor == null && (
+            <div className="im-hint im-hint--center">
+              Выберите цвет фигурки, чтобы начать.
             </div>
           )}
         </div>

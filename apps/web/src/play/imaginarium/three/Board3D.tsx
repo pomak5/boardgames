@@ -22,7 +22,7 @@ export interface Board3DProps {
   onSelectSlot: (slot: number) => void;
 }
 
-const BOARD_Y = 0.1;
+const BOARD_Y = -0.8;
 const BOARD_Z = -0.5;
 const SPREAD = 4.2;
 
@@ -56,8 +56,10 @@ export function Board3D({
         const colsInRow = row === 0 ? perRow : n - perRow;
         const ct = colsInRow === 1 ? 0 : col / (colsInRow - 1) - 0.5;
         const x = ct * SPREAD * 2;
-        const y = BOARD_Y - row * 1.7;
-        const z = BOARD_Z + row * 0.6;
+        // Ряды разносим по глубине (Z), а не по высоте (Y) — иначе 2-й ряд
+        // уходит под стол. Высота BOARD_Y одна на все ряды (над столом).
+        const y = BOARD_Y;
+        const z = BOARD_Z - row * 1.8;
         const ry = ct * 0.18;
         const isLeaderSlot = phase === "scoring" && slots?.[i] === leaderId;
         const isSel = selectedSlot === i;
@@ -85,8 +87,9 @@ export function Board3D({
           const colsInRow = row === 0 ? perRow : n - perRow;
           const ct = colsInRow === 1 ? 0 : col / (colsInRow - 1) - 0.5;
           const x = ct * SPREAD * 2;
-          const y = BOARD_Y - row * 1.7 - 1.0;
-          const z = BOARD_Z + row * 0.6;
+          // Бейдж числа голосов — над картой (над столом, не под ним).
+          const y = BOARD_Y + 0.95;
+          const z = BOARD_Z - row * 1.8;
           return (
             <Html key={`v:${i}`} position={[x, y, z]} center distanceFactor={9}>
               <div

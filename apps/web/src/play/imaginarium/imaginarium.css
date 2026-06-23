@@ -525,6 +525,64 @@
   padding: 14px;
 }
 
+/* Цвет фигурки игрока в списке */
+.im-player__color {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--border), 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Палитра выбора цвета */
+.im-colorpick {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 0 2px;
+  border-top: 1px dashed var(--border);
+}
+.im-colorpick__label {
+  font: 800 13px 'Nunito', sans-serif;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.im-colorpick__row {
+  display: flex;
+  gap: 8px;
+}
+.im-colorpick__dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s, border-color 0.15s, opacity 0.15s;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+.im-colorpick__dot:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.08);
+}
+.im-colorpick__dot--me {
+  border-color: var(--text-strong);
+  transform: scale(1.12);
+}
+.im-colorpick__dot--taken {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.im-colorpick__dot:disabled {
+  cursor: not-allowed;
+}
+.im-colorpick__hint {
+  font: 700 12px 'Nunito', sans-serif;
+  color: var(--accent);
+}
+
 .im-tag {
   font: 800 11px 'Nunito', sans-serif;
   letter-spacing: 0.05em;
@@ -611,18 +669,20 @@
 }
 .im-lobby__start { width: auto; min-width: 240px; }
 
-/* ============ стол (STUB) ============ */
+/* ============ стол — fullscreen ============ */
 .im-table {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  grid-template-areas: 'main chat';
-  gap: 18px;
-  align-items: start;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
 }
-.im-table > .on-chat {
-  grid-area: chat;
-  position: sticky;
-  top: 16px;
+/* Break out of .im-app constraints */
+.im-app:has(.im-table) {
+  max-width: none;
+  padding: 0;
+  gap: 0;
 }
 .im-table__stub {
   grid-area: main;
@@ -676,13 +736,11 @@
 
 /* ============ адаптив ============ */
 @media (max-width: 880px) {
-  .im-lobby,
-  .im-table {
+  .im-lobby {
     grid-template-columns: 1fr;
     grid-template-areas: 'main' 'chat';
   }
-  .im-lobby > .on-chat,
-  .im-table > .on-chat {
+  .im-lobby > .on-chat {
     position: static;
   }
   .im-fields { grid-template-columns: 1fr; }

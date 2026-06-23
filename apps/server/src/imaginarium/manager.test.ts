@@ -21,20 +21,29 @@ function roomWithPlayers(m: RoomManager, n: number): { room: Room; ids: string[]
 /** Первая карта в руке игрока (для submitLeader/submitCard). */
 const firstCard = (room: Room, id: string): CardId => room.game!.hands[id]![0]!;
 
+/** Текущий ведущий раунда. */
+const leader = (room: Room): string => room.game!.round!.leader;
+
+/** Не-ведущие игроки (все, кроме текущего лидера), в порядке ids. */
+const nonLeaders = (room: Room, ids: string[]): string[] =>
+  ids.filter((id) => id !== leader(room));
+
 /** Слот ведущего на столе (после revealTable). */
 const leaderSlot = (room: Room): number =>
   room.game!.round!.slots!.indexOf(room.game!.round!.leader);
 
-/** Прокручивает полный раунд до фазы scoring (start + ассоциация + карты + голоса). */
+/** Прокручивает полный раунд до фазы scoring (start + ассоциация + карты + голоса).
+ *  Работает со случайным первым ведущим. */
 function driveToScoring(m: RoomManager, room: Room, ids: string[]): void {
   m.start(room, ids[0]!);
-  m.submitLeader(room, ids[0]!, firstCard(room, ids[0]!), 'ассоциация');
-  for (let i = 1; i < ids.length; i++) {
-    m.submitCard(room, ids[i]!, firstCard(room, ids[i]!));
+  const ld = leader(room);
+  m.submitLeader(room, ld, firstCard(room, ld), 'ассоциация');
+  for (const id of nonLeaders(room, ids)) {
+    m.submitCard(room, id, firstCard(room, id));
   }
   const ls = leaderSlot(room);
-  for (let i = 1; i < ids.length; i++) {
-    m.castVote(room, ids[i]!, ls);
+  for (const id of nonLeaders(room, ids)) {
+    m.castVote(room, id, ls);
   }
 }
 
@@ -91,6 +100,22 @@ describe('RoomManager — лобби', () => {
     m.updateSettings(room, ids[0]!, { targetScore: null });
     expect(room.settings.targetScore).toBeNull();
   });
+
+  test('setPlayerColor: уникальность, только лобби', () => {
+    const m = mk();
+    const { room, ids } = roomWithPlayers(m, 3);
+    m.setPlayerColor(room, ids[0]!, 0);
+    expect(room.players.get(ids[0]!)!.color).toBe(0);
+    // тот же цвет другим — ошибка
+    expect(() => m.setPlayerColor(room, ids[1]!, 0)).toThrow(RoomError);
+    m.setPlayerColor(room, ids[1]!, 1);
+    expect(room.players.get(ids[1]!)!.color).toBe(1);
+    // невалидный индекс
+    expect(() => m.setPlayerColor(room, ids[2]!, 9)).toThrow(RoomError);
+    // не в лобби
+    m.start(room, ids[0]!);
+    expect(() => m.setPlayerColor(room, ids[2]!, 2)).toThrow(RoomError);
+  });
 });
 
 describe('RoomManager — партия (полный цикл)', () => {
@@ -103,10 +128,23 @@ describe('RoomManager — партия (полный цикл)', () => {
     expect(room.game!.players).toEqual(ids);
     for (const id of ids) expect(room.game!.hands[id]).toHaveLength(6);
     expect(room.game!.round!.phase).toBe('association');
-    expect(room.game!.round!.leader).toBe(ids[0]!);
+    // первый ведущий — один из игроков (случайный)
+    expect(ids).toContain(room.game!.round!.leader);
     expect(room.game!.roundNumber).toBe(1);
     for (const id of ids) expect(room.game!.scores[id]).toBe(0);
+    // цвета фигурок назначены всем
+    for (const id of ids) expect(room.game!.playerColors[id]).toBeGreaterThanOrEqual(0);
     expect(typeof room.turnDeadline).toBe('number');
+  });
+
+  test('start сохраняет выбранные в лобби цвета', () => {
+    const m = mk();
+    const { room, ids } = roomWithPlayers(m, 3);
+    m.setPlayerColor(room, ids[0]!, 2);
+    m.setPlayerColor(room, ids[1]!, 4);
+    m.start(room, ids[0]!);
+    expect(room.game!.playerColors[ids[0]!]).toBe(2);
+    expect(room.game!.playerColors[ids[1]!]).toBe(4);
   });
 
   test('start валидация состава и прав', () => {
@@ -123,34 +161,38 @@ describe('RoomManager — партия (полный цикл)', () => {
     const m = mk();
     const { room, ids } = roomWithPlayers(m, 4);
     m.start(room, ids[0]!);
-    const card = firstCard(room, ids[0]!);
-    m.submitLeader(room, ids[0]!, card, 'ассоциация');
+    const ld = leader(room);
+    const card = firstCard(room, ld);
+    m.submitLeader(room, ld, card, 'ассоциация');
     expect(room.game!.round!.phase).toBe('choosing');
     expect(room.game!.round!.association).toBe('ассоциация');
-    expect(room.game!.round!.submissions[ids[0]!]).toBe(card);
-    expect(room.game!.hands[ids[0]!]).toHaveLength(5);
+    expect(room.game!.round!.submissions[ld]).toBe(card);
+    expect(room.game!.hands[ld]).toHaveLength(5);
     expect(typeof room.turnDeadline).toBe('number');
     // не-ведущий
-    expect(() => m.submitLeader(room, ids[1]!, firstCard(room, ids[1]!), 'x')).toThrow(RoomError);
+    const nl = nonLeaders(room, ids)[0]!;
+    expect(() => m.submitLeader(room, nl, firstCard(room, nl), 'x')).toThrow(RoomError);
     // не в той фазе (уже choosing)
-    expect(() => m.submitLeader(room, ids[0]!, firstCard(room, ids[0]!), 'y')).toThrow(RoomError);
+    expect(() => m.submitLeader(room, ld, firstCard(room, ld), 'y')).toThrow(RoomError);
   });
 
   test('submitCard + auto-reveal когда все сдали', () => {
     const m = mk();
     const { room, ids } = roomWithPlayers(m, 4);
     m.start(room, ids[0]!);
-    m.submitLeader(room, ids[0]!, firstCard(room, ids[0]!), 'ассоциация');
+    const ld = leader(room);
+    m.submitLeader(room, ld, firstCard(room, ld), 'ассоциация');
     // ведущий не сдаёт карту в choosing
-    expect(() => m.submitCard(room, ids[0]!, firstCard(room, ids[0]!))).toThrow(RoomError);
+    expect(() => m.submitCard(room, ld, firstCard(room, ld))).toThrow(RoomError);
+    const nl = nonLeaders(room, ids);
     // первый не-ведущий сдаёт
-    m.submitCard(room, ids[1]!, firstCard(room, ids[1]!));
+    m.submitCard(room, nl[0]!, firstCard(room, nl[0]!));
     // повторная сдача тем же игроком
-    expect(() => m.submitCard(room, ids[1]!, firstCard(room, ids[1]!))).toThrow(RoomError);
+    expect(() => m.submitCard(room, nl[0]!, firstCard(room, nl[0]!))).toThrow(RoomError);
     // второй не-ведущий
-    m.submitCard(room, ids[2]!, firstCard(room, ids[2]!));
+    m.submitCard(room, nl[1]!, firstCard(room, nl[1]!));
     // третий не-ведущий → auto-reveal
-    m.submitCard(room, ids[3]!, firstCard(room, ids[3]!));
+    m.submitCard(room, nl[2]!, firstCard(room, nl[2]!));
     expect(room.game!.round!.phase).toBe('voting');
     expect(room.game!.round!.slots).toHaveLength(4);
     expect(new Set(room.game!.round!.slots!)).toEqual(new Set(ids));
@@ -161,48 +203,46 @@ describe('RoomManager — партия (полный цикл)', () => {
     const m = mk();
     const { room, ids } = roomWithPlayers(m, 4);
     m.start(room, ids[0]!);
-    m.submitLeader(room, ids[0]!, firstCard(room, ids[0]!), 'ассоциация');
-    m.submitCard(room, ids[1]!, firstCard(room, ids[1]!));
-    m.submitCard(room, ids[2]!, firstCard(room, ids[2]!));
-    m.submitCard(room, ids[3]!, firstCard(room, ids[3]!));
+    const ld = leader(room);
+    m.submitLeader(room, ld, firstCard(room, ld), 'ассоциация');
+    const nl = nonLeaders(room, ids);
+    for (const id of nl) m.submitCard(room, id, firstCard(room, id));
     const ls = leaderSlot(room);
     // ведущий не голосует
     const slots = room.game!.round!.slots!;
-    const voter0Slot = slots.indexOf(ids[0]!);
-    const otherFor0 = slots.findIndex((p) => p !== ids[0]);
-    expect(() => m.castVote(room, ids[0]!, otherFor0)).toThrow(RoomError);
+    const otherForLd = slots.findIndex((p) => p !== ld);
+    expect(() => m.castVote(room, ld, otherForLd)).toThrow(RoomError);
     // первый не-ведущий голосует
-    m.castVote(room, ids[1]!, ls);
+    m.castVote(room, nl[0]!, ls);
     // повторное голосование
-    expect(() => m.castVote(room, ids[1]!, ls)).toThrow(RoomError);
+    expect(() => m.castVote(room, nl[0]!, ls)).toThrow(RoomError);
     // голос за свою карту — проверка на уровне движка (ImaginariumError, не RoomError)
-    const ownSlot2 = slots.indexOf(ids[2]!);
-    expect(() => m.castVote(room, ids[2]!, ownSlot2)).toThrow(ImaginariumError);
+    const ownSlot1 = slots.indexOf(nl[1]!);
+    expect(() => m.castVote(room, nl[1]!, ownSlot1)).toThrow(ImaginariumError);
     // второй не-ведущий
-    m.castVote(room, ids[2]!, ls);
+    m.castVote(room, nl[1]!, ls);
     // третий не-ведущий → auto-tally
-    m.castVote(room, ids[3]!, ls);
+    m.castVote(room, nl[2]!, ls);
     expect(room.game!.round!.phase).toBe('scoring');
     expect(typeof room.turnDeadline).toBe('number');
     // allOrNone (все угадали): ведущий 0 + 3 голоса-за-карту-ведущего = 3;
     // каждый не-ведущий +2 утешительных, без голосов за свои карты = 2
-    expect(room.game!.scores[ids[0]!]).toBe(3);
-    expect(room.game!.scores[ids[1]!]).toBe(2);
-    expect(room.game!.scores[ids[2]!]).toBe(2);
-    expect(room.game!.scores[ids[3]!]).toBe(2);
+    expect(room.game!.scores[ld]).toBe(3);
+    for (const id of nl) expect(room.game!.scores[id]).toBe(2);
   });
 
   test('advance: добор + следующий раунд', () => {
     const m = mk();
     const { room, ids } = roomWithPlayers(m, 4);
     driveToScoring(m, room, ids);
+    const ld = room.game!.leaderIndex;
     // до advance: руки по 5 (одна карта сдана)
     for (const id of ids) expect(room.game!.hands[id]).toHaveLength(5);
     m.advance(room, ids[0]!);
     expect(room.game!.round!.phase).toBe('association');
     expect(room.game!.roundNumber).toBe(2);
-    expect(room.game!.leaderIndex).toBe(1);
-    expect(room.game!.round!.leader).toBe(ids[1]!);
+    expect(room.game!.leaderIndex).toBe((ld + 1) % ids.length);
+    expect(room.game!.round!.leader).toBe(ids[(ld + 1) % ids.length]!);
     expect(room.game!.round!.submissions).toEqual({});
     expect(room.game!.round!.slots).toBeNull();
     expect(room.game!.round!.votes).toEqual({});
@@ -239,8 +279,8 @@ describe('RoomManager — финал', () => {
     m.newRound(room, ids[0]!);
     expect(room.phase).toBe('playing');
     expect(room.game!.roundNumber).toBe(1);
-    expect(room.game!.leaderIndex).toBe(0);
-    expect(room.game!.round!.leader).toBe(ids[0]!);
+    // новый случайный ведущий — один из игроков
+    expect(ids).toContain(room.game!.round!.leader);
     for (const id of ids) expect(room.game!.hands[id]).toHaveLength(6);
     expect(room.game!.deck).toHaveLength(60); // 84 - 4*6
     // не-хост
@@ -251,7 +291,7 @@ describe('RoomManager — финал', () => {
 });
 
 describe('RoomManager — виды и редукция', () => {
-  test('roomView: без token, со всеми игроками', () => {
+  test('roomView: без token, со всеми игроками и цветами', () => {
     const m = mk();
     const { room } = roomWithPlayers(m, 3);
     const view = m.roomView(room);
@@ -264,6 +304,8 @@ describe('RoomManager — виды и редукция', () => {
       expect(p).not.toHaveProperty('token');
       expect(typeof p.id).toBe('string');
       expect(typeof p.nickname).toBe('string');
+      // color есть в типе (null пока не выбран)
+      expect(p.color == null || typeof p.color === 'number').toBe(true);
     }
     expect(view.startedAt).toBe(room.startedAt);
   });
@@ -272,23 +314,27 @@ describe('RoomManager — виды и редукция', () => {
     const m = mk();
     const { room, ids } = roomWithPlayers(m, 4);
     m.start(room, ids[0]!);
-    const view0 = m.viewFor(room, ids[0]!)!;
-    expect(view0.hand).toEqual(room.game!.hands[ids[0]!]!);
-    expect(view0.hand).toHaveLength(6);
-    // рука ids[0] не содержит карт ids[1]
-    const hand1 = room.game!.hands[ids[1]!]!;
-    expect(view0.hand.every((c) => !hand1.includes(c))).toBe(true);
+    const ld = leader(room);
+    const meId = nonLeaders(room, ids)[0]!;
+    const viewMe = m.viewFor(room, meId)!;
+    expect(viewMe.hand).toEqual(room.game!.hands[meId]!);
+    expect(viewMe.hand).toHaveLength(6);
+    // моя рука не содержит карт ведущего
+    const leaderHand = room.game!.hands[ld]!;
+    expect(viewMe.hand.every((c) => !leaderHand.includes(c))).toBe(true);
     // не-игрок видит пустую руку
     const viewN = m.viewFor(room, 'nobody')!;
     expect(viewN.hand).toEqual([]);
+    // playerColors и deckRemaining прокинуты
+    expect(viewMe.playerColors).toEqual(room.game!.playerColors);
+    expect(typeof viewMe.deckRemaining).toBe('number');
     // на voting: slots редуцированы в view, но есть в исходнике
-    m.submitLeader(room, ids[0]!, firstCard(room, ids[0]!), 'ассоциация');
-    m.submitCard(room, ids[1]!, firstCard(room, ids[1]!));
-    m.submitCard(room, ids[2]!, firstCard(room, ids[2]!));
-    m.submitCard(room, ids[3]!, firstCard(room, ids[3]!));
+    m.submitLeader(room, ld, firstCard(room, ld), 'ассоциация');
+    const nl = nonLeaders(room, ids);
+    for (const id of nl) m.submitCard(room, id, firstCard(room, id));
     expect(room.game!.round!.phase).toBe('voting');
     expect(room.game!.round!.slots).toHaveLength(4);
-    const viewV = m.viewFor(room, ids[1]!)!;
+    const viewV = m.viewFor(room, nl[0]!)!;
     expect(viewV.round!.slots).toBeNull();
   });
 });

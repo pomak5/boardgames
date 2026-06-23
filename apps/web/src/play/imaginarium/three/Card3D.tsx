@@ -76,13 +76,19 @@ export function Card3D({
   const texture = useCardTexture(faceUp ? cardId : undefined);
 
   const targetRotY = faceUp ? 0 : Math.PI;
+  // Базовое вращение из пропса (веер руки/доски: ry, rz). useFrame ниже
+  // лерпит к baseRotY + targetRotY, иначе веер стирается после 1-го кадра
+  // и рука рисуется плоской полосой без дуги.
+  const baseRotY = rotation[1];
+  const baseRotZ = rotation[2];
   const lift = (selected ? 0.55 : 0) + (hovered && clickable ? 0.3 : 0);
   const scale = selected ? 1.08 : hovered && clickable ? 1.05 : 1;
 
   useFrame(() => {
     const g = group.current;
     if (!g) return;
-    g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, targetRotY, 0.18);
+    g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, baseRotY + targetRotY, 0.18);
+    g.rotation.z = THREE.MathUtils.lerp(g.rotation.z, baseRotZ, 0.18);
     g.position.y = THREE.MathUtils.lerp(g.position.y, position[1] + lift, 0.18);
     const s = THREE.MathUtils.lerp(g.scale.x, scale, 0.18);
     g.scale.setScalar(s);

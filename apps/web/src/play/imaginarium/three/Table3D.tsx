@@ -25,8 +25,11 @@ export interface Table3DProps {
 }
 
 function FeltTable() {
+  // Поверхность стола на y = -1.6. Карты руки/доски стоят нижним краем
+  // над столом (BOARD_Y/HAND_Y = -0.8 → нижний край -1.5, зазор 0.1), иначе
+  // непрозрачный стол перекрывает карты и видна только коричневая плоскость.
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.2, 0]} receiveShadow>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.6, 0]} receiveShadow>
       <planeGeometry args={[20, 14]} />
       <meshStandardMaterial color="#9c6b3c" roughness={0.95} metalness={0} />
     </mesh>

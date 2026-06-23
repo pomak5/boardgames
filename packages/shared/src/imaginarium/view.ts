@@ -47,9 +47,11 @@ export function redactImaginarium(
 
   return {
     players: [...state.players],
+    playerColors: { ...state.playerColors },
     scores: { ...state.scores },
     hand: state.hands[id] ? [...state.hands[id]!] : [],
     handSize: state.handSize,
+    deckRemaining: state.deck.length,
     leaderIndex: state.leaderIndex,
     round: roundView,
     roundNumber: state.roundNumber,

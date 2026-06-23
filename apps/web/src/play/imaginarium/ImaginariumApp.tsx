@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Avatar } from "../components/Avatar";
 import { IconGear } from "../icons";
 import { useAuth } from "../net/useAuth";
+import { Chat } from "../online/Chat";
 import { SettingsModal } from "../SettingsModal";
 import { setSettings, type Theme, useSettings } from "../settings";
 import "../theme.css";
@@ -324,7 +325,12 @@ export function ImaginariumApp() {
         />
       )}
       {inRoom && room.phase === "lobby" && <ImaginariumLobby api={api} />}
-      {inRoom && room.phase !== "lobby" && <ImaginariumTable api={api} />}
+      {inRoom && room.phase !== "lobby" && (
+        <>
+          <ImaginariumTable api={api} />
+          <Chat messages={api.chat} meId={api.playerId} onSend={api.sendChat} />
+        </>
+      )}
 
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
     </div>

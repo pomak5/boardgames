@@ -101,6 +101,8 @@ export const associationSchema = z.string();
 export const imaginariumCardIdSchema = z.string();
 /** Номер слота голосования: целое >= 0 (валидность проверяет движок). */
 export const imaginariumVoteSlotSchema = z.number().int().nonnegative();
+/** Индекс цвета фигурки: целое 0..5 (6 цветов под MAX_PLAYERS). */
+export const imaginariumColorSchema = z.number().int().min(0).max(5);
 
 // ─────────────────────── chat ───────────────────────
 /** Текст сообщения чата: строка (длину обрезает `addChat` в менеджере). */

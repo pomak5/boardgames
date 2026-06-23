@@ -14,6 +14,10 @@ export interface CreateImaginariumOptions {
   /** Полная колода CardId (менеджер собирает из арт-набора); движок мешает и раздаёт. */
   deck: CardId[];
   handSize?: number; // default DEFAULT_HAND_SIZE (6)
+  /** playerId -> индекс цвета фигурки. Если не указан — назначается по порядку. */
+  playerColors?: Record<string, number>;
+  /** Индекс первого ведущего в players. По умолчанию — 0. */
+  firstLeaderIndex?: number;
   random?: () => number;
 }
 
@@ -69,15 +73,39 @@ export function createImaginariumGame(opts: CreateImaginariumOptions): Imaginari
   const scores: Record<string, number> = {};
   for (const p of playerIds) scores[p] = 0;
 
+  // Цвета фигурок: из опций или по порядку мест.
+  const playerColors: Record<string, number> = {};
+  const usedColors = new Set<number>();
+  for (const p of playerIds) {
+    const c = opts.playerColors?.[p];
+    if (c != null && !usedColors.has(c)) {
+      playerColors[p] = c;
+      usedColors.add(c);
+    }
+  }
+  // Авто-назначение свободных цветов не выбравшим.
+  let nextColor = 0;
+  for (const p of playerIds) {
+    if (playerColors[p] != null) continue;
+    while (usedColors.has(nextColor)) nextColor++;
+    playerColors[p] = nextColor;
+    usedColors.add(nextColor);
+    nextColor++;
+  }
+
+  // Первый ведущий: из опций или 0.
+  const leaderIndex = opts.firstLeaderIndex ?? 0;
+
   return {
     players: [...playerIds],
+    playerColors,
     scores,
     hands,
     deck: remaining,
     handSize,
-    leaderIndex: 0,
+    leaderIndex,
     round: {
-      leader: playerIds[0]!,
+      leader: playerIds[leaderIndex]!,
       association: null,
       submissions: {},
       slots: null,
@@ -87,7 +115,7 @@ export function createImaginariumGame(opts: CreateImaginariumOptions): Imaginari
     },
     roundNumber: 1,
     phase: 'association',
-    log: [{ type: 'round-start', leader: playerIds[0]!, roundNumber: 1 }],
+    log: [{ type: 'round-start', leader: playerIds[leaderIndex]!, roundNumber: 1 }],
     winner: null,
   };
 }

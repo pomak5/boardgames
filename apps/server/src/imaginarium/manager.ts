@@ -45,6 +45,8 @@ interface PlayerRecord {
   nickname: string;
   avatarUrl: string | null;
   connected: boolean;
+  /** Индекс цвета фигурки (0..5) или null, если не выбран в лобби. */
+  color: number | null;
 }
 
 export interface Room {
@@ -224,6 +226,22 @@ export class RoomManager {
     return redactImaginarium(room.game, { id: playerId });
   }
 
+  /** Игрок выбирает цвет фигурки в лобби. Цвета уникальны в рамках комнаты. */
+  setPlayerColor(room: Room, playerId: string, color: number): void {
+    if (room.phase !== 'lobby') throw new RoomError('Цвет можно выбрать только в лобби');
+    const player = room.players.get(playerId);
+    if (!player) throw new RoomError('Игрок не найден');
+    if (color < 0 || color > 5) throw new RoomError('Неверный цвет');
+    for (const [id, p] of room.players) {
+      if (id !== playerId && p.color === color) {
+        throw new RoomError('Этот цвет уже занят');
+      }
+    }
+    player.color = color;
+    this.snapshotRoom(room);
+  }
+
+
   // ───────────────────────── game flow ─────────────────────────
   // Синхронно: колода — константа, без БД. Хендлер броадкастит после вызова.
 
@@ -233,10 +251,19 @@ export class RoomManager {
     if (room.players.size < MIN_PLAYERS || room.players.size > MAX_PLAYERS) {
       throw new RoomError(`Нужно игроков от ${MIN_PLAYERS} до ${MAX_PLAYERS}`);
     }
+    const playerIds = [...room.players.keys()];
+    const playerColors: Record<string, number> = {};
+    for (const [id, p] of room.players) {
+      if (p.color != null) playerColors[id] = p.color;
+    }
+    // Первый ведущий — случайный.
+    const firstLeaderIndex = Math.floor(Math.random() * playerIds.length);
     room.game = createImaginariumGame({
-      playerIds: [...room.players.keys()],
+      playerIds,
       deck: [...IMAGINARIUM_DECK],
       handSize: room.settings.handSize,
+      playerColors,
+      firstLeaderIndex,
       random: Math.random,
     });
     room.phase = 'playing';
@@ -249,10 +276,18 @@ export class RoomManager {
   newRound(room: Room, playerId: string): void {
     if (playerId !== room.hostId) throw new RoomError('Новый раунд начинает хост');
     if (room.phase !== 'finished') throw new RoomError('Игра ещё не закончена');
+    const playerIds = [...room.players.keys()];
+    const playerColors: Record<string, number> = {};
+    for (const [id, p] of room.players) {
+      if (p.color != null) playerColors[id] = p.color;
+    }
+    const firstLeaderIndex = Math.floor(Math.random() * playerIds.length);
     room.game = createImaginariumGame({
-      playerIds: [...room.players.keys()],
+      playerIds,
       deck: [...IMAGINARIUM_DECK],
       handSize: room.settings.handSize,
+      playerColors,
+      firstLeaderIndex,
       random: Math.random,
     });
     room.phase = 'playing';
@@ -504,6 +539,7 @@ function makePlayer(nickname: string, avatarUrl: string | null = null): PlayerRe
     nickname: nick,
     avatarUrl,
     connected: true,
+    color: null,
   };
 }
 

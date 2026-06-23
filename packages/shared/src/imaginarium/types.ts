@@ -32,9 +32,21 @@ export interface ImaginariumRound {
   phase: ImaginariumRoundPhase;
 }
 
+/** Палитра цветов фигурок (6 цветов под MAX_PLAYERS). Индекс = color. */
+export const IMAGINARIUM_COLORS: string[] = [
+  '#d94a32', // красный
+  '#5c8a3a', // зелёный
+  '#3a6ea5', // синий
+  '#8a5a9c', // фиолетовый
+  '#d9982f', // оранжевый
+  '#e8d24a', // жёлтый
+];
+
 export interface ImaginariumState {
   /** Игроки по порядку мест (seat order). */
   players: string[];
+  /** playerId -> индекс цвета фигурки (0..IMAGINARIUM_COLORS.length-1). */
+  playerColors: Record<string, number>;
   scores: Record<string, number>;
   /** playerId -> карты в руке. Видит только владелец (redact в view). */
   hands: Record<string, CardId[]>;

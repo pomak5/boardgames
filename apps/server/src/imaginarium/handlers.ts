@@ -17,6 +17,7 @@ import {
   associationSchema,
   chatTextSchema,
   imaginariumCardIdSchema,
+  imaginariumColorSchema,
   imaginariumSettingsPatchSchema,
   imaginariumVoteSlotSchema,
   parseSocketArg,
@@ -206,6 +207,17 @@ export function registerImaginarium(nsp: ImaginariumNamespace): Janitable {
         const room = inRoom();
         if (!room || !data.playerId) return;
         manager.start(room, data.playerId);
+        broadcast(room);
+      }),
+    );
+
+    socket.on('room:setColor', (color) =>
+      guard(() => {
+        const room = inRoom();
+        if (!room || !data.playerId) return;
+        const clean = parseSocketArg(socket, imaginariumColorSchema, color);
+        if (clean === null) return;
+        manager.setPlayerColor(room, data.playerId, clean);
         broadcast(room);
       }),
     );

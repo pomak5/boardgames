@@ -25,6 +25,8 @@ export interface ImaginariumRoomApi {
   join: (code: string, nickname: string) => void;
   leave: () => void;
   updateSettings: (patch: ImaginariumSettingsPatch) => void;
+  /** Выбор цвета фигурки в лобби (индекс 0..5). */
+  setColor: (color: number) => void;
   start: () => void;
   newRound: () => void;
   sendChat: (text: string) => void;
@@ -143,6 +145,7 @@ export function useImaginariumRoom(): ImaginariumRoomApi {
       reset();
     },
     updateSettings: patch => socket.emit("room:settings", patch),
+    setColor: color => socket.emit("room:setColor", color),
     start: () => socket.emit("room:start"),
     newRound: () => socket.emit("room:newRound"),
     sendChat: text => socket.emit("chat:send", text),

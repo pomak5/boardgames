@@ -319,10 +319,14 @@ export interface ImaginariumRoundView {
  *  редуцирован (см. ImaginariumRoundView), log редуцирован на voting. */
 export interface ImaginariumView {
   players: string[];
+  /** playerId -> индекс цвета фигурки (0..IMAGINARIUM_COLORS.length-1). */
+  playerColors: Record<string, number>;
   scores: Record<string, number>;
   /** Только моя рука (копия); [] для не-игрока. */
   hand: CardId[];
   handSize: number;
+  /** Сколько карт осталось в колоде (публично, для визуала стопки). */
+  deckRemaining: number;
   leaderIndex: number;
   round: ImaginariumRoundView | null;
   roundNumber: number;
@@ -351,6 +355,8 @@ export interface ImaginariumRoomPlayerView {
   /** data:image/* URL аватара из профиля (null у гостей). */
   avatarUrl: string | null;
   connected: boolean;
+  /** Индекс цвета фигурки (0..5) или null, если игрок ещё не выбрал цвет. */
+  color: number | null;
 }
 
 export interface ImaginariumRoomView {
@@ -400,6 +406,8 @@ export interface ImaginariumClientToServerEvents {
   'room:rejoin': (code: string, token: string, ack: (a: ImaginariumJoinAck) => void) => void;
   'room:leave': () => void;
   'room:settings': (settings: ImaginariumSettingsPatch) => void;
+  /** Выбор цвета фигурки в лобби (индекс 0..5). Сервер проверяет уникальность. */
+  'room:setColor': (color: number) => void;
   'room:start': () => void;
   'room:newRound': () => void;
   'chat:send': (text: string) => void;

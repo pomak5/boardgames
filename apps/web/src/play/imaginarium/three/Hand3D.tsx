@@ -16,8 +16,8 @@ export interface Hand3DProps {
   faceUp: boolean;
 }
 
-const HAND_Y = -1.6;
-const HAND_Z = 1.5;
+const HAND_Y = -0.8;
+const HAND_Z = 2.0;
 const SPREAD = 3.4;
 
 export function Hand3D({
