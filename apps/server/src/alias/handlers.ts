@@ -12,6 +12,7 @@ import { RoomError, RoomManager } from './manager';
 import type { Room } from './manager';
 import { resolveIdentity } from '../auth/identity';
 import type { Janitable } from '../janitor';
+import { createChatThrottle } from '../chatThrottle';
 import { aliasSettingsPatchSchema, chatTextSchema, parseSocketArg } from '../validation';
 
 interface SocketData {
@@ -30,6 +31,8 @@ type AliasNamespace = Namespace<
 
 export function registerAlias(nsp: AliasNamespace): Janitable {
   const manager = new RoomManager();
+  // Анти-флуд чата: не чаще 5 сообщений за 5с на сокет (аудит безопасности).
+  const chatThrottle = createChatThrottle();
 
   /** Рассылает состояние комнаты, персональные виды игры и дедлайн раунда. */
   function broadcast(room: Room): void {
@@ -179,6 +182,7 @@ export function registerAlias(nsp: AliasNamespace): Janitable {
 
     socket.on('room:leave', leaveCurrent);
     socket.on('disconnect', leaveCurrent);
+    socket.on('disconnect', () => chatThrottle.forget(socket.id));
 
     socket.on('room:setTeam', (team, role) =>
       guard(() => {
@@ -238,6 +242,7 @@ export function registerAlias(nsp: AliasNamespace): Janitable {
         if (!room || !data.playerId) return;
         const clean = parseSocketArg(socket, chatTextSchema, text);
         if (clean === null) return;
+        if (!chatThrottle.allow(socket.id)) return;
         const msg = manager.addChat(room, data.playerId, clean);
         nsp.to(room.code).emit('chat:message', msg);
       }),
