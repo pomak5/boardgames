@@ -2,9 +2,24 @@
 import { SignJWT, jwtVerify } from 'jose';
 
 const DEV_SECRET = 'dev-secret-change-me';
+let warnedDevSecret = false;
 
 function secretKey(): Uint8Array {
-  return new TextEncoder().encode(process.env.JWT_SECRET ?? DEV_SECRET);
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    // Не используем небезопасный dev-секрет молча: предупреждаем один раз.
+    // В проде (при DATABASE_URL) JWT_SECRET обязателен и проверяется в index.ts;
+    // это предупреждение закрывает gap guest-only режима (без БД).
+    if (!warnedDevSecret) {
+      warnedDevSecret = true;
+      console.warn(
+        '[auth] JWT_SECRET не задан — используется небезопасный dev-секрет. ' +
+          'Допустимо только для локальной разработки; задайте JWT_SECRET в проде.',
+      );
+    }
+    return new TextEncoder().encode(DEV_SECRET);
+  }
+  return new TextEncoder().encode(secret);
 }
 
 export interface TokenPayload {
