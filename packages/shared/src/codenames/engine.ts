@@ -73,14 +73,18 @@ function looksRelated(a: string, b: string): boolean {
 }
 
 export function validateClue(state: CodenamesState, clue: Clue): void {
-  if (!/^[а-яёa-z-]+$/i.test(clue.word.trim())) {
+  // Подсказка — одно слово: буквы (рус/лат), допускается дефис между буквенными
+  // группами («что-то»). Запрещены пробелы, цифры и «слова» из одних дефисов.
+  if (!/^[а-яёa-z]+(?:-[а-яёa-z]+)*$/i.test(clue.word.trim())) {
     throw new CodenamesError('INVALID_CLUE_WORD', 'Подсказка — одно слово без пробелов и цифр');
   }
   if (!Number.isInteger(clue.count) || clue.count < 0 || clue.count > 9) {
     throw new CodenamesError('INVALID_CLUE_COUNT', 'Число должно быть целым от 0 до 9');
   }
   for (const card of state.cards) {
-    if (looksRelated(card.word, clue.word)) {
+    // Только НЕоткрытые слова поля запрещены как подсказка (правила Codenames:
+    // уже закрытые фишкой/угаданные слова — «честная игра», их можно называть).
+    if (!card.revealed && looksRelated(card.word, clue.word)) {
       throw new CodenamesError(
         'INVALID_CLUE_WORD',
         `Подсказка похожа на слово с поля: «${card.word}»`,

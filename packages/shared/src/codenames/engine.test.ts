@@ -59,6 +59,16 @@ describe('giveClue', () => {
     expect(() => giveClue(g, { word: 'два слова', count: 1 })).toThrow();
   });
 
+  test('подсказка из одних дефисов/с цифрами — ошибка; дефисное слово — ок', () => {
+    const g = newGame();
+    expect(() => giveClue(g, { word: '-', count: 1 })).toThrow();
+    expect(() => giveClue(g, { word: '---', count: 1 })).toThrow();
+    expect(() => giveClue(g, { word: '-кот', count: 1 })).toThrow();
+    expect(() => giveClue(g, { word: 'abc123', count: 1 })).toThrow();
+    // буквенное слово через дефис допустимо
+    expect(() => giveClue(g, { word: 'фыва-жук', count: 1 })).not.toThrow();
+  });
+
   test('count 0 — неограниченные попытки', () => {
     const g = giveClue(newGame(), { word: 'фываж', count: 0 });
     expect(g.guessesLeft).toBeNull();

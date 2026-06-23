@@ -101,14 +101,14 @@ describe('бот-капитан: правила подсказок', () => {
       let g = newGame(seed * 17);
       const used = new Set<string>();
       const norm = (w: string) => w.trim().toLowerCase().replace(/ё/g, 'е');
-      const boardWords = new Set(g.cards.map((c) => norm(c.word)));
+      const boardWords = new Set(g.cards.filter((c) => !c.revealed).map((c) => norm(c.word)));
       for (let turn = 0; turn < 6 && g.phase !== 'finished'; turn++) {
         const trace = suggestClue(g, g.turn, 'normal');
         expect(trace).not.toBeNull();
         if (!trace) break;
         const w = norm(trace.clue.word);
         expect(used.has(w)).toBe(false); // подсказка не повторяется
-        expect(boardWords.has(w)).toBe(false); // подсказка не совпадает со словом поля (даже открытым)
+        expect(boardWords.has(w)).toBe(false); // подсказка не совпадает с НЕоткрытым словом поля
         used.add(w);
         g = giveClue(g, trace.clue);
         g = passTurn(g);
@@ -116,13 +116,44 @@ describe('бот-капитан: правила подсказок', () => {
     }
   }, 30000);
 
-  test('validateClue запрещает слово, совпадающее с открытой картой', () => {
-    let g = newGame(99);
-    const target = g.cards[0]!;
-    g = giveClue(g, { word: 'тест', count: 1 });
-    g = guess(g, 0);
-    if (g.phase === 'clue' || g.phase === 'guess') {
-      expect(() => validateClue(g, { word: target.word.toLowerCase(), count: 1 })).toThrow();
-    }
+  test('validateClue: неоткрытые слова поля запрещены, открытые (угаданные) — разрешены по правилам', () => {
+    // Контролируемое поле из 25 несхожих по основам слов (без ложных совпадений
+    // looksRelated по 4-символьному префиксу).
+    const words = [
+      'apple',
+      'bravo',
+      'cat',
+      'delta',
+      'echo',
+      'foxtrot',
+      'golf',
+      'hotel',
+      'india',
+      'juliet',
+      'kilo',
+      'lima',
+      'mike',
+      'november',
+      'oscar',
+      'papa',
+      'quebec',
+      'romeo',
+      'sierra',
+      'tango',
+      'uniform',
+      'victor',
+      'whiskey',
+      'xray',
+      'yankee',
+    ];
+    const g = createGame(words, { startingTeam: 'red', random: seeded(1) });
+    const revealedWord = g.cards[0]!.word;
+    const stillHiddenWord = g.cards[1]!.word;
+    g.cards[0]!.revealed = true; // имитируем закрытую фишкой (угаданную) карту
+
+    // Неоткрытое слово поля — подсказка запрещена.
+    expect(() => validateClue(g, { word: stillHiddenWord, count: 1 })).toThrow();
+    // Открытое (угаданное) слово — честная игра, подсказка допустима.
+    expect(() => validateClue(g, { word: revealedWord, count: 1 })).not.toThrow();
   });
 });

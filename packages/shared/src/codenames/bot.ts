@@ -78,7 +78,10 @@ export function suggestClue(
 ): BotClueTrace | null {
   const { words, index } = load();
   const unrevealed = state.cards.filter((c) => !c.revealed);
-  const boardWordsAll = state.cards.map((c) => c.word); // все слова поля, включая открытые
+  // Только НЕоткрытые слова поля исключаем из кандидатов (открытые — честная
+  // игра по правилам). Раньше сюда ошибочно попадали и открытые слова, из-за
+  // чего словарь бота сужался по ходу партии и подсказки слабели.
+  const boardWords = unrevealed.map((c) => c.word);
   const usedClues = new Set(
     state.log
       .filter((e) => e.type === 'clue')
@@ -108,7 +111,7 @@ export function suggestClue(
   for (let ci = 0; ci < words.length; ci++) {
     const candidate = words[ci] as string;
     if (usedClues.has(normalize(candidate))) continue; // не повторяем подсказки
-    if (relatedToBoard(candidate, boardWordsAll)) continue;
+    if (relatedToBoard(candidate, boardWords)) continue;
 
     let assassinSim = -1;
     let dangerSim = -1;
