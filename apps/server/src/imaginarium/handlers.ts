@@ -13,6 +13,7 @@ import { RoomError, RoomManager } from './manager';
 import type { Room } from './manager';
 import { resolveIdentity } from '../auth/identity';
 import type { Janitable } from '../janitor';
+import { createChatThrottle } from '../chatThrottle';
 import {
   associationSchema,
   chatTextSchema,
@@ -40,6 +41,8 @@ type ImaginariumNamespace = Namespace<
 export function registerImaginarium(nsp: ImaginariumNamespace): Janitable {
   // broadcast вызывается и менеджером (срабатывания фазных таймеров), и хендлерами.
   const manager = new RoomManager((room) => broadcast(room));
+  // Анти-флуд чата: не чаще 5 сообщений за 5с на сокет (аудит безопасности).
+  const chatThrottle = createChatThrottle();
   /** Комнаты, для которых финал уже записан (анти-дубль). */
   const recorded = new Set<string>();
 
@@ -190,6 +193,7 @@ export function registerImaginarium(nsp: ImaginariumNamespace): Janitable {
 
     socket.on('room:leave', leaveCurrent);
     socket.on('disconnect', leaveCurrent);
+    socket.on('disconnect', () => chatThrottle.forget(socket.id));
 
     socket.on('room:settings', (settings) =>
       guard(() => {
@@ -238,6 +242,7 @@ export function registerImaginarium(nsp: ImaginariumNamespace): Janitable {
         if (!room || !data.playerId) return;
         const clean = parseSocketArg(socket, chatTextSchema, text);
         if (clean === null) return;
+        if (!chatThrottle.allow(socket.id)) return;
         const msg = manager.addChat(room, data.playerId, clean);
         nsp.to(room.code).emit('chat:message', msg);
       }),
